@@ -106,8 +106,11 @@ export default function Footer() {
 
         {/* Business Info */}
         <div className="border-t border-white/10 pt-8 mb-8">
-          <p className="text-xs text-white/30 leading-relaxed">
-            사업자등록번호: 123-45-67890 | 대표: 홍길동 | 주소: 강원도 평창군 대관령면 올림픽로 123
+          <p className="text-xs text-white/30 leading-relaxed break-keep">
+            사업자등록번호: 123-45-67890 | 대표: 홍길동
+            <br className="sm:hidden" />
+            <span className="hidden sm:inline"> | </span>
+            주소: 강원도 평창군 대관령면 올림픽로 123
           </p>
         </div>
       </div>

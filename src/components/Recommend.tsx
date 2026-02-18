@@ -368,25 +368,25 @@ export default function Recommend() {
               </div>
 
               <div
-                className={`relative rounded-3xl p-8 bg-gradient-to-br ${recommendedProgram.color} text-white mb-6 overflow-hidden`}
+                className={`relative rounded-3xl p-5 sm:p-8 bg-gradient-to-br ${recommendedProgram.color} text-white mb-6 overflow-hidden`}
               >
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
                 <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                     <div className="flex items-center gap-3">
-                      <recommendedProgram.icon size={28} className="text-white/80" />
+                      <recommendedProgram.icon size={28} className="text-white/80 flex-shrink-0" />
                       <div>
                         <p className="text-white/60 text-xs font-medium">
                           적합도 {result.matchPercent}%
                         </p>
-                        <h3 className="text-2xl font-bold">{recommendedProgram.title}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold">{recommendedProgram.title}</h3>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right ml-10 sm:ml-0">
                       <p className="text-white/60 text-xs">{recommendedProgram.duration}</p>
-                      <p className="text-xl font-bold">{recommendedProgram.price}</p>
+                      <p className="text-lg sm:text-xl font-bold">{recommendedProgram.price}</p>
                     </div>
                   </div>
 

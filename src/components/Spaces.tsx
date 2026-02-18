@@ -48,7 +48,7 @@ export default function Spaces() {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="spaces" className="py-24 px-4 bg-white">
+    <section id="spaces" className="py-16 sm:py-24 px-4 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6">
           <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">

@@ -62,16 +62,18 @@ export default function Hero() {
 
         {/* Availability Badge */}
         <div className="mt-14 animate-fade-in delay-400">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
-            <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
-            </span>
-            <span className="text-white/90 text-sm">
-              오늘 예약 가능 <strong>3실</strong>
-            </span>
-            <span className="text-white/30">|</span>
-            <span className="text-white/70 text-sm">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl sm:rounded-full px-5 sm:px-6 py-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
+              </span>
+              <span className="text-white/90 text-sm">
+                오늘 예약 가능 <strong>3실</strong>
+              </span>
+            </div>
+            <span className="hidden sm:inline text-white/30">|</span>
+            <span className="text-white/70 text-xs sm:text-sm">
               다음 예약 가능일 <strong>3월 25일</strong>
             </span>
           </div>

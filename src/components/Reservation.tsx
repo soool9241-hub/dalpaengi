@@ -235,8 +235,8 @@ export default function Reservation() {
 
   return (
     <>
-      <section id="reservation" className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section id="reservation" className="py-16 sm:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-4 overflow-hidden">
           <div className="text-center mb-12">
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">
               RESERVATION
@@ -284,7 +284,7 @@ export default function Reservation() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Calendar */}
-            <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
+            <div className="bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar size={18} className="text-primary" />
                 <h3 className="text-lg font-semibold text-text-dark">
@@ -373,23 +373,29 @@ export default function Reservation() {
               {/* Date selection summary */}
               {program.rangeMode && checkIn && (
                 <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl text-center">
-                  <p className="text-sm text-text-mid">
-                    체크인:{" "}
-                    <span className="font-semibold text-primary">
-                      {formatFullDate(checkIn)}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0 text-sm text-text-mid">
+                    <span>
+                      체크인:{" "}
+                      <span className="font-semibold text-primary">
+                        {formatFullDate(checkIn)}
+                      </span>
                     </span>
                     {checkOut && (
                       <>
-                        {" → "}체크아웃:{" "}
-                        <span className="font-semibold text-primary">
-                          {formatFullDate(checkOut)}
+                        <span className="hidden sm:inline">{" → "}</span>
+                        <span className="sm:hidden text-text-light text-xs">↓</span>
+                        <span>
+                          체크아웃:{" "}
+                          <span className="font-semibold text-primary">
+                            {formatFullDate(checkOut)}
+                          </span>
                         </span>
                         <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
                           {nights}박
                         </span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
               )}
               {!program.rangeMode && selectedDate && (
@@ -628,7 +634,7 @@ export default function Reservation() {
           </div>
 
           {/* Price Summary */}
-          <div className="mt-8 bg-background rounded-2xl shadow-sm border border-border p-6">
+          <div className="mt-8 bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -685,7 +691,7 @@ export default function Reservation() {
       {showConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
-          <div className="relative bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in p-8">
+          <div className="relative bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in p-5 sm:p-8">
             <button
               onClick={() => setShowConfirm(false)}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -707,10 +713,10 @@ export default function Reservation() {
                 <span className="font-medium text-text-dark">{program.label}</span>
               </div>
               {program.rangeMode && checkIn && checkOut && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-light">날짜</span>
-                  <span className="font-medium text-text-dark">
-                    {formatFullDate(checkIn)} ~ {formatFullDate(checkOut)} ({nights}박)
+                <div className="flex justify-between text-sm gap-2">
+                  <span className="text-text-light flex-shrink-0">날짜</span>
+                  <span className="font-medium text-text-dark text-right">
+                    {formatFullDate(checkIn)} ~<br className="sm:hidden" /> {formatFullDate(checkOut)} ({nights}박)
                   </span>
                 </div>
               )}

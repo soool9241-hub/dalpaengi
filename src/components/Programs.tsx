@@ -218,7 +218,7 @@ export default function Programs() {
               </button>
             </div>
 
-            <div className="p-8">
+            <div className="p-5 sm:p-8">
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {popupProgram.tags.map((tag, j) => (
@@ -229,12 +229,12 @@ export default function Programs() {
               </div>
 
               {/* Price */}
-              <div className="flex items-end gap-2 mb-6">
-                <span className="text-3xl font-bold text-text-dark">
+              <div className="flex flex-wrap items-end gap-1 sm:gap-2 mb-6">
+                <span className="text-2xl sm:text-3xl font-bold text-text-dark">
                   {popupProgram.price.toLocaleString()}
                 </span>
-                <span className="text-sm text-text-light mb-1">원</span>
-                <span className="text-sm text-text-light mb-1 ml-2">
+                <span className="text-sm text-text-light mb-0.5 sm:mb-1">원</span>
+                <span className="text-xs sm:text-sm text-text-light mb-0.5 sm:mb-1 ml-1">
                   (1인당 {Math.round(popupProgram.price / popupProgram.maxPeople).toLocaleString()}원)
                 </span>
               </div>
