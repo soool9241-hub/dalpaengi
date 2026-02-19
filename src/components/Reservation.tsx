@@ -309,9 +309,21 @@ export default function Reservation() {
               {/* Base Program */}
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
                 <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-primary" /><h3 className="text-lg font-semibold text-text-dark">기본 프로그램</h3></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div><p className="font-medium text-text-dark">총 예약인원</p><p className="text-sm text-text-light">{BASE_PEOPLE}인 기본</p></div>
-                  <div className="text-right"><p className="text-lg font-bold text-text-dark">{totalGuests}인</p><p className="text-xs text-text-light">1인당 {formatPrice(pricePerPerson)}</p></div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-text-dark">총 예약인원</p>
+                    {extraGuests > 0
+                      ? <p className="text-sm text-text-light">{BASE_PEOPLE}인 기본 + {extraGuests}인 추가 = <span className="font-semibold text-text-dark">{totalGuests}인</span></p>
+                      : <p className="text-sm text-text-light">{BASE_PEOPLE}인 기본</p>
+                    }
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-text-dark">{totalGuests}<span className="text-base font-medium">인</span></p>
+                  </div>
+                </div>
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
+                  <span className="text-sm text-text-mid">1인당 예상 요금</span>
+                  <span className="text-lg font-bold text-primary">{formatPrice(pricePerPerson)}</span>
                 </div>
                 {program.rangeMode && checkIn && checkOut && (
                   <div className="mt-2 pt-2 border-t border-border">
