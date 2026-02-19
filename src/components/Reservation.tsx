@@ -1,12 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus, Hammer, Utensils } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
-
-const MEAT_OPTIONS = [
-  { id: "moksal", name: "목살", price: 50000, unit: "5인분" },
-];
 
 const DINNER_PRICE = 10000;
 const WOODCRAFT_PRICE = 20000;
@@ -67,7 +63,6 @@ export default function Reservation() {
   const [gasRanges, setGasRanges] = useState(0);
   const [dinnerCount, setDinnerCount] = useState(0);
   const [woodcraftCount, setWoodcraftCount] = useState(0);
-  const [selectedMeats, setSelectedMeats] = useState<Record<string, number>>({});
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Bus rental
@@ -142,14 +137,6 @@ export default function Reservation() {
   const isSingleSelected = (day: number) => selectedDate?.year === currentYear && selectedDate?.month === currentMonth && selectedDate?.day === day;
   const isPastDate = (day: number) => new Date(currentYear, currentMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  const handleMeatChange = (id: string, delta: number) => {
-    setSelectedMeats((prev) => {
-      const next = Math.max(0, (prev[id] || 0) + delta);
-      if (next === 0) { const copy = { ...prev }; delete copy[id]; return copy; }
-      return { ...prev, [id]: next };
-    });
-  };
-
   const totalPrice = useMemo(() => {
     let total = program.basePrice * nights;
     total += extraGuests * EXTRA_GUEST_PRICE;
@@ -157,11 +144,8 @@ export default function Reservation() {
     total += gasRanges * GAS_RANGE_PRICE;
     total += dinnerCount * DINNER_PRICE;
     total += woodcraftCount * WOODCRAFT_PRICE;
-    for (const opt of MEAT_OPTIONS) {
-      total += (selectedMeats[opt.id] || 0) * opt.price;
-    }
     return total;
-  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, selectedMeats]);
+  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -350,14 +334,6 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
-                  {/* Meat - 목살 only */}
-                  {MEAT_OPTIONS.map((opt) => (
-                    <Counter key={opt.id} label={opt.name} desc={`${opt.unit}당 ${formatPrice(opt.price)}`} value={selectedMeats[opt.id] || 0}
-                      onDec={() => handleMeatChange(opt.id, -1)} onInc={() => handleMeatChange(opt.id, 1)} />
-                  ))}
-
-                  <hr className="border-border" />
-
                   <Counter label="가스렌지" desc={`개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges}
                     onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} />
 
@@ -449,7 +425,6 @@ export default function Reservation() {
                   {getTimeSlotLabel() && <p>시간대: {getTimeSlotLabel()}</p>}
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * EXTRA_GUEST_PRICE)}</p>}
                   {bbqGrills > 0 && <p>바베큐 세트 ({bbqGrills}개): {formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</p>}
-                  {MEAT_OPTIONS.filter((o) => selectedMeats[o.id]).map((o) => <p key={o.id}>{o.name} x{selectedMeats[o.id]}: {formatPrice(selectedMeats[o.id] * o.price)}</p>)}
                   {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * GAS_RANGE_PRICE)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {formatPrice(dinnerCount * DINNER_PRICE)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</p>}
@@ -497,9 +472,6 @@ export default function Reservation() {
               <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}</span><span className="font-medium text-text-dark">{formatPrice(program.basePrice * nights)}</span></div>
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * EXTRA_GUEST_PRICE)}</span></div>}
               {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">바베큐 세트</span><span className="font-medium text-text-dark">{formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</span></div>}
-              {MEAT_OPTIONS.filter((o) => selectedMeats[o.id]).map((o) => (
-                <div key={o.id} className="flex justify-between text-sm"><span className="text-text-light">{o.name} x{selectedMeats[o.id]}</span><span className="font-medium text-text-dark">{formatPrice(selectedMeats[o.id] * o.price)}</span></div>
-              ))}
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * GAS_RANGE_PRICE)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사</span><span className="font-medium text-text-dark">{formatPrice(dinnerCount * DINNER_PRICE)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</span></div>}
