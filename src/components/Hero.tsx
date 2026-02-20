@@ -116,6 +116,22 @@ export default function Hero() {
         {/* Availability Badge - Supabase 연동 */}
         <div className="mt-14 animate-fade-in delay-400">
           <div className="inline-flex flex-col items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4">
+            {/* 선호 요일 선택 */}
+            <div className="flex items-center gap-2">
+              <span className="text-white/40 text-xs">선호 요일</span>
+              <div className="flex gap-1">
+                {DAY_LABELS.map((label, i) => (
+                  <button key={label} onClick={() => setPreferredDay(i)}
+                    className={`w-7 h-7 rounded-full text-[11px] font-semibold transition-all
+                      ${preferredDay === i
+                        ? "bg-white text-primary shadow-md"
+                        : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* 오늘 예약 가능 + 다음 예약 가능일 */}
             <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-2.5 w-2.5 relative">
@@ -135,21 +151,6 @@ export default function Hero() {
                     : "조회 중..."}
                 </strong>
               </span>
-            </div>
-            {/* 선호 요일 선택 */}
-            <div className="flex items-center gap-2">
-              <span className="text-white/40 text-xs">선호 요일</span>
-              <div className="flex gap-1">
-                {DAY_LABELS.map((label, i) => (
-                  <button key={label} onClick={() => setPreferredDay(i)}
-                    className={`w-7 h-7 rounded-full text-[11px] font-semibold transition-all
-                      ${preferredDay === i
-                        ? "bg-white text-primary shadow-md"
-                        : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
