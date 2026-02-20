@@ -215,8 +215,24 @@ export default function Reservation() {
 
     setIsSubmitting(true);
     try {
+      // check_in 날짜 결정
+      let checkInDate: string;
+      let stayDays = 1;
+      if (program.rangeMode && checkIn && checkOut) {
+        checkInDate = toDateStr(checkIn.year, checkIn.month, checkIn.day);
+        stayDays = nights;
+      } else if (selectedDate) {
+        checkInDate = toDateStr(selectedDate.year, selectedDate.month, selectedDate.day);
+      } else {
+        alert("날짜를 선택해주세요.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const reservationData: Record<string, unknown> = {
         program_type: programType,
+        check_in: checkInDate,
+        stay_days: stayDays,
         guest_count: totalGuests,
         extra_guests: extraGuests,
         guest_name: guestName.trim(),
@@ -241,21 +257,10 @@ export default function Reservation() {
           people: busForm.dropoffPeople,
           time: busForm.dropoffTime,
         } : null,
-        total_revenue: totalPrice,
+        time_slot: selectedTimeSlot || null,
+        channel: "website",
         status: "confirmed",
       };
-
-      if (program.rangeMode && checkIn && checkOut) {
-        reservationData.check_in = toDateStr(checkIn.year, checkIn.month, checkIn.day);
-        reservationData.check_out = toDateStr(checkOut.year, checkOut.month, checkOut.day);
-      } else if (selectedDate) {
-        reservationData.check_in = toDateStr(selectedDate.year, selectedDate.month, selectedDate.day);
-        reservationData.check_out = null;
-      }
-
-      if (selectedTimeSlot) {
-        reservationData.time_slot = selectedTimeSlot;
-      }
 
       const { error } = await supabase.from("reservations").insert(reservationData);
 
