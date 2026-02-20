@@ -117,20 +117,14 @@ export default function Reservation() {
   ];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
-  // Supabase에서 예약 데이터 조회
+  // Supabase에서 예약 데이터 조회 - check_in 기준으로 방막기
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
-      // 현재 보고 있는 달의 첫날과 마지막날 (전후 1달 여유)
-      const startDate = toDateStr(currentYear, currentMonth - 1, 1);
-      const endDate = toDateStr(currentYear, currentMonth + 2, 0);
-
       const { data, error } = await supabase
         .from("reservations")
-        .select("program_type, check_in, check_out, time_slot, status")
-        .neq("status", "cancelled")
-        .gte("check_in", startDate)
-        .lte("check_in", endDate);
+        .select("check_in")
+        .neq("status", "cancelled");
 
       if (error) {
         console.error("예약 데이터 조회 실패:", error);
@@ -138,17 +132,8 @@ export default function Reservation() {
       }
 
       const dates = new Set<string>();
-
-      (data as Reservation[])?.forEach((r) => {
-        if (r.program_type === "stay" && r.check_in && r.check_out) {
-          // 숙박: check_in ~ check_out-1 까지 모든 날짜 차단
-          const start = new Date(r.check_in);
-          const end = new Date(r.check_out);
-          for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-            dates.add(d.toISOString().split("T")[0]);
-          }
-        } else {
-          // 3시간/주야간: check_in 날짜만 차단
+      data?.forEach((r: { check_in: string }) => {
+        if (r.check_in) {
           dates.add(r.check_in);
         }
       });
@@ -159,7 +144,7 @@ export default function Reservation() {
     } finally {
       setLoadingReservations(false);
     }
-  }, [currentYear, currentMonth]);
+  }, []);
 
   // 컴포넌트 마운트 시 + 월/프로그램 변경 시 예약 데이터 조회
   useEffect(() => {
