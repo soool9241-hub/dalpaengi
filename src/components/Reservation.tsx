@@ -418,37 +418,76 @@ export default function Reservation() {
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((day, idx) => {
-                  if (day === null) return <div key={`empty-${idx}`} />;
-                  const past = isPastDate(day);
-                  const booked = isBooked(day);
-                  // 체크아웃 선택 모드: 체크인 선택 후 체크아웃 미선택 상태
+                {(() => {
+                  // 체크아웃 선택 모드: 체크인 이후 첫 번째 예약 날짜를 찾아서 그 이후는 전부 차단
                   const isSelectingCheckout = program.rangeMode && checkIn && !checkOut;
-                  // 체크아웃 선택 모드에서는 예약된 날짜도 클릭 가능 (오전 11시 퇴실)
-                  const disabled = past || (booked && !isSelectingCheckout);
-                  const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
-                  const isCI = isCheckIn(day); const isCO = isCheckOut(day);
-                  const inRange = isInRange(day); const isSingle = isSingleSelected(day);
-                  const isSelected = isCI || isCO || isSingle;
-                  return (
-                    <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
-                      className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
-                        ${past ? "text-text-light/30 cursor-not-allowed"
-                        : booked && !isSelectingCheckout ? "bg-red-100 text-red-400 cursor-not-allowed"
-                        : booked && isSelectingCheckout ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
-                        : isSelected ? "bg-primary text-white shadow-md"
-                        : inRange ? "bg-primary/15 text-primary"
-                        : dayOfWeek === 0 ? "text-red-400 hover:bg-sage"
-                        : dayOfWeek === 6 ? "text-blue-400 hover:bg-sage"
-                        : "text-text-dark hover:bg-sage"}`}>
-                      {day}
-                      {isCI && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">IN</span>}
-                      {isCO && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">OUT</span>}
-                      {booked && !past && !isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
-                      {booked && !past && isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-orange-500 font-bold">퇴실</span>}
-                    </button>
-                  );
-                })}
+                  let maxCheckoutDate: string | null = null;
+                  if (isSelectingCheckout && checkIn) {
+                    const ciDate = new Date(checkIn.year, checkIn.month, checkIn.day);
+                    // 체크인 다음날부터 탐색해서 첫 번째 예약(마감) 날짜 찾기
+                    for (let i = 1; i <= 365; i++) {
+                      const d = new Date(ciDate);
+                      d.setDate(d.getDate() + i);
+                      const ds = d.toISOString().split("T")[0];
+                      if (bookedDates.has(ds)) {
+                        // 이 날짜가 체크아웃 가능한 최대 날짜 (퇴실 가능)
+                        maxCheckoutDate = ds;
+                        break;
+                      }
+                    }
+                  }
+
+                  return calendarDays.map((day, idx) => {
+                    if (day === null) return <div key={`empty-${idx}`} />;
+                    const past = isPastDate(day);
+                    const booked = isBooked(day);
+                    const dateStr = toDateStr(currentYear, currentMonth, day);
+
+                    // 체크아웃 모드에서의 비활성화 판단
+                    let disabledInCheckoutMode = false;
+                    let isCheckoutAllowed = false;
+                    if (isSelectingCheckout) {
+                      const ciDate = new Date(checkIn!.year, checkIn!.month, checkIn!.day);
+                      const thisDate = new Date(currentYear, currentMonth, day);
+                      if (thisDate <= ciDate) {
+                        // 체크인 당일 또는 이전 → 비활성화
+                        disabledInCheckoutMode = true;
+                      } else if (maxCheckoutDate && dateStr === maxCheckoutDate) {
+                        // 첫 번째 예약 날짜 = 체크아웃 가능 (퇴실)
+                        isCheckoutAllowed = true;
+                      } else if (maxCheckoutDate && dateStr > maxCheckoutDate) {
+                        // 첫 번째 예약 이후 → 완전 비활성화
+                        disabledInCheckoutMode = true;
+                      }
+                    }
+
+                    const disabled = !!(past
+                      || (booked && !isSelectingCheckout)
+                      || (isSelectingCheckout && disabledInCheckoutMode));
+                    const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
+                    const isCI = isCheckIn(day); const isCO = isCheckOut(day);
+                    const inRange = isInRange(day); const isSingle = isSingleSelected(day);
+                    const isSelected = isCI || isCO || isSingle;
+                    return (
+                      <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
+                        className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
+                          ${past ? "text-text-light/30 cursor-not-allowed"
+                          : disabled ? "bg-red-100 text-red-400 cursor-not-allowed"
+                          : isCheckoutAllowed ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
+                          : isSelected ? "bg-primary text-white shadow-md"
+                          : inRange ? "bg-primary/15 text-primary"
+                          : dayOfWeek === 0 ? "text-red-400 hover:bg-sage"
+                          : dayOfWeek === 6 ? "text-blue-400 hover:bg-sage"
+                          : "text-text-dark hover:bg-sage"}`}>
+                        {day}
+                        {isCI && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">IN</span>}
+                        {isCO && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">OUT</span>}
+                        {booked && !past && !isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
+                        {isCheckoutAllowed && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-orange-500 font-bold">퇴실</span>}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
 
               {/* 범례 */}
