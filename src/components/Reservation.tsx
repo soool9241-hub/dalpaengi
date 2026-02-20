@@ -348,11 +348,14 @@ export default function Reservation() {
   };
 
   // Counter component for DRY
-  const Counter = ({ label, desc, value, onDec, onInc }: { label: string; desc: string; value: number; onDec: () => void; onInc: () => void }) => (
+  const Counter = ({ label, desc, value, unitPrice, onDec, onInc }: { label: string; desc: string; value: number; unitPrice?: number; onDec: () => void; onInc: () => void }) => (
     <div className="flex items-center justify-between">
       <div>
         <p className="font-medium text-text-dark text-sm">{label}</p>
         <p className="text-xs text-text-light">{desc}</p>
+        {value > 0 && unitPrice && (
+          <p className="text-xs text-primary font-semibold mt-0.5">= {formatPrice(value * unitPrice)}</p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <button onClick={onDec} className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
@@ -535,29 +538,29 @@ export default function Reservation() {
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
                 <h3 className="text-base font-semibold text-text-dark mb-4">추가 옵션</h3>
                 <div className="space-y-4">
-                  <Counter label="추가 인원" desc={`1인 ${formatPrice(EXTRA_GUEST_PRICE)}`} value={extraGuests}
+                  <Counter label="추가 인원" desc={`1인 ${formatPrice(EXTRA_GUEST_PRICE)}`} value={extraGuests} unitPrice={EXTRA_GUEST_PRICE}
                     onDec={() => setExtraGuests((g) => Math.max(0, g - 1))} onInc={() => setExtraGuests((g) => Math.min(30, g + 1))} />
 
                   <hr className="border-border" />
 
-                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(BBQ_GRILL_PRICE)} (최대 6개)`} value={bbqGrills}
+                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(BBQ_GRILL_PRICE)} (최대 6개)`} value={bbqGrills} unitPrice={BBQ_GRILL_PRICE}
                     onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} />
 
                   <hr className="border-border" />
 
-                  <Counter label="가스렌지" desc={`버너+가스+불판 / 개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges}
+                  <Counter label="가스렌지" desc={`버너+가스+불판 / 개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges} unitPrice={GAS_RANGE_PRICE}
                     onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} />
 
                   <hr className="border-border" />
 
                   {/* 저녁 식사 */}
-                  <Counter label="저녁 식사" desc={`1인 ${formatPrice(DINNER_PRICE)} (고기+햇반+쌈장+채소)`} value={dinnerCount}
+                  <Counter label="저녁 식사" desc={`1인 ${formatPrice(DINNER_PRICE)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={DINNER_PRICE}
                     onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => Math.min(totalGuests, g + 1))} />
 
                   <hr className="border-border" />
 
                   {/* 목공 키트 */}
-                  <Counter label="목공 키트 (트레이)" desc={`개당 ${formatPrice(WOODCRAFT_PRICE)}`} value={woodcraftCount}
+                  <Counter label="목공 키트 (트레이)" desc={`개당 ${formatPrice(WOODCRAFT_PRICE)}`} value={woodcraftCount} unitPrice={WOODCRAFT_PRICE}
                     onDec={() => setWoodcraftCount((g) => Math.max(0, g - 1))} onInc={() => setWoodcraftCount((g) => Math.min(30, g + 1))} />
 
                   <hr className="border-border" />
