@@ -566,9 +566,12 @@ export default function Reservation() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-text-dark text-sm">항아리 바베큐 (통삼겹)</p>
-                      <p className="text-xs text-text-light">1인 {formatPrice(POT_BBQ_PRICE)} / 최소 {POT_BBQ_MIN}인</p>
+                      <p className="text-xs text-text-light">1인 {formatPrice(POT_BBQ_PRICE)}</p>
+                      <span className="inline-block mt-1 text-[11px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                        * 최소 {POT_BBQ_MIN}인분부터 주문 가능
+                      </span>
                       {potBbqCount > 0 && (
-                        <p className="text-xs text-primary font-semibold mt-0.5">{potBbqCount}인분 = {formatPrice(potBbqCount * POT_BBQ_PRICE)}</p>
+                        <p className="text-xs text-primary font-semibold mt-1">{potBbqCount}인분 = {formatPrice(potBbqCount * POT_BBQ_PRICE)}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
