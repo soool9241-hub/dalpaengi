@@ -241,7 +241,7 @@ export default function Reservation() {
           people: busForm.dropoffPeople,
           time: busForm.dropoffTime,
         } : null,
-        total_price: totalPrice,
+        total_revenue: totalPrice,
         status: "confirmed",
       };
 
