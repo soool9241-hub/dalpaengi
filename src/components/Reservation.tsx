@@ -189,16 +189,17 @@ export default function Reservation() {
       const d2 = new Date(clicked.year, clicked.month, clicked.day);
       if (d2 <= d1) { setCheckIn(clicked); setCheckOut(null); }
       else {
-        // 체크인~체크아웃 사이에 예약된 날짜가 있는지 확인
-        let hasBookedInRange = false;
+        // 체크인~체크아웃 전날까지 "숙박하는 밤"이 겹치는지 확인
+        // 체크아웃 당일은 오전 퇴실이므로 겹치지 않음
+        let hasConflict = false;
         for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
           if (bookedDates.has(d.toISOString().split("T")[0])) {
-            hasBookedInRange = true;
+            hasConflict = true;
             break;
           }
         }
-        if (hasBookedInRange) {
-          alert("선택한 기간 내에 이미 예약된 날짜가 포함되어 있습니다.");
+        if (hasConflict) {
+          alert("선택한 기간에 이미 예약이 있습니다. 체크아웃 날짜를 조정해주세요.");
           setCheckIn(clicked);
           setCheckOut(null);
         } else {
@@ -421,7 +422,10 @@ export default function Reservation() {
                   if (day === null) return <div key={`empty-${idx}`} />;
                   const past = isPastDate(day);
                   const booked = isBooked(day);
-                  const disabled = past || booked;
+                  // 체크아웃 선택 모드: 체크인 선택 후 체크아웃 미선택 상태
+                  const isSelectingCheckout = program.rangeMode && checkIn && !checkOut;
+                  // 체크아웃 선택 모드에서는 예약된 날짜도 클릭 가능 (오전 11시 퇴실)
+                  const disabled = past || (booked && !isSelectingCheckout);
                   const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
                   const isCI = isCheckIn(day); const isCO = isCheckOut(day);
                   const inRange = isInRange(day); const isSingle = isSingleSelected(day);
@@ -430,7 +434,8 @@ export default function Reservation() {
                     <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
                       className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
                         ${past ? "text-text-light/30 cursor-not-allowed"
-                        : booked ? "bg-red-100 text-red-400 cursor-not-allowed"
+                        : booked && !isSelectingCheckout ? "bg-red-100 text-red-400 cursor-not-allowed"
+                        : booked && isSelectingCheckout ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
                         : isSelected ? "bg-primary text-white shadow-md"
                         : inRange ? "bg-primary/15 text-primary"
                         : dayOfWeek === 0 ? "text-red-400 hover:bg-sage"
@@ -439,7 +444,8 @@ export default function Reservation() {
                       {day}
                       {isCI && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">IN</span>}
                       {isCO && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">OUT</span>}
-                      {booked && !past && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
+                      {booked && !past && !isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
+                      {booked && !past && isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-orange-500 font-bold">퇴실</span>}
                     </button>
                   );
                 })}
