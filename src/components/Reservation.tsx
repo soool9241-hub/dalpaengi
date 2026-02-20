@@ -576,7 +576,7 @@ export default function Reservation() {
                     </div>
                     {showBusForm && !busRequested && (
                       <div className="mt-3 p-4 bg-sage/30 rounded-xl space-y-3">
-                        <p className="text-xs font-semibold text-text-dark mb-2">픽업 정보</p>
+                        <p className="text-xs font-semibold text-text-dark mb-2">승차 정보</p>
                         <div className="grid grid-cols-2 gap-2">
                           <input placeholder="담당자 이름" value={busForm.managerName} onChange={(e) => setBusForm({ ...busForm, managerName: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
@@ -584,12 +584,16 @@ export default function Reservation() {
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                          <input placeholder="픽업 장소" value={busForm.pickupPlace} onChange={(e) => setBusForm({ ...busForm, pickupPlace: e.target.value })}
+                          <input placeholder="승차 장소" value={busForm.pickupPlace} onChange={(e) => setBusForm({ ...busForm, pickupPlace: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <input placeholder="인원" value={busForm.pickupPeople} onChange={(e) => setBusForm({ ...busForm, pickupPeople: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
-                          <input placeholder="시간" value={busForm.pickupTime} onChange={(e) => setBusForm({ ...busForm, pickupTime: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
+                          <select value={busForm.pickupTime} onChange={(e) => setBusForm({ ...busForm, pickupTime: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary">
+                            <option value="">시간 선택</option>
+                            <option value="오전 (08:00~12:00)">오전</option>
+                            <option value="오후 (12:00~18:00)">오후</option>
+                          </select>
                         </div>
 
                         <p className="text-xs font-semibold text-text-dark mb-2 pt-2">하차 정보</p>
@@ -604,8 +608,12 @@ export default function Reservation() {
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <input placeholder="인원" value={busForm.dropoffPeople} onChange={(e) => setBusForm({ ...busForm, dropoffPeople: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
-                          <input placeholder="시간" value={busForm.dropoffTime} onChange={(e) => setBusForm({ ...busForm, dropoffTime: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
+                          <select value={busForm.dropoffTime} onChange={(e) => setBusForm({ ...busForm, dropoffTime: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary">
+                            <option value="">시간 선택</option>
+                            <option value="오전 (08:00~12:00)">오전</option>
+                            <option value="오후 (12:00~18:00)">오후</option>
+                          </select>
                         </div>
 
                         <button onClick={() => { setBusRequested(true); setShowBusForm(false); }}
