@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 
 const DINNER_PRICE = 10000;
 const WOODCRAFT_PRICE = 20000;
+const POT_BBQ_PRICE = 30000;
+const POT_BBQ_MIN = 10;
 
 type ProgramType = "stay" | "half" | "daynight";
 
@@ -86,6 +88,7 @@ export default function Reservation() {
   const [gasRanges, setGasRanges] = useState(0);
   const [dinnerCount, setDinnerCount] = useState(0);
   const [woodcraftCount, setWoodcraftCount] = useState(0);
+  const [potBbqCount, setPotBbqCount] = useState(0); // 0=미선택, 10~N인분
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Bus rental
@@ -237,6 +240,7 @@ export default function Reservation() {
         gas_ranges: gasRanges,
         dinner_count: dinnerCount,
         woodcraft_count: woodcraftCount,
+        pot_bbq_count: potBbqCount,
         bus_requested: busRequested,
         bus_pickup_info: busRequested ? {
           manager_name: busForm.managerName,
@@ -292,6 +296,7 @@ export default function Reservation() {
       setGasRanges(0);
       setDinnerCount(0);
       setWoodcraftCount(0);
+      setPotBbqCount(0);
       setGuestName("");
       setGuestPhone("");
     } catch (err) {
@@ -321,8 +326,9 @@ export default function Reservation() {
     total += gasRanges * GAS_RANGE_PRICE;
     total += dinnerCount * DINNER_PRICE;
     total += woodcraftCount * WOODCRAFT_PRICE;
+    total += potBbqCount * POT_BBQ_PRICE;
     return total;
-  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount]);
+  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -556,6 +562,30 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
+                  {/* 항아리 바베큐 */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-text-dark text-sm">항아리 바베큐 (통삼겹)</p>
+                      <p className="text-xs text-text-light">1인 {formatPrice(POT_BBQ_PRICE)} / 최소 {POT_BBQ_MIN}인</p>
+                      {potBbqCount > 0 && (
+                        <p className="text-xs text-primary font-semibold mt-0.5">{potBbqCount}인분 = {formatPrice(potBbqCount * POT_BBQ_PRICE)}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setPotBbqCount((c) => c <= POT_BBQ_MIN ? 0 : c - 1)}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Minus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                      <span className="w-8 text-center font-semibold text-text-dark text-sm">{potBbqCount}</span>
+                      <button onClick={() => setPotBbqCount((c) => c === 0 ? POT_BBQ_MIN : Math.min(50, c + 1))}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Plus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <hr className="border-border" />
+
                   {/* 버스 렌트 */}
                   <div>
                     <div className="flex items-center justify-between">
@@ -641,6 +671,7 @@ export default function Reservation() {
                   {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * GAS_RANGE_PRICE)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {formatPrice(dinnerCount * DINNER_PRICE)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</p>}
+                  {potBbqCount > 0 && <p>항아리 바베큐 ({potBbqCount}인분): {formatPrice(potBbqCount * POT_BBQ_PRICE)}</p>}
                   {busRequested && <p>버스 렌트: 별도 견적</p>}
                 </div>
               </div>
@@ -708,6 +739,7 @@ export default function Reservation() {
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * GAS_RANGE_PRICE)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사</span><span className="font-medium text-text-dark">{formatPrice(dinnerCount * DINNER_PRICE)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</span></div>}
+              {potBbqCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">항아리 바베큐 ({potBbqCount}인분)</span><span className="font-medium text-text-dark">{formatPrice(potBbqCount * POT_BBQ_PRICE)}</span></div>}
               {busRequested && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트</span><span className="font-medium text-amber-600">별도 견적</span></div>}
               <hr className="border-border" />
               <div className="flex justify-between"><span className="font-semibold text-text-dark">총 결제 금액</span><span className="font-bold text-primary text-lg">{formatPrice(totalPrice)}</span></div>
