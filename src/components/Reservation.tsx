@@ -168,6 +168,24 @@ export default function Reservation() {
     return bookedDates.has(dateStr);
   };
 
+  // 오늘 예약 가능 여부 + 다음 예약 가능 토요일 계산
+  const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const isTodayAvailable = !bookedDates.has(todayStr);
+
+  const nextAvailableSaturday = useMemo(() => {
+    const d = new Date();
+    // 이번주 토요일부터 시작
+    d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
+    for (let i = 0; i < 52; i++) {
+      const ds = dateToStr(d);
+      if (!bookedDates.has(ds)) {
+        return d;
+      }
+      d.setDate(d.getDate() + 7); // 다음 토요일
+    }
+    return null;
+  }, [bookedDates]);
+
   const nights = useMemo(() => {
     if (!program.rangeMode || !checkIn || !checkOut) return 1;
     const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
@@ -380,6 +398,27 @@ export default function Reservation() {
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">RESERVATION</p>
             <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">프로그램 예약</h2>
             <p className="text-text-light">원하시는 날짜와 프로그램을 선택하여 예약해주세요</p>
+          </div>
+
+          {/* 예약 가능 현황 */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-10">
+            <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border-2 ${isTodayAvailable ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+              <span className={`w-3 h-3 rounded-full ${isTodayAvailable ? "bg-green-400 animate-pulse" : "bg-red-400"}`}></span>
+              <span className="text-sm font-semibold text-text-dark">오늘</span>
+              <span className={`text-sm font-bold ${isTodayAvailable ? "text-green-600" : "text-red-500"}`}>
+                {isTodayAvailable ? "예약 가능" : "예약 마감"}
+              </span>
+            </div>
+            <div className="hidden sm:block w-px h-8 bg-border"></div>
+            <div className="flex items-center gap-2 px-5 py-3 rounded-2xl border-2 border-primary/20 bg-primary/5">
+              <Calendar size={16} className="text-primary" />
+              <span className="text-sm font-semibold text-text-dark">다음 예약 가능일</span>
+              <span className="text-sm font-bold text-primary">
+                {nextAvailableSaturday
+                  ? `${nextAvailableSaturday.getMonth() + 1}월 ${nextAvailableSaturday.getDate()}일 (토)`
+                  : "조회 중..."}
+              </span>
+            </div>
           </div>
 
           {/* Program Tabs */}
