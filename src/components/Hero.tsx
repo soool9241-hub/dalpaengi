@@ -1,8 +1,61 @@
 "use client";
 
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+function dateToStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function Hero() {
+  const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [preferredDay, setPreferredDay] = useState(6); // 기본: 토요일
+
+  const fetchBookedDates = useCallback(async () => {
+    const { data } = await supabase
+      .from("reservations")
+      .select("check_in, check_out")
+      .neq("status", "cancelled");
+
+    if (!data) return;
+    const dates = new Set<string>();
+    data.forEach((r: { check_in: string; check_out: string | null }) => {
+      if (!r.check_in) return;
+      const start = new Date(r.check_in);
+      const end = r.check_out ? new Date(r.check_out) : new Date(r.check_in);
+      if (!r.check_out) end.setDate(end.getDate() + 1);
+      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+        dates.add(dateToStr(d));
+      }
+    });
+    setBookedDates(dates);
+  }, []);
+
+  useEffect(() => {
+    fetchBookedDates();
+  }, [fetchBookedDates]);
+
+  const today = new Date();
+  const todayStr = dateToStr(today);
+  const isTodayAvailable = !bookedDates.has(todayStr);
+
+  const nextAvailableDate = useMemo(() => {
+    const d = new Date();
+    const diff = (preferredDay - d.getDay() + 7) % 7 || 7;
+    d.setDate(d.getDate() + diff);
+    for (let i = 0; i < 52; i++) {
+      const ds = dateToStr(d);
+      if (!bookedDates.has(ds)) {
+        return new Date(d);
+      }
+      d.setDate(d.getDate() + 7);
+    }
+    return null;
+  }, [bookedDates, preferredDay]);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background image placeholder with gradient overlay */}
@@ -60,22 +113,44 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* Availability Badge */}
+        {/* Availability Badge - Supabase 연동 */}
         <div className="mt-14 animate-fade-in delay-400">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl sm:rounded-full px-5 sm:px-6 py-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
-              </span>
-              <span className="text-white/90 text-sm">
-                오늘 예약 가능 <strong>3실</strong>
+          <div className="inline-flex flex-col items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isTodayAvailable ? "bg-green-400" : "bg-red-400"} opacity-75`} />
+                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isTodayAvailable ? "bg-green-400" : "bg-red-400"}`} />
+                </span>
+                <span className="text-white/90 text-sm">
+                  오늘 {isTodayAvailable ? <strong className="text-green-300">예약 가능</strong> : <strong className="text-red-300">예약 마감</strong>}
+                </span>
+              </div>
+              <span className="hidden sm:inline text-white/30">|</span>
+              <span className="text-white/70 text-xs sm:text-sm">
+                다음 예약 가능일{" "}
+                <strong className="text-white">
+                  {nextAvailableDate
+                    ? `${nextAvailableDate.getMonth() + 1}월 ${nextAvailableDate.getDate()}일 (${DAY_LABELS[nextAvailableDate.getDay()]})`
+                    : "조회 중..."}
+                </strong>
               </span>
             </div>
-            <span className="hidden sm:inline text-white/30">|</span>
-            <span className="text-white/70 text-xs sm:text-sm">
-              다음 예약 가능일 <strong>3월 25일</strong>
-            </span>
+            {/* 선호 요일 선택 */}
+            <div className="flex items-center gap-2">
+              <span className="text-white/40 text-xs">선호 요일</span>
+              <div className="flex gap-1">
+                {DAY_LABELS.map((label, i) => (
+                  <button key={label} onClick={() => setPreferredDay(i)}
+                    className={`w-7 h-7 rounded-full text-[11px] font-semibold transition-all
+                      ${preferredDay === i
+                        ? "bg-white text-primary shadow-md"
+                        : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -168,29 +168,6 @@ export default function Reservation() {
     return bookedDates.has(dateStr);
   };
 
-  // 오늘 예약 가능 여부
-  const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
-  const isTodayAvailable = !bookedDates.has(todayStr);
-
-  // 선호 요일 선택 → 다음 예약 가능일 계산
-  const [preferredDay, setPreferredDay] = useState(6); // 기본: 토요일
-  const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-
-  const nextAvailableDate = useMemo(() => {
-    const d = new Date();
-    // 선호 요일의 가장 가까운 다음 날짜로 이동
-    const diff = (preferredDay - d.getDay() + 7) % 7 || 7;
-    d.setDate(d.getDate() + diff);
-    for (let i = 0; i < 52; i++) {
-      const ds = dateToStr(d);
-      if (!bookedDates.has(ds)) {
-        return new Date(d);
-      }
-      d.setDate(d.getDate() + 7);
-    }
-    return null;
-  }, [bookedDates, preferredDay]);
-
   const nights = useMemo(() => {
     if (!program.rangeMode || !checkIn || !checkOut) return 1;
     const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
@@ -403,46 +380,6 @@ export default function Reservation() {
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">RESERVATION</p>
             <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">프로그램 예약</h2>
             <p className="text-text-light">원하시는 날짜와 프로그램을 선택하여 예약해주세요</p>
-          </div>
-
-          {/* 예약 가능 현황 */}
-          <div className="flex flex-col items-center gap-4 mb-10">
-            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
-              <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border-2 ${isTodayAvailable ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
-                <span className={`w-3 h-3 rounded-full ${isTodayAvailable ? "bg-green-400 animate-pulse" : "bg-red-400"}`}></span>
-                <span className="text-sm font-semibold text-text-dark">오늘</span>
-                <span className={`text-sm font-bold ${isTodayAvailable ? "text-green-600" : "text-red-500"}`}>
-                  {isTodayAvailable ? "예약 가능" : "예약 마감"}
-                </span>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-border"></div>
-              <div className="flex items-center gap-2 px-5 py-3 rounded-2xl border-2 border-primary/20 bg-primary/5">
-                <Calendar size={16} className="text-primary" />
-                <span className="text-sm font-semibold text-text-dark">다음 예약 가능일</span>
-                <span className="text-sm font-bold text-primary">
-                  {nextAvailableDate
-                    ? `${nextAvailableDate.getMonth() + 1}월 ${nextAvailableDate.getDate()}일 (${DAY_LABELS[nextAvailableDate.getDay()]})`
-                    : "조회 중..."}
-                </span>
-              </div>
-            </div>
-            {/* 선호 요일 선택 */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-light">선호 요일</span>
-              <div className="flex gap-1">
-                {DAY_LABELS.map((label, i) => (
-                  <button key={label} onClick={() => setPreferredDay(i)}
-                    className={`w-9 h-9 rounded-full text-xs font-semibold transition-all
-                      ${preferredDay === i
-                        ? "bg-primary text-white shadow-md"
-                        : i === 0 ? "bg-white border border-border text-red-400 hover:border-primary/30"
-                        : i === 6 ? "bg-white border border-border text-blue-400 hover:border-primary/30"
-                        : "bg-white border border-border text-text-mid hover:border-primary/30"}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Program Tabs */}
