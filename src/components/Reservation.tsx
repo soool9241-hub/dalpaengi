@@ -30,7 +30,7 @@ const PROGRAMS: Record<ProgramType, { label: string; icon: typeof Moon; basePric
 const BASE_PEOPLE = 15;
 const EXTRA_GUEST_PRICE = 10000;
 const BBQ_GRILL_PRICE = 30000;
-const GAS_RANGE_PRICE = 20000;
+const GAS_RANGE_PRICE = 15000;
 
 export default function Reservation() {
   const { selectedProgramId } = useReservation();
@@ -341,12 +341,12 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
-                  <Counter label="바베큐 세트" desc={`그릴당 ${formatPrice(BBQ_GRILL_PRICE)}`} value={bbqGrills}
-                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(10, g + 1))} />
+                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(BBQ_GRILL_PRICE)} (최대 6개)`} value={bbqGrills}
+                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} />
 
                   <hr className="border-border" />
 
-                  <Counter label="가스렌지" desc={`개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges}
+                  <Counter label="가스렌지" desc={`버너+가스+불판 / 개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges}
                     onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} />
 
                   <hr className="border-border" />
@@ -436,7 +436,7 @@ export default function Reservation() {
                   <p>{program.label} ({formatPrice(program.basePrice)}/{program.unit}{program.rangeMode && nights > 1 ? ` × ${nights}박` : ""}): {formatPrice(program.basePrice * nights)}</p>
                   {getTimeSlotLabel() && <p>시간대: {getTimeSlotLabel()}</p>}
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * EXTRA_GUEST_PRICE)}</p>}
-                  {bbqGrills > 0 && <p>바베큐 세트 ({bbqGrills}개): {formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</p>}
+                  {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</p>}
                   {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * GAS_RANGE_PRICE)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {formatPrice(dinnerCount * DINNER_PRICE)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</p>}
@@ -483,7 +483,7 @@ export default function Reservation() {
               <hr className="border-border" />
               <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}</span><span className="font-medium text-text-dark">{formatPrice(program.basePrice * nights)}</span></div>
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * EXTRA_GUEST_PRICE)}</span></div>}
-              {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">바베큐 세트</span><span className="font-medium text-text-dark">{formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</span></div>}
+              {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여</span><span className="font-medium text-text-dark">{formatPrice(bbqGrills * BBQ_GRILL_PRICE)}</span></div>}
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * GAS_RANGE_PRICE)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사</span><span className="font-medium text-text-dark">{formatPrice(dinnerCount * DINNER_PRICE)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</span></div>}
