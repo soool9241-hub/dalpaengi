@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
+import { supabase } from "@/lib/supabase";
 
 const DINNER_PRICE = 10000;
 const WOODCRAFT_PRICE = 20000;
@@ -32,6 +33,19 @@ const EXTRA_GUEST_PRICE = 10000;
 const BBQ_GRILL_PRICE = 30000;
 const GAS_RANGE_PRICE = 15000;
 
+interface Reservation {
+  program_type: string;
+  check_in: string;
+  check_out: string | null;
+  time_slot: string | null;
+  status: string;
+}
+
+// 날짜를 "YYYY-MM-DD" 형식으로 변환
+function toDateStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export default function Reservation() {
   const { selectedProgramId } = useReservation();
 
@@ -41,6 +55,15 @@ export default function Reservation() {
 
   const [programType, setProgramType] = useState<ProgramType>("stay");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+
+  // Supabase 예약 데이터
+  const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [loadingReservations, setLoadingReservations] = useState(false);
+
+  // 예약 확정 상태
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (selectedProgramId) {
@@ -91,6 +114,60 @@ export default function Reservation() {
   ];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
+  // Supabase에서 예약 데이터 조회
+  const fetchReservations = useCallback(async () => {
+    setLoadingReservations(true);
+    try {
+      // 현재 보고 있는 달의 첫날과 마지막날 (전후 1달 여유)
+      const startDate = toDateStr(currentYear, currentMonth - 1, 1);
+      const endDate = toDateStr(currentYear, currentMonth + 2, 0);
+
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("program_type, check_in, check_out, time_slot, status")
+        .eq("status", "confirmed")
+        .gte("check_in", startDate)
+        .lte("check_in", endDate);
+
+      if (error) {
+        console.error("예약 데이터 조회 실패:", error);
+        return;
+      }
+
+      const dates = new Set<string>();
+
+      (data as Reservation[])?.forEach((r) => {
+        if (r.program_type === "stay" && r.check_in && r.check_out) {
+          // 숙박: check_in ~ check_out-1 까지 모든 날짜 차단
+          const start = new Date(r.check_in);
+          const end = new Date(r.check_out);
+          for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+            dates.add(d.toISOString().split("T")[0]);
+          }
+        } else {
+          // 3시간/주야간: check_in 날짜만 차단
+          dates.add(r.check_in);
+        }
+      });
+
+      setBookedDates(dates);
+    } catch (err) {
+      console.error("예약 데이터 조회 중 오류:", err);
+    } finally {
+      setLoadingReservations(false);
+    }
+  }, [currentYear, currentMonth]);
+
+  // 컴포넌트 마운트 시 + 월/프로그램 변경 시 예약 데이터 조회
+  useEffect(() => {
+    fetchReservations();
+  }, [fetchReservations]);
+
+  const isBooked = (day: number): boolean => {
+    const dateStr = toDateStr(currentYear, currentMonth, day);
+    return bookedDates.has(dateStr);
+  };
+
   const nights = useMemo(() => {
     if (!program.rangeMode || !checkIn || !checkOut) return 1;
     const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
@@ -116,13 +193,113 @@ export default function Reservation() {
       const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
       const d2 = new Date(clicked.year, clicked.month, clicked.day);
       if (d2 <= d1) { setCheckIn(clicked); setCheckOut(null); }
-      else { setCheckOut(clicked); }
+      else {
+        // 체크인~체크아웃 사이에 예약된 날짜가 있는지 확인
+        let hasBookedInRange = false;
+        for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
+          if (bookedDates.has(d.toISOString().split("T")[0])) {
+            hasBookedInRange = true;
+            break;
+          }
+        }
+        if (hasBookedInRange) {
+          alert("선택한 기간 내에 이미 예약된 날짜가 포함되어 있습니다.");
+          setCheckIn(clicked);
+          setCheckOut(null);
+        } else {
+          setCheckOut(clicked);
+        }
+      }
     }
   };
 
   const handleProgramChange = (type: ProgramType) => {
     setProgramType(type);
     setCheckIn(null); setCheckOut(null); setSelectedDate(null); setSelectedTimeSlot(null);
+  };
+
+  // 예약 확정 → Supabase INSERT
+  const handleConfirmReservation = async () => {
+    if (!guestName.trim() || !guestPhone.trim()) {
+      alert("이름과 연락처를 입력해주세요.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const reservationData: Record<string, unknown> = {
+        program_type: programType,
+        guest_count: totalGuests,
+        extra_guests: extraGuests,
+        guest_name: guestName.trim(),
+        guest_phone: guestPhone.trim(),
+        bbq_grills: bbqGrills,
+        gas_ranges: gasRanges,
+        dinner_count: dinnerCount,
+        woodcraft_count: woodcraftCount,
+        bus_requested: busRequested,
+        bus_pickup_info: busRequested ? {
+          manager_name: busForm.managerName,
+          manager_phone: busForm.managerPhone,
+          place: busForm.pickupPlace,
+          people: busForm.pickupPeople,
+          time: busForm.pickupTime,
+        } : null,
+        bus_dropoff_info: busRequested ? {
+          manager_name: busForm.dropoffManagerName,
+          manager_phone: busForm.dropoffManagerPhone,
+          place: busForm.dropoffPlace,
+          people: busForm.dropoffPeople,
+          time: busForm.dropoffTime,
+        } : null,
+        total_price: totalPrice,
+        status: "confirmed",
+      };
+
+      if (program.rangeMode && checkIn && checkOut) {
+        reservationData.check_in = toDateStr(checkIn.year, checkIn.month, checkIn.day);
+        reservationData.check_out = toDateStr(checkOut.year, checkOut.month, checkOut.day);
+      } else if (selectedDate) {
+        reservationData.check_in = toDateStr(selectedDate.year, selectedDate.month, selectedDate.day);
+        reservationData.check_out = null;
+      }
+
+      if (selectedTimeSlot) {
+        reservationData.time_slot = selectedTimeSlot;
+      }
+
+      const { error } = await supabase.from("reservations").insert(reservationData);
+
+      if (error) {
+        console.error("예약 저장 실패:", error);
+        alert("예약 저장에 실패했습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      setShowConfirm(false);
+      alert("예약이 완료되었습니다! 감사합니다.");
+
+      // 달력 갱신
+      await fetchReservations();
+
+      // 폼 초기화
+      setCheckIn(null);
+      setCheckOut(null);
+      setSelectedDate(null);
+      setSelectedTimeSlot(null);
+      setExtraGuests(0);
+      setBbqGrills(0);
+      setGasRanges(0);
+      setDinnerCount(0);
+      setWoodcraftCount(0);
+      setGuestName("");
+      setGuestPhone("");
+    } catch (err) {
+      console.error("예약 처리 중 오류:", err);
+      alert("예약 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isInRange = (day: number) => {
@@ -219,6 +396,7 @@ export default function Reservation() {
               <div className="flex items-center gap-2 mb-2">
                 <Calendar size={18} className="text-primary" />
                 <h3 className="text-lg font-semibold text-text-dark">{program.rangeMode ? "체크인 / 체크아웃 선택" : "날짜 선택"}</h3>
+                {loadingReservations && <span className="text-xs text-text-light animate-pulse ml-auto">불러오는 중...</span>}
               </div>
               {program.rangeMode && <p className="text-xs text-text-light mb-4">첫 번째 클릭 = 체크인, 두 번째 클릭 = 체크아웃</p>}
               <div className="flex items-center justify-between mb-6">
@@ -236,20 +414,35 @@ export default function Reservation() {
                 {calendarDays.map((day, idx) => {
                   if (day === null) return <div key={`empty-${idx}`} />;
                   const past = isPastDate(day);
+                  const booked = isBooked(day);
+                  const disabled = past || booked;
                   const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
                   const isCI = isCheckIn(day); const isCO = isCheckOut(day);
                   const inRange = isInRange(day); const isSingle = isSingleSelected(day);
                   const isSelected = isCI || isCO || isSingle;
                   return (
-                    <button key={day} onClick={() => handleDateClick(day)} disabled={past}
+                    <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
                       className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
-                        ${past ? "text-text-light/30 cursor-not-allowed" : isSelected ? "bg-primary text-white shadow-md" : inRange ? "bg-primary/15 text-primary" : dayOfWeek === 0 ? "text-red-400 hover:bg-sage" : dayOfWeek === 6 ? "text-blue-400 hover:bg-sage" : "text-text-dark hover:bg-sage"}`}>
+                        ${past ? "text-text-light/30 cursor-not-allowed"
+                        : booked ? "bg-red-100 text-red-400 cursor-not-allowed"
+                        : isSelected ? "bg-primary text-white shadow-md"
+                        : inRange ? "bg-primary/15 text-primary"
+                        : dayOfWeek === 0 ? "text-red-400 hover:bg-sage"
+                        : dayOfWeek === 6 ? "text-blue-400 hover:bg-sage"
+                        : "text-text-dark hover:bg-sage"}`}>
                       {day}
                       {isCI && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">IN</span>}
                       {isCO && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">OUT</span>}
+                      {booked && !past && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
                     </button>
                   );
                 })}
+              </div>
+
+              {/* 범례 */}
+              <div className="mt-3 flex items-center gap-4 text-xs text-text-light">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-100 inline-block"></span> 예약마감</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary inline-block"></span> 선택됨</span>
               </div>
 
               {/* Date summary */}
@@ -469,6 +662,26 @@ export default function Reservation() {
               <h3 className="text-xl font-bold text-text-dark">예약 확인</h3>
               <p className="text-sm text-text-light mt-1">아래 내용을 확인해주세요</p>
             </div>
+
+            {/* 예약자 정보 입력 */}
+            <div className="mb-5 space-y-3">
+              <p className="text-sm font-semibold text-text-dark">예약자 정보</p>
+              <input
+                type="text"
+                placeholder="이름 (단체명)"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+              <input
+                type="tel"
+                placeholder="연락처 (010-0000-0000)"
+                value={guestPhone}
+                onChange={(e) => setGuestPhone(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm"><span className="text-text-light">프로그램</span><span className="font-medium text-text-dark">{program.label}</span></div>
               {program.rangeMode && checkIn && checkOut && (
@@ -495,8 +708,12 @@ export default function Reservation() {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border-2 border-border rounded-xl font-semibold text-sm text-text-mid hover:bg-sage transition-colors">취소</button>
-              <button onClick={() => { setShowConfirm(false); alert("예약이 완료되었습니다! 확인 메일을 보내드리겠습니다."); }}
-                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-light transition-colors">예약 확정</button>
+              <button
+                onClick={handleConfirmReservation}
+                disabled={isSubmitting}
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSubmitting ? "처리 중..." : "예약 확정"}
+              </button>
             </div>
           </div>
         </div>
