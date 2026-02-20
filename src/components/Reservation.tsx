@@ -352,9 +352,9 @@ export default function Reservation() {
     <div className="flex items-center justify-between">
       <div>
         <p className="font-medium text-text-dark text-sm">{label}</p>
-        <p className="text-xs text-text-light">{desc}</p>
+        <p className="text-xs text-text-light inline">{desc}</p>
         {value > 0 && unitPrice && (
-          <p className="text-xs text-primary font-semibold mt-0.5">= {formatPrice(value * unitPrice)}</p>
+          <span className="text-xs text-primary font-semibold ml-2">{formatPrice(unitPrice)} x {value} = {formatPrice(value * unitPrice)}</span>
         )}
       </div>
       <div className="flex items-center gap-3">
