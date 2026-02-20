@@ -48,6 +48,11 @@ function toDateStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// Date 객체 → "YYYY-MM-DD" (로컬 시간 기준, toISOString은 UTC라 한국에서 하루 밀림)
+function dateToStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function Reservation() {
   const { selectedProgramId } = useReservation();
 
@@ -141,7 +146,7 @@ export default function Reservation() {
         if (!r.check_out) end.setDate(end.getDate() + 1);
         // check_in ~ check_out 전날까지 차단 (check_out 당일은 새 체크인 가능)
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-          dates.add(d.toISOString().split("T")[0]);
+          dates.add(dateToStr(d));
         }
       });
 
@@ -193,7 +198,7 @@ export default function Reservation() {
         // 체크아웃 당일은 오전 퇴실이므로 겹치지 않음
         let hasConflict = false;
         for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
-          if (bookedDates.has(d.toISOString().split("T")[0])) {
+          if (bookedDates.has(dateToStr(d))) {
             hasConflict = true;
             break;
           }
@@ -428,7 +433,7 @@ export default function Reservation() {
                     for (let i = 1; i <= 365; i++) {
                       const d = new Date(ciDate);
                       d.setDate(d.getDate() + i);
-                      const ds = d.toISOString().split("T")[0];
+                      const ds = dateToStr(d);
                       if (bookedDates.has(ds)) {
                         // 이 날짜가 체크아웃 가능한 최대 날짜 (퇴실 가능)
                         maxCheckoutDate = ds;
