@@ -117,14 +117,13 @@ export default function Reservation() {
   ];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
-  // Supabase에서 예약 데이터 조회 - check_in 전후 버퍼 포함 방막기
-  const BLOCK_DAYS_BEFORE = 5; // 체크인 5일 전부터 차단
+  // Supabase에서 예약 데이터 조회 - check_in 기준으로 방막기
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
       const { data, error } = await supabase
         .from("reservations")
-        .select("check_in, check_out")
+        .select("check_in")
         .neq("status", "cancelled");
 
       if (error) {
@@ -133,20 +132,9 @@ export default function Reservation() {
       }
 
       const dates = new Set<string>();
-      data?.forEach((r: { check_in: string; check_out: string | null }) => {
-        if (!r.check_in) return;
-
-        // 차단 시작: 체크인 5일 전
-        const blockStart = new Date(r.check_in);
-        blockStart.setDate(blockStart.getDate() - BLOCK_DAYS_BEFORE);
-
-        // 차단 끝: 체크아웃 날짜 (없으면 체크인 다음날)
-        const blockEnd = r.check_out ? new Date(r.check_out) : new Date(r.check_in);
-        if (!r.check_out) blockEnd.setDate(blockEnd.getDate() + 1);
-
-        // 시작~끝 모든 날짜 차단
-        for (let d = new Date(blockStart); d <= blockEnd; d.setDate(d.getDate() + 1)) {
-          dates.add(d.toISOString().split("T")[0]);
+      data?.forEach((r: { check_in: string }) => {
+        if (r.check_in) {
+          dates.add(r.check_in);
         }
       });
 
