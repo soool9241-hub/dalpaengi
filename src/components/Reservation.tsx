@@ -128,7 +128,7 @@ export default function Reservation() {
       const { data, error } = await supabase
         .from("reservations")
         .select("program_type, check_in, check_out, time_slot, status")
-        .eq("status", "confirmed")
+        .neq("status", "cancelled")
         .gte("check_in", startDate)
         .lte("check_in", endDate);
 
