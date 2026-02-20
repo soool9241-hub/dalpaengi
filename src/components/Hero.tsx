@@ -113,45 +113,45 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* Availability Badge - Supabase 연동 */}
-        <div className="mt-14 animate-fade-in delay-400">
-          <div className="inline-flex flex-col items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4">
-            {/* 선호 요일 선택 */}
-            <div className="flex items-center gap-2">
-              <span className="text-white/40 text-xs">선호 요일</span>
-              <div className="flex gap-1">
-                {DAY_LABELS.map((label, i) => (
-                  <button key={label} onClick={() => setPreferredDay(i)}
-                    className={`w-7 h-7 rounded-full text-[11px] font-semibold transition-all
-                      ${preferredDay === i
-                        ? "bg-white text-primary shadow-md"
-                        : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
+        {/* 선호 요일 선택 */}
+        <div className="mt-10 animate-fade-in delay-300">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-white/50 text-xs">선호 요일</span>
+            <div className="flex gap-1">
+              {DAY_LABELS.map((label, i) => (
+                <button key={label} onClick={() => setPreferredDay(i)}
+                  className={`w-8 h-8 rounded-full text-xs font-semibold transition-all
+                    ${preferredDay === i
+                      ? "bg-white text-primary shadow-md"
+                      : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
+                  {label}
+                </button>
+              ))}
             </div>
-            {/* 오늘 예약 가능 + 다음 예약 가능일 */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 relative">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isTodayAvailable ? "bg-green-400" : "bg-red-400"} opacity-75`} />
-                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isTodayAvailable ? "bg-green-400" : "bg-red-400"}`} />
-                </span>
-                <span className="text-white/90 text-sm">
-                  오늘 {isTodayAvailable ? <strong className="text-green-300">예약 가능</strong> : <strong className="text-red-300">예약 마감</strong>}
-                </span>
-              </div>
-              <span className="hidden sm:inline text-white/30">|</span>
-              <span className="text-white/70 text-xs sm:text-sm">
-                다음 예약 가능일{" "}
-                <strong className="text-white">
-                  {nextAvailableDate
-                    ? `${nextAvailableDate.getMonth() + 1}월 ${nextAvailableDate.getDate()}일 (${DAY_LABELS[nextAvailableDate.getDay()]})`
-                    : "조회 중..."}
-                </strong>
+          </div>
+        </div>
+
+        {/* Availability Badge - Supabase 연동 */}
+        <div className="mt-4 animate-fade-in delay-400">
+          <div className="inline-flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isTodayAvailable ? "bg-green-400" : "bg-red-400"} opacity-75`} />
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isTodayAvailable ? "bg-green-400" : "bg-red-400"}`} />
+              </span>
+              <span className="text-white/90 text-sm">
+                오늘 {isTodayAvailable ? <strong className="text-green-300">예약 가능</strong> : <strong className="text-red-300">예약 마감</strong>}
               </span>
             </div>
+            <span className="text-white/30">|</span>
+            <span className="text-white/70 text-xs sm:text-sm">
+              다음 예약 가능일{" "}
+              <strong className="text-white">
+                {nextAvailableDate
+                  ? `${nextAvailableDate.getMonth() + 1}월 ${nextAvailableDate.getDate()}일 (${DAY_LABELS[nextAvailableDate.getDay()]})`
+                  : "조회 중..."}
+              </strong>
+            </span>
           </div>
         </div>
       </div>
