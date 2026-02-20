@@ -117,13 +117,14 @@ export default function Reservation() {
   ];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
-  // Supabase에서 예약 데이터 조회 - check_in 기준으로 방막기
+  // Supabase에서 예약 데이터 조회 - 체크인~체크아웃 전날까지 차단 (에어비앤비 방식)
+  // 체크인 오후 3시 ~ 체크아웃 오전 11시 → 체크아웃 날짜는 새 체크인 가능
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
       const { data, error } = await supabase
         .from("reservations")
-        .select("check_in")
+        .select("check_in, check_out")
         .neq("status", "cancelled");
 
       if (error) {
@@ -132,9 +133,15 @@ export default function Reservation() {
       }
 
       const dates = new Set<string>();
-      data?.forEach((r: { check_in: string }) => {
-        if (r.check_in) {
-          dates.add(r.check_in);
+      data?.forEach((r: { check_in: string; check_out: string | null }) => {
+        if (!r.check_in) return;
+        const start = new Date(r.check_in);
+        // 체크아웃 날짜가 있으면 그 전날까지, 없으면 체크인 당일만 차단
+        const end = r.check_out ? new Date(r.check_out) : new Date(r.check_in);
+        if (!r.check_out) end.setDate(end.getDate() + 1);
+        // check_in ~ check_out 전날까지 차단 (check_out 당일은 새 체크인 가능)
+        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+          dates.add(d.toISOString().split("T")[0]);
         }
       });
 
