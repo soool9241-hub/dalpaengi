@@ -38,9 +38,9 @@ export default function Contact() {
               <Phone size={24} className="text-white" />
             </div>
             <h3 className="text-lg font-bold text-text-dark mb-1">전화 문의</h3>
-            <p className="text-sm text-text-light mb-4">1544-0000</p>
+            <p className="text-sm text-text-light mb-4">010-8531-9531</p>
             <a
-              href="tel:1544-0000"
+              href="tel:010-8531-9531"
               className="inline-block bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-light transition-colors"
             >
               전화 걸기

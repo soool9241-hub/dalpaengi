@@ -32,11 +32,9 @@ export default function Footer() {
               <span>🐌</span> 달팽이아지트
             </h3>
             <p className="text-white/60 text-sm leading-relaxed mb-4">
-              강원도 평창의 자연 속에서
+              서로다른 우리들의 이야기가
               <br />
-              느릿하지만 확실한 휴식을
-              <br />
-              경험해 보세요.
+              만들어지는 공간
             </p>
           </div>
 
@@ -63,18 +61,18 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3 text-white/60">
                 <Phone className="w-4 h-4 text-white/40 flex-shrink-0" />
-                <span>1544-0000</span>
+                <span>010-8531-9531</span>
               </li>
               <li className="flex items-center gap-3 text-white/60">
                 <Mail className="w-4 h-4 text-white/40 flex-shrink-0" />
-                <span>help@healingstay.com</span>
+                <span>sool9241@naver.com</span>
               </li>
               <li className="flex items-start gap-3 text-white/60">
                 <MapPin className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
                 <span>
-                  강원도 평창군 대관령면
+                  전북 완주군 소양면
                   <br />
-                  올림픽로 123
+                  해월신왕길 92
                 </span>
               </li>
             </ul>
@@ -107,10 +105,10 @@ export default function Footer() {
         {/* Business Info */}
         <div className="border-t border-white/10 pt-8 mb-8">
           <p className="text-xs text-white/30 leading-relaxed break-keep">
-            사업자등록번호: 123-45-67890 | 대표: 홍길동
+            달팽이아지트
             <br className="sm:hidden" />
             <span className="hidden sm:inline"> | </span>
-            주소: 강원도 평창군 대관령면 올림픽로 123
+            주소: 전북 완주군 소양면 해월신왕길 92
           </p>
         </div>
       </div>

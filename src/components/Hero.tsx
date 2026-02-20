@@ -31,15 +31,15 @@ export default function Hero() {
             Healing Stay &middot; Pension
           </p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            서로다른 우리의 이야기가
+            서로다른 우리들의 이야기가
             <br />
-            <span className="text-white/90">피어나는 공간</span>
+            <span className="text-white/90">만들어지는 공간</span>
           </h1>
           <p className="text-white/70 text-xl sm:text-2xl mb-2 font-semibold">
             달팽이 아지트 펜션
           </p>
           <p className="text-white/50 text-sm mb-10 max-w-md mx-auto leading-relaxed">
-            강원도 평창의 자연 속에서 느리게, 깊이 쉬어가세요.
+            전북 완주의 자연 속에서 느리게, 깊이 쉬어가세요.
             <br />
             당신만의 힐링 프로그램이 준비되어 있습니다.
           </p>
