@@ -36,10 +36,9 @@ const BBQ_GRILL_PRICE = 30000;
 const GAS_RANGE_PRICE = 15000;
 
 interface Reservation {
-  program_type: string;
-  check_in: string;
-  check_out: string | null;
-  time_slot: string | null;
+  reservation_date: string;
+  checkout_date: string | null;
+  stay_nights: number;
   status: string;
 }
 
@@ -54,7 +53,7 @@ function dateToStr(d: Date): string {
 }
 
 export default function Reservation() {
-  const { selectedProgramId } = useReservation();
+  const { selectedProgramId, selectedCheckInDate, setSelectedCheckInDate, isMTPackage } = useReservation();
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -72,6 +71,7 @@ export default function Reservation() {
   const [guestPhone, setGuestPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Hero에서 프로그램 선택 시
   useEffect(() => {
     if (selectedProgramId) {
       setProgramType(selectedProgramId);
@@ -79,8 +79,28 @@ export default function Reservation() {
       setCheckOut(null);
       setSelectedDate(null);
       setSelectedTimeSlot(null);
+      // MT 패키지면 버스 선택함, 숙박이면 선택안함
+      setShowBusForm(isMTPackage);
     }
-  }, [selectedProgramId]);
+  }, [selectedProgramId, isMTPackage]);
+
+  // Hero에서 날짜 선택 시 → 달력에 체크인 + 체크아웃(1박) 자동 반영
+  useEffect(() => {
+    if (selectedCheckInDate) {
+      const { year, month, day } = selectedCheckInDate;
+      setCurrentYear(year);
+      setCurrentMonth(month);
+      if (programType === "stay") {
+        setCheckIn({ year, month, day });
+        // 1박 기준 체크아웃 자동 설정
+        const nextDay = new Date(year, month, day + 1);
+        setCheckOut({ year: nextDay.getFullYear(), month: nextDay.getMonth(), day: nextDay.getDate() });
+      } else {
+        setSelectedDate({ year, month, day });
+      }
+      setSelectedCheckInDate(null);
+    }
+  }, [selectedCheckInDate, programType, setSelectedCheckInDate]);
 
   const program = PROGRAMS[programType];
 
@@ -88,10 +108,10 @@ export default function Reservation() {
   const [checkOut, setCheckOut] = useState<{ year: number; month: number; day: number } | null>(null);
   const [selectedDate, setSelectedDate] = useState<{ year: number; month: number; day: number } | null>(null);
 
-  const [extraGuests, setExtraGuests] = useState(0);
-  const [bbqGrills, setBbqGrills] = useState(0);
-  const [gasRanges, setGasRanges] = useState(0);
-  const [dinnerCount, setDinnerCount] = useState(0);
+  const [extraGuests, setExtraGuests] = useState(15);
+  const [bbqGrills, setBbqGrills] = useState(4); // 30명 / 8 = 4개
+  const [gasRanges, setGasRanges] = useState(4); // 30명 / 8 = 4개
+  const [dinnerCount, setDinnerCount] = useState(30); // 30명
   const [woodcraftCount, setWoodcraftCount] = useState(0);
   const [potBbqCount, setPotBbqCount] = useState(0); // 0=미선택, 10~N인분
   const [showConfirm, setShowConfirm] = useState(false);
@@ -129,7 +149,7 @@ export default function Reservation() {
     try {
       const { data, error } = await supabase
         .from("reservations")
-        .select("check_in, check_out")
+        .select("reservation_date, checkout_date")
         .neq("status", "cancelled");
 
       if (error) {
@@ -138,13 +158,11 @@ export default function Reservation() {
       }
 
       const dates = new Set<string>();
-      data?.forEach((r: { check_in: string; check_out: string | null }) => {
-        if (!r.check_in) return;
-        const start = new Date(r.check_in);
-        // 체크아웃 날짜가 있으면 그 전날까지, 없으면 체크인 당일만 차단
-        const end = r.check_out ? new Date(r.check_out) : new Date(r.check_in);
-        if (!r.check_out) end.setDate(end.getDate() + 1);
-        // check_in ~ check_out 전날까지 차단 (check_out 당일은 새 체크인 가능)
+      data?.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
+        if (!r.reservation_date) return;
+        const start = new Date(r.reservation_date);
+        const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
+        if (!r.checkout_date) end.setDate(end.getDate() + 1);
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           dates.add(dateToStr(d));
         }
@@ -217,9 +235,10 @@ export default function Reservation() {
   const handleProgramChange = (type: ProgramType) => {
     setProgramType(type);
     setCheckIn(null); setCheckOut(null); setSelectedDate(null); setSelectedTimeSlot(null);
+    setShowBusForm(type !== "stay");
   };
 
-  // 예약 확정 → Supabase INSERT
+  // 예약 확정 → Supabase INSERT (customers + reservations)
   const handleConfirmReservation = async () => {
     if (!guestName.trim() || !guestPhone.trim()) {
       alert("이름과 연락처를 입력해주세요.");
@@ -228,34 +247,85 @@ export default function Reservation() {
 
     setIsSubmitting(true);
     try {
-      // check_in 날짜 결정
-      let checkInDate: string;
-      let stayDays = 1;
+      // 날짜 결정
+      let reservationDate: string;
+      let stayNights = 1;
       if (program.rangeMode && checkIn && checkOut) {
-        checkInDate = toDateStr(checkIn.year, checkIn.month, checkIn.day);
-        stayDays = nights;
+        reservationDate = toDateStr(checkIn.year, checkIn.month, checkIn.day);
+        stayNights = nights;
       } else if (selectedDate) {
-        checkInDate = toDateStr(selectedDate.year, selectedDate.month, selectedDate.day);
+        reservationDate = toDateStr(selectedDate.year, selectedDate.month, selectedDate.day);
       } else {
         alert("날짜를 선택해주세요.");
         setIsSubmitting(false);
         return;
       }
 
-      const reservationData: Record<string, unknown> = {
-        program_type: programType,
-        check_in: checkInDate,
-        stay_days: stayDays,
-        guest_count: totalGuests,
-        extra_guests: extraGuests,
+      // 1. 고객 생성 또는 조회
+      const phone = guestPhone.trim().replace(/[^0-9]/g, "");
+      let customerId: number | null = null;
+
+      const { data: existingCustomer } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("phone", phone)
+        .limit(1)
+        .single();
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const { data: newCustomer, error: custErr } = await supabase
+          .from("customers")
+          .insert({
+            name: guestName.trim(),
+            phone: phone,
+            visit_count: 1,
+            first_visit: reservationDate,
+            last_visit: reservationDate,
+            total_guests_brought: totalGuests,
+          })
+          .select("id")
+          .single();
+
+        if (custErr) {
+          console.error("고객 생성 실패:", custErr);
+          alert("예약 저장에 실패했습니다. 다시 시도해주세요.");
+          return;
+        }
+        customerId = newCustomer.id;
+      }
+
+      // 2. 예약 생성
+      const resDate = new Date(reservationDate);
+      const purposeMap: Record<string, string> = {
+        stay: "숙박", half: "3시간 대여", daynight: "주/야간 패키지",
+      };
+
+      const notes = [
+        extraGuests > 0 ? `추가인원 ${extraGuests}명` : "",
+        dinnerCount > 0 ? `저녁식사 ${dinnerCount}명` : "",
+        woodcraftCount > 0 ? `목공키트 ${woodcraftCount}개` : "",
+        potBbqCount > 0 ? `항아리BBQ ${potBbqCount}인분` : "",
+        busRequested ? "버스 렌트 요청" : "",
+        selectedTimeSlot || "",
+      ].filter(Boolean).join(", ") || null;
+
+      const reservationData = {
+        customer_id: customerId,
         guest_name: guestName.trim(),
-        guest_phone: guestPhone.trim(),
-        bbq_grills: bbqGrills,
-        gas_ranges: gasRanges,
+        guest_phone: phone,
+        reservation_date: reservationDate,
+        stay_nights: stayNights,
+        guest_count: totalGuests,
+        bbq_count: bbqGrills,
+        burner_count: gasRanges,
+        program_type: programType,
+        extra_guests: extraGuests,
         dinner_count: dinnerCount,
         woodcraft_count: woodcraftCount,
         pot_bbq_count: potBbqCount,
-        bus_requested: busRequested,
+        bus_requested: showBusForm,
         bus_pickup_info: busRequested ? {
           manager_name: busForm.managerName,
           manager_phone: busForm.managerPhone,
@@ -271,8 +341,14 @@ export default function Reservation() {
           time: busForm.dropoffTime,
         } : null,
         time_slot: selectedTimeSlot || null,
-        channel: "website",
+        purpose: purposeMap[programType] || programType,
+        purpose_raw: purposeMap[programType] || programType,
+        referral_source: "website",
+        source: "website",
         status: "confirmed",
+        notes: notes,
+        reservation_year: resDate.getFullYear(),
+        reservation_month: resDate.getMonth() + 1,
       };
 
       const { error } = await supabase.from("reservations").insert(reservationData);
@@ -283,8 +359,62 @@ export default function Reservation() {
         return;
       }
 
+      // SMS 발송
+      const dateLabel = program.rangeMode && checkIn
+        ? `${checkIn.year}년 ${checkIn.month + 1}월 ${checkIn.day}일`
+        : selectedDate ? `${selectedDate.year}년 ${selectedDate.month + 1}월 ${selectedDate.day}일` : "";
+
+      const timeSlotLabel = (() => {
+        if (!selectedTimeSlot) return null;
+        if (programType === "half") {
+          const s = [
+            { id: "09-12", label: "오전 (09:00~12:00)" },
+            { id: "12-15", label: "낮 (12:00~15:00)" },
+            { id: "15-18", label: "오후 (15:00~18:00)" },
+            { id: "18-21", label: "저녁 (18:00~21:00)" },
+          ].find((s) => s.id === selectedTimeSlot);
+          return s?.label || null;
+        }
+        if (programType === "daynight") {
+          const s = [
+            { id: "day", label: "주간 (10:00~15:00)" },
+            { id: "night", label: "야간 (17:00~22:00)" },
+          ].find((s) => s.id === selectedTimeSlot);
+          return s?.label || null;
+        }
+        return null;
+      })();
+
+      try {
+        await fetch("/api/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guestName: guestName.trim(),
+            guestPhone: phone,
+            reservationDate: dateLabel,
+            stayNights: stayNights,
+            totalGuests: totalGuests,
+            baseGuests: BASE_PEOPLE,
+            extraGuests: extraGuests,
+            programLabel: purposeMap[programType] || programType,
+            basePrice: program.basePrice,
+            bbqGrills,
+            gasRanges,
+            dinnerCount,
+            woodcraftCount,
+            potBbqCount,
+            busRequested: showBusForm,
+            timeSlot: timeSlotLabel,
+            totalPrice,
+          }),
+        });
+      } catch (smsErr) {
+        console.error("SMS 발송 실패:", smsErr);
+      }
+
       setShowConfirm(false);
-      alert("예약이 완료되었습니다! 감사합니다.");
+      alert("예약이 완료되었습니다! 확인 문자가 발송됩니다.");
 
       // 달력 갱신
       await fetchReservations();
@@ -320,7 +450,7 @@ export default function Reservation() {
   const isCheckIn = (day: number) => checkIn?.year === currentYear && checkIn?.month === currentMonth && checkIn?.day === day;
   const isCheckOut = (day: number) => checkOut?.year === currentYear && checkOut?.month === currentMonth && checkOut?.day === day;
   const isSingleSelected = (day: number) => selectedDate?.year === currentYear && selectedDate?.month === currentMonth && selectedDate?.day === day;
-  const isPastDate = (day: number) => new Date(currentYear, currentMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const isPastDate = (day: number) => new Date(currentYear, currentMonth, day) <= new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   const totalPrice = useMemo(() => {
     let total = program.basePrice * nights;
@@ -477,6 +607,7 @@ export default function Reservation() {
                       <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
                         className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
                           ${past ? "text-text-light/30 cursor-not-allowed"
+                          : disabled && isSelectingCheckout ? "text-text-light/30 cursor-not-allowed"
                           : disabled ? "bg-red-100 text-red-400 cursor-not-allowed"
                           : isCheckoutAllowed ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
                           : isSelected ? "bg-primary text-white shadow-md"
@@ -558,18 +689,54 @@ export default function Reservation() {
               {/* Base Program */}
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
                 <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-primary" /><h3 className="text-lg font-semibold text-text-dark">기본 프로그램</h3></div>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="font-medium text-text-dark">총 예약인원</p>
-                    {extraGuests > 0
-                      ? <p className="text-sm text-text-light">{BASE_PEOPLE}인 기본 + {extraGuests}인 추가 = <span className="font-semibold text-text-dark">{totalGuests}인</span></p>
-                      : <p className="text-sm text-text-light">{BASE_PEOPLE}인 기본</p>
-                    }
+
+                {/* 인원 입력 */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-text-dark mb-2 block">예약 인원</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1.5 bg-sage/50 rounded-xl px-4 py-2.5">
+                      <span className="text-sm text-text-mid">기본</span>
+                      <span className="text-lg font-bold text-text-dark">{BASE_PEOPLE}</span>
+                      <span className="text-sm text-text-mid">인</span>
+                    </div>
+                    <span className="text-lg text-text-light">+</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-text-mid">추가</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={extraGuests}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const extra = Math.max(0, parseInt(e.target.value) || 0);
+                          setExtraGuests(extra);
+                          const val = BASE_PEOPLE + extra;
+                          setBbqGrills(Math.min(6, Math.ceil(val / 8)));
+                          setGasRanges(Math.min(5, Math.ceil(val / 8)));
+                          setDinnerCount(val);
+                        }}
+                        className="w-14 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary"
+                      />
+                      <span className="text-sm text-text-mid">인</span>
+                    </div>
+                    <span className="text-lg text-text-light">=</span>
+                    <div className="flex items-center gap-1 bg-primary/10 rounded-xl px-4 py-2.5">
+                      <span className="text-lg font-bold text-primary">{totalGuests}</span>
+                      <span className="text-sm text-primary">명</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-text-dark">{totalGuests}<span className="text-base font-medium">인</span></p>
-                  </div>
+                  <button
+                    onClick={() => {
+                      setBbqGrills(Math.min(6, Math.ceil(totalGuests / 8)));
+                      setGasRanges(Math.min(5, Math.ceil(totalGuests / 8)));
+                      setDinnerCount(totalGuests);
+                    }}
+                    className="px-4 py-2 bg-primary/10 text-primary text-xs font-semibold rounded-full hover:bg-primary/20 transition-colors"
+                  >
+                    옵션 자동추천
+                  </button>
                 </div>
+
                 <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
                   <span className="text-sm text-text-mid">1인당 예상 요금</span>
                   <span className="text-lg font-bold text-primary">{formatPrice(pricePerPerson)}</span>
@@ -583,13 +750,13 @@ export default function Reservation() {
 
               {/* Extra Options */}
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
-                <h3 className="text-base font-semibold text-text-dark mb-4">추가 옵션</h3>
+                <h3 className="text-base font-semibold text-text-dark mb-2">추가 옵션</h3>
+                {extraGuests > 0 && (
+                  <div className="mb-4 p-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+                    <p className="text-xs text-text-mid">추가 인원 {extraGuests}명 × {formatPrice(EXTRA_GUEST_PRICE)} = <span className="font-semibold text-primary">{formatPrice(extraGuests * EXTRA_GUEST_PRICE)}</span></p>
+                  </div>
+                )}
                 <div className="space-y-4">
-                  <Counter label="추가 인원" desc={`1인 ${formatPrice(EXTRA_GUEST_PRICE)}`} value={extraGuests} unitPrice={EXTRA_GUEST_PRICE}
-                    onDec={() => setExtraGuests((g) => Math.max(0, g - 1))} onInc={() => setExtraGuests((g) => Math.min(30, g + 1))} />
-
-                  <hr className="border-border" />
-
                   <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(BBQ_GRILL_PRICE)} (최대 6개)`} value={bbqGrills} unitPrice={BBQ_GRILL_PRICE}
                     onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} />
 
@@ -602,13 +769,7 @@ export default function Reservation() {
 
                   {/* 저녁 식사 */}
                   <Counter label="저녁 식사" desc={`1인 ${formatPrice(DINNER_PRICE)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={DINNER_PRICE}
-                    onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => Math.min(totalGuests, g + 1))} />
-
-                  <hr className="border-border" />
-
-                  {/* 목공 키트 */}
-                  <Counter label="목공 키트 (트레이)" desc={`개당 ${formatPrice(WOODCRAFT_PRICE)}`} value={woodcraftCount} unitPrice={WOODCRAFT_PRICE}
-                    onDec={() => setWoodcraftCount((g) => Math.max(0, g - 1))} onInc={() => setWoodcraftCount((g) => Math.min(30, g + 1))} />
+                    onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => g + 1)} />
 
                   <hr className="border-border" />
 
@@ -641,23 +802,25 @@ export default function Reservation() {
 
                   {/* 버스 렌트 */}
                   <div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-medium text-text-dark text-sm flex items-center gap-1.5">
                           <Bus size={14} className="text-primary" /> 버스 렌트
                         </p>
                         <p className="text-xs text-text-light">별도 견적 (요청 후 안내)</p>
                       </div>
-                      {busRequested ? (
-                        <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-semibold">견적 요청됨</span>
-                      ) : (
-                        <button onClick={() => setShowBusForm(!showBusForm)}
-                          className="text-xs bg-primary text-white px-4 py-2 rounded-full font-semibold hover:bg-primary-light transition-colors">
-                          {showBusForm ? "닫기" : "견적 요청"}
+                      <div className="flex bg-sage/50 rounded-full p-0.5">
+                        <button onClick={() => { setShowBusForm(false); setBusRequested(false); }}
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${!showBusForm ? "bg-white text-text-dark shadow-sm" : "text-text-light"}`}>
+                          선택안함
                         </button>
-                      )}
+                        <button onClick={() => setShowBusForm(true)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${showBusForm ? "bg-primary text-white shadow-sm" : "text-text-light"}`}>
+                          선택함
+                        </button>
+                      </div>
                     </div>
-                    {showBusForm && !busRequested && (
+                    {showBusForm && (
                       <div className="mt-3 p-4 bg-sage/30 rounded-xl space-y-3">
                         <p className="text-xs font-semibold text-text-dark mb-2">승차 정보</p>
                         <div className="grid grid-cols-2 gap-2">
@@ -699,10 +862,7 @@ export default function Reservation() {
                           </select>
                         </div>
 
-                        <button onClick={() => { setBusRequested(true); setShowBusForm(false); }}
-                          className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors mt-2">
-                          견적 요청하기
-                        </button>
+                        <p className="text-xs text-primary font-medium mt-2 text-center">* 선택함 시 예약 접수와 함께 견적 요청됩니다</p>
                       </div>
                     )}
                   </div>

@@ -73,13 +73,13 @@ export default function Header() {
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-4">
             <a
-              href="tel:1544-0000"
+              href="tel:010-8531-9531"
               className={`flex items-center gap-1.5 text-sm transition-colors ${
                 scrolled ? "text-text-mid" : "text-white/80"
               }`}
             >
               <Phone size={14} />
-              1544-0000
+              010-8531-9531
             </a>
             <a
               href="#reservation"
@@ -120,11 +120,11 @@ export default function Header() {
             ))}
             <hr className="my-2 border-border" />
             <a
-              href="tel:1544-0000"
+              href="tel:010-8531-9531"
               className="flex items-center gap-2 text-sm text-text-mid py-3 px-4"
             >
               <Phone size={14} />
-              1544-0000
+              010-8531-9531
             </a>
             <a
               href="#reservation"

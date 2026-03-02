@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useReservation } from "@/context/ReservationContext";
 
 function dateToStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -10,23 +11,30 @@ function dateToStr(d: Date): string {
 
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
+const HERO_PROGRAMS = [
+  { id: "stay" as const, label: "숙박 패키지", icon: Moon },
+  { id: "stay" as const, label: "대학생 MT", icon: GraduationCap, isMT: true },
+];
+
 export default function Hero() {
+  const { setSelectedProgramId, setSelectedCheckInDate, setIsMTPackage } = useReservation();
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [selectedHeroProgram, setSelectedHeroProgram] = useState(0); // 0: 숙박, 1: MT
   const [preferredDay, setPreferredDay] = useState(6); // 기본: 토요일
 
   const fetchBookedDates = useCallback(async () => {
     const { data } = await supabase
       .from("reservations")
-      .select("check_in, check_out")
+      .select("reservation_date, checkout_date")
       .neq("status", "cancelled");
 
     if (!data) return;
     const dates = new Set<string>();
-    data.forEach((r: { check_in: string; check_out: string | null }) => {
-      if (!r.check_in) return;
-      const start = new Date(r.check_in);
-      const end = r.check_out ? new Date(r.check_out) : new Date(r.check_in);
-      if (!r.check_out) end.setDate(end.getDate() + 1);
+    data.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
+      if (!r.reservation_date) return;
+      const start = new Date(r.reservation_date);
+      const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
+      if (!r.checkout_date) end.setDate(end.getDate() + 1);
       for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
         dates.add(dateToStr(d));
       }
@@ -42,23 +50,42 @@ export default function Hero() {
   const todayStr = dateToStr(today);
   const isTodayAvailable = !bookedDates.has(todayStr);
 
-  const nextAvailableDate = useMemo(() => {
+  // 선호 요일 기준 가능한 날짜 최대 4개
+  const availableDates = useMemo(() => {
+    const results: Date[] = [];
     const d = new Date();
-    const diff = (preferredDay - d.getDay() + 7) % 7 || 7;
+    d.setDate(d.getDate() + 1);
+    const diff = (preferredDay - d.getDay() + 7) % 7;
     d.setDate(d.getDate() + diff);
-    for (let i = 0; i < 52; i++) {
+
+    for (let i = 0; i < 52 && results.length < 4; i++) {
       const ds = dateToStr(d);
       if (!bookedDates.has(ds)) {
-        return new Date(d);
+        results.push(new Date(d));
       }
       d.setDate(d.getDate() + 7);
     }
-    return null;
+    return results;
   }, [bookedDates, preferredDay]);
+
+  const formatDate = (d: Date) =>
+    `${d.getMonth() + 1}/${d.getDate()}(${DAY_LABELS[d.getDay()]})`;
+
+  const handleDateClick = (d: Date) => {
+    const prog = HERO_PROGRAMS[selectedHeroProgram];
+    setSelectedProgramId(prog.id);
+    setIsMTPackage(!!prog.isMT);
+    setSelectedCheckInDate({
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      day: d.getDate(),
+    });
+    document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background image placeholder with gradient overlay */}
+      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/95 via-primary/90 to-primary-light/85" />
       <div
         className="absolute inset-0 opacity-30"
@@ -67,7 +94,6 @@ export default function Hero() {
             "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
         }}
       />
-      {/* Additional decorative gradients */}
       <div className="absolute inset-0 opacity-20">
         <div
           className="absolute inset-0"
@@ -98,7 +124,7 @@ export default function Hero() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-10">
           <a
             href="#programs"
             className="bg-white text-primary-dark px-8 py-4 rounded-full font-semibold text-sm hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
@@ -113,45 +139,87 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* 선호 요일 선택 */}
-        <div className="mt-10 animate-fade-in delay-300">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-white/50 text-xs">선호 요일</span>
-            <div className="flex gap-1">
+        {/* 빠른 예약 위젯 */}
+        <div className="animate-fade-in delay-300">
+          <div className="inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 sm:px-8 py-5 w-full max-w-md">
+
+            {/* STEP 1: 프로그램 선택 */}
+            <p className="text-white/40 text-[11px] tracking-wider uppercase mb-2">Step 1</p>
+            <div className="flex gap-2 mb-4">
+              {HERO_PROGRAMS.map((prog, i) => {
+                const Icon = prog.icon;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedHeroProgram(i)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all
+                      ${selectedHeroProgram === i
+                        ? "bg-white text-primary shadow-lg"
+                        : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+                  >
+                    <Icon size={14} />
+                    {prog.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* STEP 2: 선호 요일 */}
+            <p className="text-white/40 text-[11px] tracking-wider uppercase mb-2">Step 2</p>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <CalendarCheck size={14} className="text-white/50" />
+              <span className="text-white/60 text-xs">선호 요일</span>
+            </div>
+            <div className="flex justify-center gap-1.5 mb-4">
               {DAY_LABELS.map((label, i) => (
                 <button key={label} onClick={() => setPreferredDay(i)}
-                  className={`w-8 h-8 rounded-full text-xs font-semibold transition-all
+                  className={`w-9 h-9 rounded-full text-xs font-bold transition-all
                     ${preferredDay === i
-                      ? "bg-white text-primary shadow-md"
+                      ? "bg-white text-primary shadow-lg scale-110"
+                      : i === 0 ? "bg-white/10 text-red-300 hover:bg-white/20"
+                      : i === 6 ? "bg-white/10 text-blue-300 hover:bg-white/20"
                       : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
                   {label}
                 </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Availability Badge - Supabase 연동 */}
-        <div className="mt-4 animate-fade-in delay-400">
-          <div className="inline-flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 relative">
+            {/* 오늘 상태 */}
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="flex h-2 w-2 relative">
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isTodayAvailable ? "bg-green-400" : "bg-red-400"} opacity-75`} />
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isTodayAvailable ? "bg-green-400" : "bg-red-400"}`} />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isTodayAvailable ? "bg-green-400" : "bg-red-400"}`} />
               </span>
-              <span className="text-white/90 text-sm">
-                오늘 {isTodayAvailable ? <strong className="text-green-300">예약 가능</strong> : <strong className="text-red-300">예약 마감</strong>}
+              <span className="text-white/80 text-xs">
+                오늘 {isTodayAvailable ? <span className="text-green-300 font-semibold">예약 가능</span> : <span className="text-red-300 font-semibold">예약 마감</span>}
               </span>
             </div>
-            <span className="text-white/30">|</span>
-            <span className="text-white/70 text-xs sm:text-sm">
-              다음 예약 가능일{" "}
-              <strong className="text-white">
-                {nextAvailableDate
-                  ? `${nextAvailableDate.getMonth() + 1}월 ${nextAvailableDate.getDate()}일 (${DAY_LABELS[nextAvailableDate.getDay()]})`
-                  : "조회 중..."}
-              </strong>
-            </span>
+
+            {/* STEP 3: 가능한 날짜 선택 */}
+            <div className="border-t border-white/10 pt-3">
+              <p className="text-white/40 text-[11px] tracking-wider uppercase mb-1">Step 3</p>
+              <p className="text-white/60 text-xs mb-2">
+                {DAY_LABELS[preferredDay]}요일 예약 가능일 <span className="text-white/40">(클릭 시 예약으로 이동)</span>
+              </p>
+              {availableDates.length > 0 ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {availableDates.map((d, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleDateClick(d)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all hover:-translate-y-0.5
+                        ${i === 0
+                          ? "bg-white text-primary shadow-md hover:shadow-lg"
+                          : "bg-white/15 text-white hover:bg-white/25"}`}
+                    >
+                      {formatDate(d)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/40 text-xs">조회 중...</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -61,7 +61,11 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3 text-white/60">
                 <Phone className="w-4 h-4 text-white/40 flex-shrink-0" />
-                <span>010-8531-9531</span>
+                <a href="tel:01085319531" className="hover:text-white transition-colors">010-8531-9531</a>
+              </li>
+              <li className="flex items-center gap-3 text-white/60">
+                <svg className="w-4 h-4 text-white/40 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.58 2 11c0 2.83 1.82 5.32 4.59 6.77L5.59 21l4.23-2.35c.7.12 1.43.18 2.18.18 5.5 0 10-3.58 10-8S17.5 3 12 3z"/></svg>
+                <a href="https://pf.kakao.com/_sool9241/chat" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">카카오톡 상담</a>
               </li>
               <li className="flex items-center gap-3 text-white/60">
                 <Mail className="w-4 h-4 text-white/40 flex-shrink-0" />

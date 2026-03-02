@@ -27,9 +27,10 @@ export default function Contact() {
             </div>
             <h3 className="text-lg font-bold text-text-dark mb-1">카카오톡 채널</h3>
             <p className="text-sm text-text-light mb-4">실시간 채팅 상담</p>
-            <button className="bg-[#FEE500] text-[#3C1E1E] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-[#FDD835] transition-colors">
+            <a href="https://pf.kakao.com/_sool9241/chat" target="_blank" rel="noopener noreferrer"
+              className="inline-block bg-[#FEE500] text-[#3C1E1E] px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-[#FDD835] transition-colors">
               카카오톡 상담하기
-            </button>
+            </a>
           </div>
 
           {/* Phone */}
