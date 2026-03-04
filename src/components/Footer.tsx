@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Send, Lock, Eye, EyeOff } from "lucide-react";
 
 const quickLinks = [
   { label: "프로그램 안내", href: "#programs" },
@@ -13,12 +13,40 @@ const quickLinks = [
 
 export default function Footer() {
   const [email, setEmail] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
       alert("뉴스레터 구독이 완료되었습니다!");
       setEmail("");
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        window.location.href = "/admin";
+      } else {
+        setError("비밀번호가 올바르지 않습니다");
+        setPassword("");
+      }
+    } catch {
+      setError("서버 오류가 발생했습니다");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,13 +148,9 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <a
-            href="/admin-login"
-            className="text-sm text-white/40 hover:text-white/40"
-            aria-label="관리자"
-          >
+          <p className="text-sm text-white/40">
             &copy; 2026 달팽이아지트. All rights reserved.
-          </a>
+          </p>
           <div className="flex items-center gap-6 text-sm text-white/40">
             <a href="#" className="hover:text-white transition-colors">
               이용약관
@@ -137,12 +161,66 @@ export default function Footer() {
             <a href="#" className="hover:text-white transition-colors">
               사업자정보확인
             </a>
-            <a href="/admin-login" className="px-3 py-1 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-colors text-xs">
+            <button
+              onClick={() => { setShowLogin(true); setPassword(""); setError(""); }}
+              className="px-3 py-1 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-colors text-xs cursor-pointer"
+            >
               관리자 모드
-            </a>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Admin Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowLogin(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
+            <button
+              onClick={() => setShowLogin(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg"
+            >
+              ✕
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-7 h-7 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">관리자 로그인</h2>
+              <p className="text-gray-500 text-sm mt-1">비밀번호를 입력하세요</p>
+            </div>
+            <form onSubmit={handleLogin}>
+              <div className="relative mb-4">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="비밀번호"
+                  autoFocus
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {error && (
+                <p className="text-red-500 text-sm mb-3 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loading || !password}
+                className="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "확인 중..." : "로그인"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }
