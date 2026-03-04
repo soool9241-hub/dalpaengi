@@ -6,9 +6,9 @@ import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS } from "@/types/admin";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "전체" },
-  { value: "confirmed", label: "예약확정" },
-  { value: "visited", label: "방문완료" },
-  { value: "reviewed", label: "후기완료" },
+  { value: "confirmed", label: "확정" },
+  { value: "visited", label: "방문" },
+  { value: "reviewed", label: "후기" },
   { value: "pending", label: "대기" },
   { value: "cancelled", label: "취소" },
 ];
@@ -117,34 +117,35 @@ export default function ReservationsPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">예약 관리</h1>
-        <a href="/admin/reservations/calendar" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors">
-          <CalendarDays size={16} /> 달력 보기
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">예약 관리</h1>
+        <a href="/admin/reservations/calendar" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors">
+          <CalendarDays size={14} /> 달력
         </a>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 space-y-3">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {STATUS_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { setStatus(opt.value); setPage(0); }}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                 status === opt.value ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {opt.label}
             </button>
           ))}
-          <span className="border-l border-gray-200 mx-2" />
+        </div>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {PROGRAM_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { setProgram(opt.value); setPage(0); }}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                 program === opt.value ? "bg-accent text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -158,16 +159,16 @@ export default function ReservationsPage() {
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="이름 또는 전화번호 검색..."
+              placeholder="이름 또는 전화번호..."
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <button type="submit" className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold">검색</button>
+          <button type="submit" className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold">검색</button>
         </form>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -195,52 +196,27 @@ export default function ReservationsPage() {
               ) : (
                 data.map((r) => (
                   <tr key={r.id} className="border-b border-gray-100 hover:bg-green-50/30 cursor-pointer transition-colors" onClick={() => setDetail(r)}>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-900 text-sm">{r.guest_name}</p>
-                    </td>
+                    <td className="px-4 py-3"><p className="font-semibold text-gray-900 text-sm">{r.guest_name}</p></td>
                     <td className="px-4 py-3 text-sm text-gray-600">{r.guest_phone}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {r.reservation_date}
-                      <span className="text-gray-400 ml-1">({r.stay_nights}박)</span>
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{r.reservation_date}<span className="text-gray-400 ml-1">({r.stay_nights}박)</span></td>
                     <td className="px-4 py-3 text-sm text-gray-700">{r.checkout_date || "-"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{PROGRAM_LABELS[r.program_type]}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">
-                      {r.guest_count}명
-                      {r.extra_guests > 0 && <span className="text-gray-400 text-xs ml-0.5">(+{r.extra_guests})</span>}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">
-                      {r.bbq_count > 0 ? `${r.bbq_count}개` : "-"}
-                      {r.burner_count > 0 && <span className="text-gray-400 text-xs block">렌지{r.burner_count}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {formatOptions(r)}
-                    </td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.guest_count}명{r.extra_guests > 0 && <span className="text-gray-400 text-xs ml-0.5">(+{r.extra_guests})</span>}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.bbq_count > 0 ? `${r.bbq_count}개` : "-"}{r.burner_count > 0 && <span className="text-gray-400 text-xs block">렌지{r.burner_count}</span>}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{formatOptions(r)}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABELS[r.status] || r.status}
-                      </span>
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>{STATUS_LABELS[r.status] || r.status}</span>
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-center">
-                        <select
-                          value={r.status}
-                          onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white"
-                        >
+                        <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white">
                           <option value="confirmed">예약확정</option>
                           <option value="visited">방문완료</option>
                           <option value="reviewed">후기완료</option>
                           <option value="pending">대기</option>
                           <option value="cancelled">취소</option>
                         </select>
-                        <button
-                          onClick={() => handleDelete(r.id, r.guest_name)}
-                          className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium"
-                          title="삭제"
-                        >
-                          삭제
-                        </button>
+                        <button onClick={() => handleDelete(r.id, r.guest_name)} className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium" title="삭제">삭제</button>
                       </div>
                     </td>
                   </tr>
@@ -250,7 +226,6 @@ export default function ReservationsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <p className="text-sm text-gray-500">총 {total}건 중 {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total)}</p>
@@ -263,14 +238,91 @@ export default function ReservationsPage() {
         )}
       </div>
 
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-3">
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mr-2" />
+            불러오는 중...
+          </div>
+        ) : data.length === 0 ? (
+          <p className="text-center py-12 text-gray-400 text-sm">예약이 없습니다</p>
+        ) : (
+          data.map((r) => (
+            <div key={r.id} onClick={() => setDetail(r)} className="bg-white rounded-2xl border border-gray-200 p-4 active:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900">{r.guest_name}</span>
+                  <span className="text-xs text-gray-500">{r.guest_phone}</span>
+                </div>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>
+                  {STATUS_LABELS[r.status]}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">체크인</span>
+                  <span className="text-gray-900 font-medium">{r.reservation_date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">체크아웃</span>
+                  <span className="text-gray-900 font-medium">{r.checkout_date || "-"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">프로그램</span>
+                  <span className="text-gray-900 font-medium">{PROGRAM_LABELS[r.program_type]}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">인원</span>
+                  <span className="text-gray-900 font-medium">{r.guest_count}명{r.extra_guests > 0 ? ` (+${r.extra_guests})` : ""}</span>
+                </div>
+                {r.bbq_count > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">BBQ</span>
+                    <span className="text-gray-900 font-medium">{r.bbq_count}개</span>
+                  </div>
+                )}
+                {formatOptions(r) !== "-" && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">부가</span>
+                    <span className="text-gray-900 font-medium">{formatOptions(r)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+                <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white">
+                  <option value="confirmed">예약확정</option>
+                  <option value="visited">방문완료</option>
+                  <option value="reviewed">후기완료</option>
+                  <option value="pending">대기</option>
+                  <option value="cancelled">취소</option>
+                </select>
+                <button onClick={() => handleDelete(r.id, r.guest_name)} className="text-xs px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-semibold">삭제</button>
+              </div>
+            </div>
+          ))
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 py-3">
+            <p className="text-xs text-gray-500">총 {total}건</p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{page + 1}/{totalPages}</span>
+              <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30"><ChevronLeft size={16} /></button>
+              <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30"><ChevronRight size={16} /></button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Detail Modal */}
       {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setDetail(null)} />
-          <div className="relative bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6">
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6">
             <button onClick={() => setDetail(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
-            <h2 className="text-xl font-bold text-gray-900 mb-5">예약 상세</h2>
-            <div className="space-y-3">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5">예약 상세</h2>
+            <div className="space-y-2.5 sm:space-y-3">
               <Row label="예약자" value={detail.guest_name} />
               <Row label="연락처" value={detail.guest_phone} />
               <Row label="체크인" value={`${detail.reservation_date} (${detail.stay_nights}박)`} />
@@ -301,7 +353,7 @@ export default function ReservationsPage() {
                 </select>
               </Row>
             </div>
-            <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200">
+            <div className="flex gap-2 mt-5 pt-4 border-t border-gray-200">
               {detail.status !== "cancelled" && (
                 <button
                   onClick={() => { setDetail(null); setConfirm({ type: "cancel", id: detail.id, name: detail.guest_name }); }}
@@ -323,9 +375,9 @@ export default function ReservationsPage() {
 
       {/* Confirm Modal */}
       {confirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirm(null)} />
-          <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-scale-in">
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-sm p-6 animate-scale-in">
             <div className="text-center mb-6">
               <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
                 confirm.type === "delete" ? "bg-red-100" : "bg-amber-100"
@@ -351,12 +403,7 @@ export default function ReservationsPage() {
               )}
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => setConfirm(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors"
-              >
-                아니오
-              </button>
+              <button onClick={() => setConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">아니오</button>
               <button
                 onClick={executeConfirm}
                 disabled={actionLoading}
@@ -376,8 +423,8 @@ export default function ReservationsPage() {
 
 function Row({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between py-2.5 border-b border-gray-100">
-      <span className="text-gray-500 font-medium min-w-[80px] text-sm">{label}</span>
+    <div className="flex items-start justify-between py-2 sm:py-2.5 border-b border-gray-100">
+      <span className="text-gray-500 font-medium min-w-[70px] sm:min-w-[80px] text-sm">{label}</span>
       {children || <span className="text-gray-900 text-right text-sm">{value}</span>}
     </div>
   );

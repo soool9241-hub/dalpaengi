@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     const today = getDateStr(now);
     const recentAgo = new Date(now);
     recentAgo.setDate(now.getDate() - recentDays);
-    const recentFrom = getDateStr(recentAgo);
+    const recentFrom = recentAgo.toISOString();
     const [weekStart, weekEnd] = getWeekRange();
     const [monthStart, monthEnd] = getMonthRange(0);
     const [prevMonthStart, prevMonthEnd] = getMonthRange(-1);
