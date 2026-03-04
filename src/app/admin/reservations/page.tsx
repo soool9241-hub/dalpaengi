@@ -28,6 +28,8 @@ export default function ReservationsPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [detail, setDetail] = useState<ReservationRow | null>(null);
+  const [confirm, setConfirm] = useState<{ type: "cancel" | "delete"; id: number; name: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const pageSize = 20;
 
   const fetchData = useCallback(async () => {
@@ -44,6 +46,12 @@ export default function ReservationsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleStatusChange = async (id: number, newStatus: string) => {
+    // 취소는 확인 팝업
+    if (newStatus === "cancelled") {
+      const r = data.find((x) => x.id === id);
+      setConfirm({ type: "cancel", id, name: r?.guest_name || "" });
+      return;
+    }
     await fetch("/api/admin/reservations", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -51,6 +59,32 @@ export default function ReservationsPage() {
     });
     fetchData();
     if (detail?.id === id) setDetail({ ...detail, status: newStatus as ReservationRow["status"] });
+  };
+
+  const handleDelete = (id: number, name: string) => {
+    setConfirm({ type: "delete", id, name });
+  };
+
+  const executeConfirm = async () => {
+    if (!confirm) return;
+    setActionLoading(true);
+    if (confirm.type === "cancel") {
+      await fetch("/api/admin/reservations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: confirm.id, status: "cancelled" }),
+      });
+    } else {
+      await fetch("/api/admin/reservations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: confirm.id }),
+      });
+    }
+    setActionLoading(false);
+    setConfirm(null);
+    if (detail?.id === confirm.id) setDetail(null);
+    fetchData();
   };
 
   const totalPages = Math.ceil(total / pageSize);
@@ -149,15 +183,24 @@ export default function ReservationsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={r.status}
-                        onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                        className="text-xs border border-border rounded-lg px-2 py-1 bg-white"
-                      >
-                        <option value="confirmed">확정</option>
-                        <option value="pending">대기</option>
-                        <option value="cancelled">취소</option>
-                      </select>
+                      <div className="flex items-center gap-1 justify-center">
+                        <select
+                          value={r.status}
+                          onChange={(e) => handleStatusChange(r.id, e.target.value)}
+                          className="text-xs border border-border rounded-lg px-2 py-1 bg-white"
+                        >
+                          <option value="confirmed">확정</option>
+                          <option value="pending">대기</option>
+                          <option value="cancelled">취소</option>
+                        </select>
+                        <button
+                          onClick={() => handleDelete(r.id, r.guest_name)}
+                          className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                          title="삭제"
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -213,6 +256,72 @@ export default function ReservationsPage() {
                   <option value="cancelled">취소</option>
                 </select>
               </Row>
+            </div>
+            <div className="flex gap-2 mt-6 pt-4 border-t border-border">
+              {detail.status !== "cancelled" && (
+                <button
+                  onClick={() => { setDetail(null); setConfirm({ type: "cancel", id: detail.id, name: detail.guest_name }); }}
+                  className="flex-1 py-2.5 rounded-xl bg-amber-50 text-amber-700 font-medium text-sm hover:bg-amber-100 transition-colors"
+                >
+                  예약 취소
+                </button>
+              )}
+              <button
+                onClick={() => { setDetail(null); handleDelete(detail.id, detail.guest_name); }}
+                className="flex-1 py-2.5 rounded-xl bg-red-50 text-red-600 font-medium text-sm hover:bg-red-100 transition-colors"
+              >
+                완전 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirm(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-scale-in">
+            <div className="text-center mb-6">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                confirm.type === "delete" ? "bg-red-100" : "bg-amber-100"
+              }`}>
+                <span className="text-2xl">{confirm.type === "delete" ? "🗑️" : "⚠️"}</span>
+              </div>
+              <h3 className="text-lg font-bold text-text-dark">
+                {confirm.type === "delete" ? "예약 삭제" : "예약 취소"}
+              </h3>
+              <p className="text-sm text-text-mid mt-2">
+                <strong>{confirm.name}</strong>님의 예약을{" "}
+                {confirm.type === "delete" ? (
+                  <span className="text-red-600 font-bold">완전히 삭제</span>
+                ) : (
+                  <span className="text-amber-600 font-bold">취소</span>
+                )}
+                하시겠습니까?
+              </p>
+              {confirm.type === "delete" && (
+                <p className="text-xs text-red-500 mt-2 bg-red-50 rounded-lg px-3 py-2">
+                  삭제된 예약은 복구할 수 없습니다
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirm(null)}
+                className="flex-1 py-2.5 rounded-xl border border-border text-text-mid font-medium text-sm hover:bg-sage/50 transition-colors"
+              >
+                아니오
+              </button>
+              <button
+                onClick={executeConfirm}
+                disabled={actionLoading}
+                className={`flex-1 py-2.5 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 ${
+                  confirm.type === "delete" ? "bg-red-500 hover:bg-red-600" : "bg-amber-500 hover:bg-amber-600"
+                }`}
+              >
+                {actionLoading ? "처리 중..." : confirm.type === "delete" ? "삭제" : "취소 처리"}
+              </button>
             </div>
           </div>
         </div>
