@@ -137,8 +137,8 @@ export default function Footer() {
             <a href="#" className="hover:text-white transition-colors">
               사업자정보확인
             </a>
-            <a href="/admin/login" className="hover:text-white transition-colors">
-              관리자
+            <a href="/admin/login" className="px-3 py-1 rounded-lg border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-colors text-xs">
+              관리자 모드
             </a>
           </div>
         </div>
