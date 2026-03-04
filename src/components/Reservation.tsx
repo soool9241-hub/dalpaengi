@@ -10,6 +10,13 @@ const WOODCRAFT_PRICE = 20000;
 const POT_BBQ_PRICE = 30000;
 const POT_BBQ_MIN = 10;
 
+const BUS_ROUTES: Record<string, number> = {
+  "전북대": 500000,
+  "전주대": 450000,
+  "원광대": 550000,
+  "우석대": 500000,
+};
+
 type ProgramType = "stay" | "half" | "daynight";
 
 const HALF_TIME_SLOTS = [
@@ -122,11 +129,13 @@ export default function Reservation() {
     managerName: "",
     managerPhone: "",
     pickupPlace: "",
+    customPickup: "",
     pickupPeople: "",
     pickupTime: "",
     dropoffManagerName: "",
     dropoffManagerPhone: "",
     dropoffPlace: "",
+    customDropoff: "",
     dropoffPeople: "",
     dropoffTime: "",
   });
@@ -148,9 +157,8 @@ export default function Reservation() {
     setLoadingReservations(true);
     try {
       const { data, error } = await supabase
-        .from("reservations")
-        .select("reservation_date, checkout_date")
-        .neq("status", "cancelled");
+        .from("reservation_calendar")
+        .select("reservation_date, checkout_date");
 
       if (error) {
         console.error("예약 데이터 조회 실패:", error);
@@ -311,11 +319,18 @@ export default function Reservation() {
         selectedTimeSlot || "",
       ].filter(Boolean).join(", ") || null;
 
+      // checkout_date 계산
+      const ciDate = new Date(reservationDate);
+      ciDate.setDate(ciDate.getDate() + stayNights);
+      const checkoutDate = `${ciDate.getFullYear()}-${String(ciDate.getMonth() + 1).padStart(2, "0")}-${String(ciDate.getDate()).padStart(2, "0")}`;
+
       const reservationData = {
         customer_id: customerId,
         guest_name: guestName.trim(),
         guest_phone: phone,
         reservation_date: reservationDate,
+        checkout_date: checkoutDate,
+        submitted_at: new Date().toISOString(),
         stay_nights: stayNights,
         guest_count: totalGuests,
         bbq_count: bbqGrills,
@@ -326,20 +341,8 @@ export default function Reservation() {
         woodcraft_count: woodcraftCount,
         pot_bbq_count: potBbqCount,
         bus_requested: showBusForm,
-        bus_pickup_info: busRequested ? {
-          manager_name: busForm.managerName,
-          manager_phone: busForm.managerPhone,
-          place: busForm.pickupPlace,
-          people: busForm.pickupPeople,
-          time: busForm.pickupTime,
-        } : null,
-        bus_dropoff_info: busRequested ? {
-          manager_name: busForm.dropoffManagerName,
-          manager_phone: busForm.dropoffManagerPhone,
-          place: busForm.dropoffPlace,
-          people: busForm.dropoffPeople,
-          time: busForm.dropoffTime,
-        } : null,
+        bus_pickup_info: null,
+        bus_dropoff_info: null,
         time_slot: selectedTimeSlot || null,
         purpose: purposeMap[programType] || programType,
         purpose_raw: purposeMap[programType] || programType,
@@ -347,16 +350,31 @@ export default function Reservation() {
         source: "website",
         status: "confirmed",
         notes: notes,
-        reservation_year: resDate.getFullYear(),
-        reservation_month: resDate.getMonth() + 1,
       };
 
-      const { error } = await supabase.from("reservations").insert(reservationData);
+      const { data: insertedRes, error } = await supabase.from("reservations").insert(reservationData).select("id").single();
 
-      if (error) {
+      if (error || !insertedRes) {
         console.error("예약 저장 실패:", error);
         alert("예약 저장에 실패했습니다. 다시 시도해주세요.");
         return;
+      }
+
+      // 버스 렌트 요청 시 bus_requests 테이블에 저장
+      if (showBusForm) {
+        const actualPickup = busForm.pickupPlace === "기타" ? busForm.customPickup : busForm.pickupPlace;
+        const actualDropoff = busForm.pickupPlace === "기타" ? busForm.customDropoff : busForm.pickupPlace;
+        await supabase.from("bus_requests").insert({
+          reservation_id: insertedRes.id,
+          manager_name: busForm.managerName,
+          manager_phone: busForm.managerPhone,
+          pickup_place: actualPickup,
+          pickup_people: busForm.pickupPeople,
+          pickup_time: busForm.pickupTime,
+          dropoff_place: actualDropoff,
+          dropoff_people: busForm.dropoffPeople,
+          dropoff_time: busForm.dropoffTime,
+        });
       }
 
       // SMS 발송
@@ -405,6 +423,15 @@ export default function Reservation() {
             woodcraftCount,
             potBbqCount,
             busRequested: showBusForm,
+            busPrice: BUS_ROUTES[busForm.pickupPlace] || 0,
+            busManagerName: busForm.managerName,
+            busManagerPhone: busForm.managerPhone,
+            busPickupPlace: busForm.pickupPlace === "기타" ? busForm.customPickup : busForm.pickupPlace,
+            busPickupPeople: busForm.pickupPeople,
+            busPickupTime: busForm.pickupTime,
+            busDropoffPlace: busForm.pickupPlace === "기타" ? busForm.customDropoff : busForm.pickupPlace,
+            busDropoffPeople: busForm.dropoffPeople,
+            busDropoffTime: busForm.dropoffTime,
             timeSlot: timeSlotLabel,
             totalPrice,
           }),
@@ -452,6 +479,8 @@ export default function Reservation() {
   const isSingleSelected = (day: number) => selectedDate?.year === currentYear && selectedDate?.month === currentMonth && selectedDate?.day === day;
   const isPastDate = (day: number) => new Date(currentYear, currentMonth, day) <= new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
+  const busPrice = showBusForm && busForm.pickupPlace && busForm.pickupPlace !== "기타" ? (BUS_ROUTES[busForm.pickupPlace] || 0) : 0;
+
   const totalPrice = useMemo(() => {
     let total = program.basePrice * nights;
     total += extraGuests * EXTRA_GUEST_PRICE;
@@ -460,8 +489,9 @@ export default function Reservation() {
     total += dinnerCount * DINNER_PRICE;
     total += woodcraftCount * WOODCRAFT_PRICE;
     total += potBbqCount * POT_BBQ_PRICE;
+    total += busPrice;
     return total;
-  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount]);
+  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -481,7 +511,7 @@ export default function Reservation() {
   };
 
   // Counter component for DRY
-  const Counter = ({ label, desc, value, unitPrice, onDec, onInc }: { label: string; desc: string; value: number; unitPrice?: number; onDec: () => void; onInc: () => void }) => (
+  const Counter = ({ label, desc, value, unitPrice, onDec, onInc, onChange }: { label: string; desc: string; value: number; unitPrice?: number; onDec: () => void; onInc: () => void; onChange?: (v: number) => void }) => (
     <div className="flex items-center justify-between">
       <div>
         <p className="font-medium text-text-dark text-sm">{label}</p>
@@ -494,7 +524,17 @@ export default function Reservation() {
         <button onClick={onDec} className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
           <Minus className="w-3.5 h-3.5 text-text-mid" />
         </button>
-        <span className="w-8 text-center font-semibold text-text-dark text-sm">{value}</span>
+        <input
+          type="number"
+          min={0}
+          value={value}
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => {
+            const v = Math.max(0, parseInt(e.target.value) || 0);
+            if (onChange) onChange(v);
+          }}
+          className="w-12 text-center font-semibold text-text-dark text-sm border border-border rounded-lg py-1 focus:outline-none focus:border-primary"
+        />
         <button onClick={onInc} className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
           <Plus className="w-3.5 h-3.5 text-text-mid" />
         </button>
@@ -514,6 +554,18 @@ export default function Reservation() {
 
           {/* Program Tabs */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            {/* MT 패키지 */}
+            <button onClick={() => { handleProgramChange("stay"); setShowBusForm(true); }}
+              className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all relative ${programType === "stay" && showBusForm ? "border-primary bg-primary/5 shadow-md" : "border-border bg-white hover:border-primary/30"}`}>
+              <div className="absolute -top-2 right-3 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">추천</div>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${programType === "stay" && showBusForm ? "bg-primary text-white" : "bg-sage text-text-light"}`}>
+                <span className="text-lg">🎓</span>
+              </div>
+              <div className="text-left">
+                <p className={`font-semibold text-sm ${programType === "stay" && showBusForm ? "text-primary" : "text-text-dark"}`}>대학생 MT 패키지</p>
+                <p className="text-xs text-text-light">{formatPrice(700000)}/박 (60명 수용)</p>
+              </div>
+            </button>
             {(Object.entries(PROGRAMS) as [ProgramType, typeof PROGRAMS[ProgramType]][]).map(([key, prog]) => {
               const Icon = prog.icon;
               const isActive = programType === key;
@@ -688,7 +740,7 @@ export default function Reservation() {
             <div className="space-y-4">
               {/* Base Program */}
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
-                <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-primary" /><h3 className="text-lg font-semibold text-text-dark">기본 프로그램</h3></div>
+                <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-primary" /><h3 className="text-lg font-semibold text-text-dark">{showBusForm && programType === "stay" ? "대학생 MT 패키지 (60명 수용가능)" : program.label}</h3></div>
 
                 {/* 인원 입력 */}
                 <div className="mb-4">
@@ -758,18 +810,18 @@ export default function Reservation() {
                 )}
                 <div className="space-y-4">
                   <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(BBQ_GRILL_PRICE)} (최대 6개)`} value={bbqGrills} unitPrice={BBQ_GRILL_PRICE}
-                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} />
+                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} onChange={(v) => setBbqGrills(Math.min(6, v))} />
 
                   <hr className="border-border" />
 
                   <Counter label="가스렌지" desc={`버너+가스+불판 / 개당 ${formatPrice(GAS_RANGE_PRICE)} (최대 5개)`} value={gasRanges} unitPrice={GAS_RANGE_PRICE}
-                    onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} />
+                    onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} onChange={(v) => setGasRanges(Math.min(5, v))} />
 
                   <hr className="border-border" />
 
                   {/* 저녁 식사 */}
                   <Counter label="저녁 식사" desc={`1인 ${formatPrice(DINNER_PRICE)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={DINNER_PRICE}
-                    onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => g + 1)} />
+                    onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => g + 1)} onChange={(v) => setDinnerCount(v)} />
 
                   <hr className="border-border" />
 
@@ -790,7 +842,17 @@ export default function Reservation() {
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Minus className="w-3.5 h-3.5 text-text-mid" />
                       </button>
-                      <span className="w-8 text-center font-semibold text-text-dark text-sm">{potBbqCount}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={potBbqCount}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const v = Math.max(0, parseInt(e.target.value) || 0);
+                          setPotBbqCount(v > 0 && v < POT_BBQ_MIN ? POT_BBQ_MIN : v);
+                        }}
+                        className="w-12 text-center font-semibold text-text-dark text-sm border border-border rounded-lg py-1 focus:outline-none focus:border-primary"
+                      />
                       <button onClick={() => setPotBbqCount((c) => c === 0 ? POT_BBQ_MIN : Math.min(50, c + 1))}
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Plus className="w-3.5 h-3.5 text-text-mid" />
@@ -822,47 +884,80 @@ export default function Reservation() {
                     </div>
                     {showBusForm && (
                       <div className="mt-3 p-4 bg-sage/30 rounded-xl space-y-3">
-                        <p className="text-xs font-semibold text-text-dark mb-2">승차 정보</p>
+                        <p className="text-xs font-semibold text-text-dark mb-2">책임자 정보</p>
                         <div className="grid grid-cols-2 gap-2">
                           <input placeholder="담당자 이름" value={busForm.managerName} onChange={(e) => setBusForm({ ...busForm, managerName: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <input placeholder="연락처" value={busForm.managerPhone} onChange={(e) => setBusForm({ ...busForm, managerPhone: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                         </div>
+
+                        <p className="text-xs font-semibold text-text-dark mb-2 pt-2">승차 정보</p>
                         <div className="grid grid-cols-3 gap-2">
-                          <input placeholder="승차 장소" value={busForm.pickupPlace} onChange={(e) => setBusForm({ ...busForm, pickupPlace: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
+                          <select value={busForm.pickupPlace} onChange={(e) => setBusForm({ ...busForm, pickupPlace: e.target.value, dropoffPlace: e.target.value })}
+                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary">
+                            <option value="">출발지 선택</option>
+                            {Object.entries(BUS_ROUTES).map(([name, price]) => (
+                              <option key={name} value={name}>{name} (왕복 {(price / 10000).toFixed(0)}만원)</option>
+                            ))}
+                            <option value="기타">기타 (직접입력)</option>
+                          </select>
                           <input placeholder="인원" value={busForm.pickupPeople} onChange={(e) => setBusForm({ ...busForm, pickupPeople: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <select value={busForm.pickupTime} onChange={(e) => setBusForm({ ...busForm, pickupTime: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary">
                             <option value="">시간 선택</option>
-                            <option value="오전 (08:00~12:00)">오전</option>
-                            <option value="오후 (12:00~18:00)">오후</option>
+                            {Array.from({ length: 25 }, (_, i) => {
+                              const h = Math.floor(i / 2) + 6;
+                              const m = i % 2 === 0 ? "00" : "30";
+                              const t = `${String(h).padStart(2, "0")}:${m}`;
+                              return <option key={t} value={t}>{t}</option>;
+                            })}
                           </select>
                         </div>
+                        {busForm.pickupPlace === "기타" && (
+                          <input placeholder="승차지 직접 입력" value={busForm.customPickup}
+                            onChange={(e) => setBusForm({ ...busForm, customPickup: e.target.value })}
+                            className="mt-2 w-full px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
+                        )}
 
-                        <p className="text-xs font-semibold text-text-dark mb-2 pt-2">하차 정보</p>
+                        {busForm.pickupPlace && busForm.pickupPlace !== "기타" && BUS_ROUTES[busForm.pickupPlace] && (
+                          <div className="mt-2 p-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+                            <p className="text-xs text-text-mid">🚌 {busForm.pickupPlace} ↔ 펜션 왕복 견적: <span className="font-bold text-primary">{formatPrice(BUS_ROUTES[busForm.pickupPlace])}</span></p>
+                          </div>
+                        )}
+                        {busForm.pickupPlace === "기타" && (
+                          <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                            <p className="text-xs text-amber-700">* 직접 입력 시 별도 견적을 안내드립니다</p>
+                          </div>
+                        )}
+
+                        <p className="text-xs font-semibold text-text-dark mb-2 pt-2">하차 정보 <span className="font-normal text-text-light">(퇴실 11시 기준)</span></p>
+                        {busForm.pickupPlace && busForm.pickupPlace !== "기타" && (
+                          <p className="text-xs text-primary mb-2">하차지: {busForm.pickupPlace} (승차지와 동일)</p>
+                        )}
+                        {busForm.pickupPlace === "기타" && (
+                          <input placeholder="하차지 직접 입력" value={busForm.customDropoff}
+                            onChange={(e) => setBusForm({ ...busForm, customDropoff: e.target.value })}
+                            className="mb-2 w-full px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
+                        )}
                         <div className="grid grid-cols-2 gap-2">
-                          <input placeholder="담당자 이름" value={busForm.dropoffManagerName} onChange={(e) => setBusForm({ ...busForm, dropoffManagerName: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
-                          <input placeholder="연락처" value={busForm.dropoffManagerPhone} onChange={(e) => setBusForm({ ...busForm, dropoffManagerPhone: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          <input placeholder="하차 장소" value={busForm.dropoffPlace} onChange={(e) => setBusForm({ ...busForm, dropoffPlace: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <input placeholder="인원" value={busForm.dropoffPeople} onChange={(e) => setBusForm({ ...busForm, dropoffPeople: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary" />
                           <select value={busForm.dropoffTime} onChange={(e) => setBusForm({ ...busForm, dropoffTime: e.target.value })}
                             className="px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary">
-                            <option value="">시간 선택</option>
-                            <option value="오전 (08:00~12:00)">오전</option>
-                            <option value="오후 (12:00~18:00)">오후</option>
+                            <option value="">하차 출발시간</option>
+                            {Array.from({ length: 10 }, (_, i) => {
+                              const h = Math.floor(i / 2) + 6;
+                              const m = i % 2 === 0 ? "00" : "30";
+                              const t = `${String(h).padStart(2, "0")}:${m}`;
+                              return <option key={t} value={t}>{t}</option>;
+                            })}
+                            <option value="10:30">10:30</option>
                           </select>
                         </div>
 
-                        <p className="text-xs text-primary font-medium mt-2 text-center">* 선택함 시 예약 접수와 함께 견적 요청됩니다</p>
+                        <p className="text-xs text-primary font-medium mt-2 text-center">* 왕복 기준 견적이며, 예약 접수와 함께 요청됩니다</p>
                       </div>
                     )}
                   </div>
@@ -885,14 +980,15 @@ export default function Reservation() {
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {formatPrice(dinnerCount * DINNER_PRICE)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</p>}
                   {potBbqCount > 0 && <p>항아리 바베큐 ({potBbqCount}인분): {formatPrice(potBbqCount * POT_BBQ_PRICE)}</p>}
-                  {busRequested && <p>버스 렌트: 별도 견적</p>}
+                  {showBusForm && busPrice > 0 && <p>버스 렌트 ({busForm.pickupPlace} 왕복): {formatPrice(busPrice)}</p>}
+                  {showBusForm && busPrice === 0 && <p>버스 렌트: 별도 견적</p>}
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-sm text-text-light">총 결제 금액</p>
                 <p className="text-3xl font-bold text-primary">{formatPrice(totalPrice)}</p>
                 <p className="text-sm text-text-mid mt-1">1인당 약 <span className="font-semibold text-primary">{formatPrice(pricePerPerson)}</span></p>
-                {busRequested && <p className="text-xs text-text-light mt-1">+ 버스 렌트 별도</p>}
+                {showBusForm && busPrice === 0 && <p className="text-xs text-text-light mt-1">+ 버스 렌트 별도 견적</p>}
               </div>
             </div>
             <button onClick={() => setShowConfirm(true)}
@@ -929,7 +1025,11 @@ export default function Reservation() {
                 type="tel"
                 placeholder="연락처 (010-0000-0000)"
                 value={guestPhone}
-                onChange={(e) => setGuestPhone(e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                  const formatted = raw.length > 7 ? `${raw.slice(0,3)}-${raw.slice(3,7)}-${raw.slice(7)}` : raw.length > 3 ? `${raw.slice(0,3)}-${raw.slice(3)}` : raw;
+                  setGuestPhone(formatted);
+                }}
                 className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
             </div>
@@ -953,11 +1053,13 @@ export default function Reservation() {
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사</span><span className="font-medium text-text-dark">{formatPrice(dinnerCount * DINNER_PRICE)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * WOODCRAFT_PRICE)}</span></div>}
               {potBbqCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">항아리 바베큐 ({potBbqCount}인분)</span><span className="font-medium text-text-dark">{formatPrice(potBbqCount * POT_BBQ_PRICE)}</span></div>}
-              {busRequested && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트</span><span className="font-medium text-amber-600">별도 견적</span></div>}
+              {showBusForm && busPrice > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트 ({busForm.pickupPlace} 왕복)</span><span className="font-medium text-text-dark">{formatPrice(busPrice)}</span></div>}
+              {showBusForm && busPrice === 0 && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트</span><span className="font-medium text-amber-600">별도 견적</span></div>}
               <hr className="border-border" />
               <div className="flex justify-between"><span className="font-semibold text-text-dark">총 결제 금액</span><span className="font-bold text-primary text-lg">{formatPrice(totalPrice)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-text-light">1인당</span><span className="font-medium text-primary">{formatPrice(pricePerPerson)}</span></div>
-              {busRequested && <p className="text-xs text-text-light text-center">* 버스 렌트 비용은 별도 안내드립니다</p>}
+              <div className="flex justify-between text-base"><span className="text-text-mid">1인당</span><span className="font-bold text-primary">{formatPrice(pricePerPerson)}</span></div>
+              {showBusForm && busPrice === 0 && <p className="text-xs text-text-light text-center">* 버스 렌트 비용은 별도 안내드립니다</p>}
+              <p className="text-text-mid mt-3 text-center leading-relaxed" style={{ fontSize: "20px" }}>예약 취소 및 환불: 예약일 2주 전 100% 환불 / 이후 환불 불가</p>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border-2 border-border rounded-xl font-semibold text-sm text-text-mid hover:bg-sage transition-colors">취소</button>

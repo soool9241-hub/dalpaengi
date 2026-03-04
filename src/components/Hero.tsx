@@ -24,9 +24,8 @@ export default function Hero() {
 
   const fetchBookedDates = useCallback(async () => {
     const { data } = await supabase
-      .from("reservations")
-      .select("reservation_date, checkout_date")
-      .neq("status", "cancelled");
+      .from("reservation_calendar")
+      .select("reservation_date, checkout_date");
 
     if (!data) return;
     const dates = new Set<string>();
