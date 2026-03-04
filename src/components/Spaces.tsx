@@ -1,48 +1,54 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Maximize, Wifi, Car, Coffee, Utensils, Eye, Shield, TreePine } from "lucide-react";
+import { Users, Maximize, Bed, Bath, CookingPot, Sofa, DoorOpen, ShowerHead, TreePine, Shield } from "lucide-react";
 
 const spaces = [
   {
-    name: "회의실",
-    capacity: "최대 20인",
-    size: "60평",
-    desc: "빔프로젝터, 화이트보드, 음향 시스템 완비. 워크숍, 세미나에 최적화된 공간입니다.",
-    amenities: ["빔프로젝터", "음향시스템", "화이트보드", "Wi-Fi"],
-    gradient: "from-blue-500 to-indigo-600",
-  },
-  {
-    name: "스탠다드룸",
-    capacity: "2인실",
-    size: "15평",
-    desc: "아늑한 2인 객실. 통유리 창을 통해 숲속 풍경을 감상할 수 있습니다.",
-    amenities: ["퀸베드", "개별 욕실", "미니바", "에어컨"],
+    name: "넓은 거실 & 야외공간",
+    capacity: "전체 이용",
+    size: "30평+",
+    desc: "60명 이상 수용 가능한 넓은 거실에 100인치 대형 TV, 전자레인지 4개, 정수기, 개별 난방기가 설치되어 있습니다. 마당 앞 야외 바베큐 공간에서 그릴 최대 6개 동시 이용 가능하며, 야외 식사 공간도 마련되어 있습니다.",
+    amenities: ["100인치 TV", "전자레인지 4개", "정수기", "개별 난방기", "야외 바베큐 (최대 6개)", "야외 식사공간"],
     gradient: "from-emerald-500 to-teal-600",
+    icon: "🏠",
   },
   {
-    name: "디럭스룸",
-    capacity: "2~3인실",
-    size: "25평",
-    desc: "넓은 거실과 테라스가 있는 프리미엄 객실. 가족 단위에 추천합니다.",
-    amenities: ["킹베드", "테라스", "거실", "욕조"],
+    name: "방 4개",
+    capacity: "각 방 10~15명",
+    size: "각 8~12평",
+    desc: "총 4개의 넓은 방이 준비되어 있습니다. 각 방마다 이불과 베개가 구비되어 있으며, 에어컨과 난방이 개별 조절 가능합니다. 단체 인원도 편하게 취침할 수 있습니다.",
+    amenities: ["이불/베개 제공", "에어컨/난방", "콘센트 다수", "조명 개별조절"],
+    gradient: "from-violet-500 to-purple-600",
+    icon: "🛏️",
+  },
+  {
+    name: "부엌",
+    capacity: "조리 가능",
+    size: "15평",
+    desc: "넓은 부엌에서 단체 조리가 가능합니다. 냉장고, 가스렌지, 전자레인지, 식기류 등 기본 조리도구가 완비되어 있습니다. 바베큐장과 바로 연결됩니다.",
+    amenities: ["대형 냉장고", "가스렌지", "전자레인지", "식기류 완비"],
     gradient: "from-amber-500 to-orange-600",
+    icon: "🍳",
   },
   {
-    name: "다이닝룸",
-    capacity: "최대 30인",
-    size: "40평",
-    desc: "단체 식사와 파티를 위한 넓은 공간. 바베큐 시설과 연결되어 있습니다.",
-    amenities: ["테이블 6개", "바베큐 연결", "냉장고", "식기류"],
-    gradient: "from-rose-500 to-pink-600",
+    name: "남녀 화장실 & 샤워",
+    capacity: "샤워부스 각 4개",
+    size: "남녀 분리",
+    desc: "남녀 화장실이 완전 분리되어 있으며, 각각 샤워부스 4개씩 총 8개가 설치되어 있습니다. 대인원도 대기 없이 쾌적하게 이용 가능합니다. 온수 24시간 가능.",
+    amenities: ["샤워부스 남4 여4", "온수 24시간", "드라이기 비치", "수건 제공"],
+    gradient: "from-sky-500 to-blue-600",
+    icon: "🚿",
   },
 ];
 
 const features = [
-  { icon: Eye, label: "360° VR 투어 제공" },
-  { icon: TreePine, label: "전 객실 자연 조망" },
+  { icon: TreePine, label: "자연 속 독채 펜션" },
   { icon: Shield, label: "프라이빗 공간" },
+  { icon: Users, label: "최대 60명 수용" },
 ];
+
+const ICON_MAP = [Sofa, Bed, CookingPot, ShowerHead];
 
 export default function Spaces() {
   const [active, setActive] = useState(0);
@@ -52,13 +58,13 @@ export default function Spaces() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6">
           <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">
-            HEALING SPACES
+            SPACES
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-text-dark mb-4">
-            힐링 스페이스 둘러보기
+            공간 둘러보기
           </h2>
           <p className="text-text-light max-w-lg mx-auto">
-            지친 일상에서 하나씩 벗어날 수 있는 특별한 공간
+            독채 전체를 사용하는 프라이빗한 공간 구성
           </p>
         </div>
 
@@ -78,12 +84,13 @@ export default function Spaces() {
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
                 active === i
                   ? "bg-primary text-white shadow-md"
                   : "bg-sage text-text-mid hover:bg-sage-dark"
               }`}
             >
+              <span className="mr-1.5">{space.icon}</span>
               {space.name}
             </button>
           ))}
@@ -91,7 +98,7 @@ export default function Spaces() {
 
         {/* Active space detail */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Visual - VR Tour Area */}
+          {/* Visual */}
           <div className="relative">
             <div
               className={`relative h-72 sm:h-96 rounded-3xl bg-gradient-to-br ${spaces[active].gradient} flex items-center justify-center overflow-hidden transition-all duration-500`}
@@ -106,19 +113,11 @@ export default function Spaces() {
                 />
               </div>
               <div className="relative text-center text-white z-10">
-                <p className="text-6xl font-bold opacity-20 mb-2">
-                  {String(active + 1).padStart(2, "0")}
-                </p>
+                <p className="text-6xl mb-3">{spaces[active].icon}</p>
                 <p className="text-2xl font-bold">{spaces[active].name}</p>
                 <p className="text-white/70 text-sm mt-1">
                   {spaces[active].capacity} &middot; {spaces[active].size}
                 </p>
-              </div>
-
-              {/* 360 VR badge */}
-              <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white text-xs font-medium flex items-center gap-1.5">
-                <Eye size={14} />
-                360° VR 투어
               </div>
 
               {/* Navigation dots */}
@@ -139,7 +138,7 @@ export default function Spaces() {
           {/* Info */}
           <div key={active} className="animate-fade-in">
             <h3 className="text-2xl font-bold text-text-dark mb-2">
-              {spaces[active].name}
+              {spaces[active].icon} {spaces[active].name}
             </h3>
             <div className="flex items-center gap-4 mb-4">
               <span className="flex items-center gap-1.5 text-sm text-text-light bg-sage rounded-full px-3 py-1">
@@ -156,18 +155,36 @@ export default function Spaces() {
             <p className="text-sm font-semibold text-text-dark mb-3">
               주요 시설
             </p>
-            <div className="grid grid-cols-2 gap-3 mb-8">
-              {spaces[active].amenities.map((a, j) => (
-                <div
-                  key={j}
-                  className="flex items-center gap-2.5 bg-sage/50 rounded-xl px-4 py-3 text-sm text-text-mid"
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              {spaces[active].amenities.map((a, j) => {
+                const IconComp = ICON_MAP[active] || DoorOpen;
+                return (
+                  <div
+                    key={j}
+                    className="flex items-center gap-2.5 bg-sage/50 rounded-xl px-4 py-3 text-sm text-text-mid"
+                  >
+                    <IconComp size={14} className="text-primary flex-shrink-0" />
+                    {a}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 전체 구조 요약 */}
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {spaces.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className={`text-center p-3 rounded-xl transition-all ${
+                    active === i
+                      ? "bg-primary/10 border-2 border-primary"
+                      : "bg-sage/30 border-2 border-transparent hover:border-primary/20"
+                  }`}
                 >
-                  {j === 0 && <Coffee size={14} className="text-primary flex-shrink-0" />}
-                  {j === 1 && <Wifi size={14} className="text-primary flex-shrink-0" />}
-                  {j === 2 && <Utensils size={14} className="text-primary flex-shrink-0" />}
-                  {j === 3 && <Car size={14} className="text-primary flex-shrink-0" />}
-                  {a}
-                </div>
+                  <span className="text-xl block mb-1">{s.icon}</span>
+                  <span className={`text-[11px] font-medium ${active === i ? "text-primary" : "text-text-light"}`}>{s.name}</span>
+                </button>
               ))}
             </div>
 
@@ -175,7 +192,7 @@ export default function Spaces() {
               href="#reservation"
               className="inline-block bg-primary text-white px-8 py-3.5 rounded-full text-sm font-semibold hover:bg-primary-light transition-all shadow-md hover:shadow-lg"
             >
-              이 공간 예약하기
+              예약하기
             </a>
           </div>
         </div>

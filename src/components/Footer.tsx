@@ -120,9 +120,13 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-white/40">
+          <a
+            href="/admin/login"
+            className="text-sm text-white/40 hover:text-white/40"
+            aria-label="관리자"
+          >
             &copy; 2026 달팽이아지트. All rights reserved.
-          </p>
+          </a>
           <div className="flex items-center gap-6 text-sm text-white/40">
             <a href="#" className="hover:text-white transition-colors">
               이용약관

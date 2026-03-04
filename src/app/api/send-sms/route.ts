@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SolapiMessageService } from "solapi";
 
-const OWNER_NUMBERS = ["01085319531", "01053140146"];
+const OWNER_NUMBERS = ["01085319531", "01053140146", "01046968497", "01046965529"];
 
 const messageService = new SolapiMessageService(
-  process.env.SOLAPI_API_KEY!,
-  process.env.SOLAPI_API_SECRET!
+  (process.env.SOLAPI_API_KEY || "").trim(),
+  (process.env.SOLAPI_API_SECRET || "").trim()
 );
 
 const formatPrice = (price: number) => price.toLocaleString("ko-KR") + "원";
@@ -26,6 +26,15 @@ interface ReservationSMS {
   woodcraftCount: number;
   potBbqCount: number;
   busRequested: boolean;
+  busPrice?: number;
+  busManagerName?: string;
+  busManagerPhone?: string;
+  busPickupPlace?: string;
+  busPickupPeople?: string;
+  busPickupTime?: string;
+  busDropoffPlace?: string;
+  busDropoffPeople?: string;
+  busDropoffTime?: string;
   timeSlot: string | null;
   totalPrice: number;
 }
@@ -34,7 +43,7 @@ function buildOptionLines(data: ReservationSMS): string[] {
   const lines: string[] = [];
   const nights = data.stayNights;
 
-  lines.push(`• ${data.programLabel} (${nights}박): ${formatPrice(data.basePrice * nights)}`);
+  lines.push(`• ${data.programLabel} 기본${data.baseGuests}인 (${nights}박): ${formatPrice(data.basePrice * nights)}`);
 
   if (data.extraGuests > 0)
     lines.push(`• 추가인원 (${data.extraGuests}명 × 10,000원): ${formatPrice(data.extraGuests * 10000)}`);
@@ -68,12 +77,19 @@ function buildCustomerMessage(data: ReservationSMS): string {
 ${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
 ━━ 요금 상세 ━━
 ${optionLines.join("\n")}
-${data.busRequested ? "• 버스 렌트: 별도 견적\n" : ""}━━━━━━━━━━━━
-총 금액: ${formatPrice(data.totalPrice)}
+${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace} 왕복): ${formatPrice(data.busPrice)}\n` : ""}${data.busRequested && !data.busPrice ? "• 버스 렌트: 별도 추후 안내\n" : ""}━━━━━━━━━━━━
+총 금액: ${formatPrice(data.totalPrice)}${data.busRequested && !data.busPrice ? " + 버스 별도" : ""}
 1인당: 약 ${formatPrice(perPerson)}
-
-입금계좌: 농협 351-0322-8946-53 임솔
+${data.busRequested && data.busPickupPlace ? `
+🚌 버스 정보
+승차: ${data.busPickupPlace} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+하차: ${data.busDropoffPlace || data.busPickupPlace} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
+${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내드리겠습니다"}
+` : ""}
+입금계좌: 카카오뱅크 3333-06-4749542 임솔
 ※ 입금 순 예약 확정
+
+[환불규정] 예약일 2주 전 취소 시 100% 환불 / 이후 환불 불가
 
 문의: 010-8531-9531
 감사합니다 :)`;
@@ -95,37 +111,41 @@ function buildOwnerMessage(data: ReservationSMS): string {
 ${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
 ━━ 옵션 / 금액 ━━
 ${optionLines.join("\n")}
-${data.busRequested ? "• 버스: 견적 요청\n" : ""}━━━━━━━━━━━━
-총 금액: ${formatPrice(data.totalPrice)}
+${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace} 왕복): ${formatPrice(data.busPrice)}\n` : ""}${data.busRequested && !data.busPrice ? "• 버스 렌트: 별도 추후 안내\n" : ""}━━━━━━━━━━━━
+총 금액: ${formatPrice(data.totalPrice)}${data.busRequested && !data.busPrice ? " + 버스 별도" : ""}
 1인당: 약 ${formatPrice(perPerson)}
-
-채널: 웹사이트`;
+${data.busRequested && data.busManagerName ? `
+🚌 책임자: ${data.busManagerName} (${data.busManagerPhone || ""})
+승차: ${data.busPickupPlace || ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+하차: ${data.busDropoffPlace || data.busPickupPlace || ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
+${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내"}` : ""}`;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const data: ReservationSMS = await req.json();
-    const sender = process.env.SOLAPI_SENDER!;
+    const sender = (process.env.SOLAPI_SENDER || "").trim();
     const customerPhone = data.guestPhone.replace(/[^0-9]/g, "");
 
     const customerMsg = buildCustomerMessage(data);
     const ownerMsg = buildOwnerMessage(data);
 
-    // LMS (장문) 발송 - 고객 + 대표 2명
-    const messages = [
-      { to: customerPhone, from: sender, text: customerMsg, type: "LMS" as const, subject: "달팽이아지트 예약확인" },
-      ...OWNER_NUMBERS.map((num) => ({
-        to: num,
-        from: sender,
-        text: ownerMsg,
-        type: "LMS" as const,
-        subject: "새 예약 접수",
-      })),
-    ];
+    // LMS (장문) 발송 - sendOne 사용
+    const results = [];
 
-    const result = await messageService.send(messages);
+    // 1. 고객님께
+    results.push(await messageService.sendOne({
+      to: customerPhone, from: sender, text: customerMsg, type: "LMS", subject: "달팽이아지트 예약확인"
+    }));
 
-    return NextResponse.json({ success: true, result });
+    // 2,3. 대표님들께
+    for (const num of OWNER_NUMBERS) {
+      results.push(await messageService.sendOne({
+        to: num, from: sender, text: ownerMsg, type: "LMS", subject: "새 예약 접수"
+      }));
+    }
+
+    return NextResponse.json({ success: true, count: results.length });
   } catch (error) {
     console.error("SMS 발송 실패:", error);
     return NextResponse.json(
