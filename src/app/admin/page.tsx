@@ -41,11 +41,17 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetch("/api/admin/dashboard?recentDays=7")
-      .then((r) => {
-        if (!r.ok) throw new Error("데이터 로드 실패");
-        return r.json();
+      .then(async (r) => {
+        if (r.status === 401) {
+          window.location.href = "/admin-login";
+          return null;
+        }
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.error || "데이터 로드 실패");
+        return json;
       })
       .then((d) => {
+        if (!d) return;
         setData(d);
         setRecentReservations(d.recentReservations || []);
       })
@@ -72,7 +78,12 @@ export default function AdminDashboard() {
     );
   }
 
-  if (error) return <p className="text-red-500 text-base font-medium bg-red-50 px-4 py-3 rounded-xl">{error}</p>;
+  if (error) return (
+    <div className="bg-red-50 px-5 py-4 rounded-xl flex items-center justify-between">
+      <p className="text-red-500 text-base font-medium">{error}</p>
+      <button onClick={() => { setError(""); setLoading(true); window.location.reload(); }} className="text-sm bg-red-100 text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-200 transition-colors">다시 시도</button>
+    </div>
+  );
   if (!data) return <p className="text-gray-500 text-base">데이터를 불러올 수 없습니다.</p>;
 
   const kpis = [
