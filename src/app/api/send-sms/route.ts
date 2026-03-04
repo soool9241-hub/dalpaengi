@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SolapiMessageService } from "solapi";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { PricingData } from "@/context/SettingsContext";
 
 const OWNER_NUMBERS = ["01085319531", "01053140146", "01046968497", "01046965529"];
 
@@ -39,30 +41,43 @@ interface ReservationSMS {
   totalPrice: number;
 }
 
-function buildOptionLines(data: ReservationSMS): string[] {
+async function loadPricing(): Promise<PricingData> {
+  const defaults: PricingData = {
+    stay: 700000, half: 300000, daynight: 400000,
+    extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
+    dinner: 10000, woodcraft: 20000, potBbq: 30000,
+  };
+  try {
+    const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "pricing").single();
+    if (data?.value) return { ...defaults, ...(data.value as Partial<PricingData>) };
+  } catch {}
+  return defaults;
+}
+
+function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
   const lines: string[] = [];
   const nights = data.stayNights;
 
   lines.push(`• ${data.programLabel} 기본${data.baseGuests}인 (${nights}박): ${formatPrice(data.basePrice * nights)}`);
 
   if (data.extraGuests > 0)
-    lines.push(`• 추가인원 (${data.extraGuests}명 × 10,000원): ${formatPrice(data.extraGuests * 10000)}`);
+    lines.push(`• 추가인원 (${data.extraGuests}명 × ${formatPrice(p.extraGuest)}): ${formatPrice(data.extraGuests * p.extraGuest)}`);
   if (data.bbqGrills > 0)
-    lines.push(`• 그릴 대여 (${data.bbqGrills}개 × 30,000원): ${formatPrice(data.bbqGrills * 30000)}`);
+    lines.push(`• 그릴 대여 (${data.bbqGrills}개 × ${formatPrice(p.bbqGrill)}): ${formatPrice(data.bbqGrills * p.bbqGrill)}`);
   if (data.gasRanges > 0)
-    lines.push(`• 가스렌지 (${data.gasRanges}개 × 15,000원): ${formatPrice(data.gasRanges * 15000)}`);
+    lines.push(`• 가스렌지 (${data.gasRanges}개 × ${formatPrice(p.gasRange)}): ${formatPrice(data.gasRanges * p.gasRange)}`);
   if (data.dinnerCount > 0)
-    lines.push(`• 저녁식사 (${data.dinnerCount}명 × 10,000원): ${formatPrice(data.dinnerCount * 10000)}`);
+    lines.push(`• 저녁식사 (${data.dinnerCount}명 × ${formatPrice(p.dinner)}): ${formatPrice(data.dinnerCount * p.dinner)}`);
   if (data.woodcraftCount > 0)
-    lines.push(`• 목공키트 (${data.woodcraftCount}개 × 20,000원): ${formatPrice(data.woodcraftCount * 20000)}`);
+    lines.push(`• 목공키트 (${data.woodcraftCount}개 × ${formatPrice(p.woodcraft)}): ${formatPrice(data.woodcraftCount * p.woodcraft)}`);
   if (data.potBbqCount > 0)
-    lines.push(`• 항아리BBQ (${data.potBbqCount}인분 × 30,000원): ${formatPrice(data.potBbqCount * 30000)}`);
+    lines.push(`• 항아리BBQ (${data.potBbqCount}인분 × ${formatPrice(p.potBbq)}): ${formatPrice(data.potBbqCount * p.potBbq)}`);
 
   return lines;
 }
 
-function buildCustomerMessage(data: ReservationSMS): string {
-  const optionLines = buildOptionLines(data);
+function buildCustomerMessage(data: ReservationSMS, p: PricingData): string {
+  const optionLines = buildOptionLines(data, p);
   const perPerson = Math.round(data.totalPrice / data.totalGuests);
   const peopleDesc = data.extraGuests > 0
     ? `${data.totalGuests}명 (기본 ${data.baseGuests}명 + 추가 ${data.extraGuests}명)`
@@ -95,8 +110,8 @@ ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: �
 감사합니다 :)`;
 }
 
-function buildOwnerMessage(data: ReservationSMS): string {
-  const optionLines = buildOptionLines(data);
+function buildOwnerMessage(data: ReservationSMS, p: PricingData): string {
+  const optionLines = buildOptionLines(data, p);
   const perPerson = Math.round(data.totalPrice / data.totalGuests);
   const peopleDesc = data.extraGuests > 0
     ? `${data.totalGuests}명 (기본${data.baseGuests} + 추가${data.extraGuests})`
@@ -127,8 +142,9 @@ export async function POST(req: NextRequest) {
     const sender = (process.env.SOLAPI_SENDER || "").trim();
     const customerPhone = data.guestPhone.replace(/[^0-9]/g, "");
 
-    const customerMsg = buildCustomerMessage(data);
-    const ownerMsg = buildOwnerMessage(data);
+    const p = await loadPricing();
+    const customerMsg = buildCustomerMessage(data, p);
+    const ownerMsg = buildOwnerMessage(data, p);
 
     // LMS (장문) 발송 - sendOne 사용
     const results = [];

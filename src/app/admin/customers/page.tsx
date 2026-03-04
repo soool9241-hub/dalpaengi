@@ -30,12 +30,20 @@ function formatPrice(n: number) {
   return n.toLocaleString() + "원";
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  confirmed: "bg-green-100 text-green-800",
+  visited: "bg-blue-100 text-blue-800",
+  reviewed: "bg-purple-100 text-purple-800",
+  pending: "bg-amber-100 text-amber-800",
+  cancelled: "bg-red-100 text-red-700",
+};
+
 const SORT_COLUMNS: { field: SortField; label: string; className?: string }[] = [
   { field: "name", label: "고객명" },
   { field: "visit_count", label: "방문" },
   { field: "last_visit", label: "최근 방문" },
-  { field: "total_guests_brought", label: "총 동반인원", className: "hidden md:table-cell" },
-  { field: "total_revenue", label: "총 매출", className: "hidden lg:table-cell" },
+  { field: "total_guests_brought", label: "총 동반인원" },
+  { field: "total_revenue", label: "총 매출" },
 ];
 
 export default function CustomersPage() {
@@ -138,18 +146,20 @@ export default function CustomersPage() {
                     </span>
                   </th>
                 ))}
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm hidden md:table-cell">연락처</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm hidden lg:table-cell">BBQ</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">연락처</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">첫 방문</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">BBQ</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">메모</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">
+                <tr><td colSpan={9} className="text-center py-12 text-gray-400">
                   <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
                   불러오는 중...
                 </td></tr>
               ) : customers.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">고객 데이터가 없습니다</td></tr>
+                <tr><td colSpan={9} className="text-center py-12 text-gray-400">고객 데이터가 없습니다</td></tr>
               ) : (
                 customers.map((c) => (
                   <tr key={c.id} onClick={() => showDetail(c.id)} className="border-b border-gray-100 hover:bg-green-50/30 cursor-pointer transition-colors">
@@ -162,7 +172,6 @@ export default function CustomersPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 md:hidden mt-0.5">{c.phone}</p>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`text-sm px-2.5 py-1 rounded-full font-bold ${
@@ -174,14 +183,16 @@ export default function CustomersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{c.last_visit || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">{c.total_guests_brought}명</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900 hidden lg:table-cell">
+                    <td className="px-4 py-3 text-sm text-gray-700">{c.total_guests_brought}명</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                       {c.total_revenue > 0 ? formatPrice(c.total_revenue) : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{c.phone}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-600 hidden lg:table-cell">
+                    <td className="px-4 py-3 text-sm text-gray-600">{c.phone}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{c.first_visit || "-"}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-600">
                       {c.total_bbq > 0 ? `${c.total_bbq}개` : "-"}
                     </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-[120px] truncate">{c.notes || "-"}</td>
                   </tr>
                 ))
               )}
@@ -228,7 +239,9 @@ export default function CustomersPage() {
                         </span>
                       )}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{detail.customer.phone}</p>
+                    <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+                      <Phone size={13} /> {detail.customer.phone}
+                    </p>
                   </div>
                 </div>
 
@@ -283,15 +296,26 @@ export default function CustomersPage() {
                   </div>
                 </div>
 
-                {/* Visit Info */}
-                <div className="flex gap-4 mb-6 text-sm">
-                  <div>
-                    <span className="text-gray-500">첫 방문: </span>
-                    <span className="font-semibold text-gray-900">{detail.customer.first_visit || "-"}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">최근 방문: </span>
-                    <span className="font-semibold text-gray-900">{detail.customer.last_visit || "-"}</span>
+                {/* Customer Info */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 mb-2">고객 정보</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">첫 방문: </span>
+                      <span className="font-semibold text-gray-900">{detail.customer.first_visit || "-"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">최근 방문: </span>
+                      <span className="font-semibold text-gray-900">{detail.customer.last_visit || "-"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">등록일: </span>
+                      <span className="font-semibold text-gray-900">{detail.customer.created_at?.split("T")[0] || "-"}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">메모: </span>
+                      <span className="font-semibold text-gray-900">{detail.customer.notes || "-"}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -307,13 +331,10 @@ export default function CustomersPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-gray-900">{r.reservation_date}</span>
                             <span className="text-sm text-gray-500">({r.stay_nights}박)</span>
+                            {r.checkout_date && <span className="text-xs text-gray-400">~ {r.checkout_date}</span>}
                           </div>
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-                            r.status === "confirmed" ? "bg-green-100 text-green-800" :
-                            r.status === "pending" ? "bg-amber-100 text-amber-800" :
-                            "bg-red-100 text-red-700"
-                          }`}>
-                            {STATUS_LABELS[r.status]}
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>
+                            {STATUS_LABELS[r.status] || r.status}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
@@ -363,7 +384,7 @@ export default function CustomersPage() {
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
-                          <span className="text-sm text-gray-500">{r.purpose || r.purpose_raw || ""}</span>
+                          <span className="text-sm text-gray-500">{r.purpose || r.purpose_raw || ""} {r.notes ? `| ${r.notes}` : ""}</span>
                           <span className="text-sm font-bold text-primary">{formatPrice(calculateRevenue(r))}</span>
                         </div>
                       </div>

@@ -138,6 +138,8 @@ export default function CalendarPage() {
                   </div>
                   <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
                     r.status === "confirmed" ? "bg-green-100 text-green-800" :
+                    r.status === "visited" ? "bg-blue-100 text-blue-800" :
+                    r.status === "reviewed" ? "bg-purple-100 text-purple-800" :
                     r.status === "pending" ? "bg-amber-100 text-amber-800" :
                     "bg-red-100 text-red-700"
                   }`}>

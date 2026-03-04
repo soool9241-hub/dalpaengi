@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Heart,
   Users,
@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
+import { usePricing } from "@/context/SettingsContext";
 
 const questions = [
   {
@@ -88,54 +89,7 @@ const questions = [
   },
 ];
 
-const programs = [
-  {
-    id: "stay",
-    icon: Moon,
-    title: "숙박객 전용 패키지",
-    duration: "1박 2일",
-    price: "700,000원",
-    color: "from-primary to-primary-light",
-    features: [
-      "디럭스룸 1박",
-      "조식 & 석식 포함",
-      "바베큐 세트 제공",
-      "숲속 산책 가이드",
-      "명상 프로그램",
-    ],
-    bestFor: "조용한 힐링과 깊은 휴식을 원하는 분",
-  },
-  {
-    id: "half",
-    icon: Clock,
-    title: "3시간 단위 대여",
-    duration: "3시간",
-    price: "300,000원",
-    color: "from-amber-500 to-orange-500",
-    features: [
-      "회의실 또는 다이닝룸",
-      "빔프로젝터 & 음향",
-      "음료 서비스",
-      "주차 무료",
-    ],
-    bestFor: "단체 워크숍이나 짧은 모임을 계획하는 분",
-  },
-  {
-    id: "daynight",
-    icon: Sun,
-    title: "주/야간 패키지",
-    duration: "5시간",
-    price: "400,000원",
-    color: "from-rose-500 to-pink-500",
-    features: [
-      "스탠다드룸 이용",
-      "바베큐 또는 다과",
-      "보드게임 대여",
-      "캠프파이어 (야간)",
-    ],
-    bestFor: "다양한 활동과 즐거운 시간을 원하는 분",
-  },
-];
+const formatPriceStr = (n: number) => n.toLocaleString("ko-KR") + "원";
 
 function getRecommendation(answers: number[]): {
   programIdx: number;
@@ -181,6 +135,56 @@ export default function Recommend() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const { setSelectedProgramId } = useReservation();
+  const { pricing } = usePricing();
+
+  const programs = useMemo(() => [
+    {
+      id: "stay",
+      icon: Moon,
+      title: "숙박객 전용 패키지",
+      duration: "1박 2일",
+      price: formatPriceStr(pricing.stay),
+      color: "from-primary to-primary-light",
+      features: [
+        "디럭스룸 1박",
+        "조식 & 석식 포함",
+        "바베큐 세트 제공",
+        "숲속 산책 가이드",
+        "명상 프로그램",
+      ],
+      bestFor: "조용한 힐링과 깊은 휴식을 원하는 분",
+    },
+    {
+      id: "half",
+      icon: Clock,
+      title: "3시간 단위 대여",
+      duration: "3시간",
+      price: formatPriceStr(pricing.half),
+      color: "from-amber-500 to-orange-500",
+      features: [
+        "회의실 또는 다이닝룸",
+        "빔프로젝터 & 음향",
+        "음료 서비스",
+        "주차 무료",
+      ],
+      bestFor: "단체 워크숍이나 짧은 모임을 계획하는 분",
+    },
+    {
+      id: "daynight",
+      icon: Sun,
+      title: "주/야간 패키지",
+      duration: "5시간",
+      price: formatPriceStr(pricing.daynight),
+      color: "from-rose-500 to-pink-500",
+      features: [
+        "스탠다드룸 이용",
+        "바베큐 또는 다과",
+        "보드게임 대여",
+        "캠프파이어 (야간)",
+      ],
+      bestFor: "다양한 활동과 즐거운 시간을 원하는 분",
+    },
+  ], [pricing]);
 
   const currentQuestion = step >= 1 && step <= 3 ? questions[step - 1] : null;
 

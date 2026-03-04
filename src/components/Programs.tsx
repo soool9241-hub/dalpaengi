@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
+import { usePricing } from "@/context/SettingsContext";
 
 const categories = [
   { id: "all", label: "전체" },
@@ -14,97 +15,98 @@ const categories = [
 
 const PROGRAM_IDS = ["stay", "stay", "half", "daynight"] as const;
 
-const programs = [
-  {
-    icon: GraduationCap,
-    title: "대학생 MT 패키지 (60명 수용가능)",
-    duration: "1박 2일",
-    price: 700000,
-    perPerson: 17500,
-    maxPeople: "제한없음",
-    categories: ["pension", "mt"],
-    tags: ["대학MT", "동아리", "대규모"],
-    tagColors: ["bg-violet-100 text-violet-600", "bg-blue-100 text-blue-600", "bg-emerald-100 text-emerald-600"],
-    gradient: "from-violet-500 to-indigo-500",
-    image: "bg-gradient-to-br from-violet-600 to-indigo-600",
-    features: [
-      "독채 전체 사용 (인원 제한 없음)",
-      "그릴 최대 6개 + 숯/토치 세트 제공",
-      "넓은 야외 바베큐장",
-      "캠프파이어 가능",
-      "보드게임/레크레이션 공간",
-      "넉넉한 주차장 (대형버스 가능)",
-    ],
-    description: "대학교 동아리 MT, 학과 MT에 최적화된 패키지! 인원 제한 없이 대규모 단체도 수용 가능합니다. 독채 전체를 사용하여 프라이빗하게 즐기세요. 그릴, 캠프파이어, 넓은 야외 공간까지 MT에 필요한 모든 것이 갖춰져 있습니다. 버스 렌트도 별도 요청 가능!",
-    highlight: true,
-  },
-  {
-    icon: Moon,
-    title: "숙박 패키지",
-    duration: "1박 2일",
-    price: 700000,
-    perPerson: 46667,
-    maxPeople: "제한없음",
-    categories: ["pension", "healing", "family"],
-    tags: ["숙박", "독채", "15명기본"],
-    tagColors: ["bg-primary/10 text-primary", "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-600"],
-    gradient: "from-primary to-primary-light",
-    image: "bg-gradient-to-br from-emerald-700 to-teal-600",
-    features: [
-      "독채 전체 사용 (1박)",
-      "넓은 거실 + 방 3개 + 테라스",
-      "바베큐장 이용 가능",
-      "넉넉한 주차장 완비",
-      "추가 인원 1인 10,000원",
-    ],
-    description: "15명 기본 독채 숙박 패키지입니다. 가족모임, 지인모임, 워크샵 등 다양한 목적으로 이용 가능합니다. 자연 속 프라이빗한 공간에서 편안한 1박 2일을 보내세요.",
-    highlight: true,
-  },
-  {
-    icon: Clock,
-    title: "3시간 단위 대여",
-    duration: "3시간",
-    price: 300000,
-    perPerson: 20000,
-    maxPeople: "제한없음",
-    categories: ["pension", "family"],
-    tags: ["단기대여", "미팅", "소모임"],
-    tagColors: ["bg-blue-100 text-blue-600", "bg-purple-100 text-purple-600", "bg-sage text-primary"],
-    gradient: "from-amber-500 to-orange-500",
-    image: "bg-gradient-to-br from-amber-600 to-orange-500",
-    features: [
-      "독채 3시간 이용",
-      "오전/낮/오후/저녁 선택",
-      "바베큐장 이용 가능",
-      "주차 무료",
-    ],
-    description: "짧은 시간 효율적으로 모임이나 소규모 파티를 진행할 수 있는 패키지입니다. 3시간 단위로 원하는 시간대를 선택하세요.",
-    highlight: false,
-  },
-  {
-    icon: Sun,
-    title: "주/야간 패키지",
-    duration: "5시간",
-    price: 400000,
-    perPerson: 26667,
-    maxPeople: "제한없음",
-    categories: ["pension", "family", "healing"],
-    tags: ["주간권", "야간권", "파티"],
-    tagColors: ["bg-orange-100 text-orange-600", "bg-indigo-100 text-indigo-600", "bg-pink-100 text-pink-600"],
-    gradient: "from-rose-500 to-pink-500",
-    image: "bg-gradient-to-br from-rose-600 to-pink-500",
-    features: [
-      "독채 5시간 이용",
-      "주간 (10:00~15:00) 또는 야간 (17:00~22:00)",
-      "바베큐 또는 다과 준비 가능",
-      "캠프파이어 (야간)",
-    ],
-    description: "5시간 동안 다양한 활동을 즐길 수 있는 주/야간 패키지입니다. 바베큐, 캠프파이어 등 풍성한 프로그램이 준비되어 있습니다.",
-    highlight: false,
-  },
-];
-
 export default function Programs() {
+  const { pricing } = usePricing();
+
+  const programs = useMemo(() => [
+    {
+      icon: GraduationCap,
+      title: "대학생 MT 패키지 (60명 수용가능)",
+      duration: "1박 2일",
+      price: pricing.stay,
+      perPerson: Math.round(pricing.stay / 40),
+      maxPeople: "제한없음",
+      categories: ["pension", "mt"],
+      tags: ["대학MT", "동아리", "대규모"],
+      tagColors: ["bg-violet-100 text-violet-600", "bg-blue-100 text-blue-600", "bg-emerald-100 text-emerald-600"],
+      gradient: "from-violet-500 to-indigo-500",
+      image: "bg-gradient-to-br from-violet-600 to-indigo-600",
+      features: [
+        "독채 전체 사용 (인원 제한 없음)",
+        "그릴 최대 6개 + 숯/토치 세트 제공",
+        "넓은 야외 바베큐장",
+        "캠프파이어 가능",
+        "보드게임/레크레이션 공간",
+        "넉넉한 주차장 (대형버스 가능)",
+      ],
+      description: "대학교 동아리 MT, 학과 MT에 최적화된 패키지! 인원 제한 없이 대규모 단체도 수용 가능합니다. 독채 전체를 사용하여 프라이빗하게 즐기세요. 그릴, 캠프파이어, 넓은 야외 공간까지 MT에 필요한 모든 것이 갖춰져 있습니다. 버스 렌트도 별도 요청 가능!",
+      highlight: true,
+    },
+    {
+      icon: Moon,
+      title: "숙박 패키지",
+      duration: "1박 2일",
+      price: pricing.stay,
+      perPerson: Math.round(pricing.stay / 15),
+      maxPeople: "제한없음",
+      categories: ["pension", "healing", "family"],
+      tags: ["숙박", "독채", "15명기본"],
+      tagColors: ["bg-primary/10 text-primary", "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-600"],
+      gradient: "from-primary to-primary-light",
+      image: "bg-gradient-to-br from-emerald-700 to-teal-600",
+      features: [
+        "독채 전체 사용 (1박)",
+        "넓은 거실 + 방 3개 + 테라스",
+        "바베큐장 이용 가능",
+        "넉넉한 주차장 완비",
+        `추가 인원 1인 ${pricing.extraGuest.toLocaleString()}원`,
+      ],
+      description: "15명 기본 독채 숙박 패키지입니다. 가족모임, 지인모임, 워크샵 등 다양한 목적으로 이용 가능합니다. 자연 속 프라이빗한 공간에서 편안한 1박 2일을 보내세요.",
+      highlight: true,
+    },
+    {
+      icon: Clock,
+      title: "3시간 단위 대여",
+      duration: "3시간",
+      price: pricing.half,
+      perPerson: Math.round(pricing.half / 15),
+      maxPeople: "제한없음",
+      categories: ["pension", "family"],
+      tags: ["단기대여", "미팅", "소모임"],
+      tagColors: ["bg-blue-100 text-blue-600", "bg-purple-100 text-purple-600", "bg-sage text-primary"],
+      gradient: "from-amber-500 to-orange-500",
+      image: "bg-gradient-to-br from-amber-600 to-orange-500",
+      features: [
+        "독채 3시간 이용",
+        "오전/낮/오후/저녁 선택",
+        "바베큐장 이용 가능",
+        "주차 무료",
+      ],
+      description: "짧은 시간 효율적으로 모임이나 소규모 파티를 진행할 수 있는 패키지입니다. 3시간 단위로 원하는 시간대를 선택하세요.",
+      highlight: false,
+    },
+    {
+      icon: Sun,
+      title: "주/야간 패키지",
+      duration: "5시간",
+      price: pricing.daynight,
+      perPerson: Math.round(pricing.daynight / 15),
+      maxPeople: "제한없음",
+      categories: ["pension", "family", "healing"],
+      tags: ["주간권", "야간권", "파티"],
+      tagColors: ["bg-orange-100 text-orange-600", "bg-indigo-100 text-indigo-600", "bg-pink-100 text-pink-600"],
+      gradient: "from-rose-500 to-pink-500",
+      image: "bg-gradient-to-br from-rose-600 to-pink-500",
+      features: [
+        "독채 5시간 이용",
+        "주간 (10:00~15:00) 또는 야간 (17:00~22:00)",
+        "바베큐 또는 다과 준비 가능",
+        "캠프파이어 (야간)",
+      ],
+      description: "5시간 동안 다양한 활동을 즐길 수 있는 주/야간 패키지입니다. 바베큐, 캠프파이어 등 풍성한 프로그램이 준비되어 있습니다.",
+      highlight: false,
+    },
+  ], [pricing]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProgram, setSelectedProgram] = useState<number | null>(null);
   const { setSelectedProgramId } = useReservation();
@@ -257,7 +259,7 @@ export default function Programs() {
                 </span>
                 <span className="text-sm text-text-light mb-0.5 sm:mb-1">원</span>
                 <span className="text-xs sm:text-sm text-text-light mb-0.5 sm:mb-1 ml-1">
-                  (기본 15명 / 추가 1인 10,000원)
+                  (기본 15명 / 추가 1인 {pricing.extraGuest.toLocaleString()}원)
                 </span>
               </div>
 

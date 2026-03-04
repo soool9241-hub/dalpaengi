@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, ChevronDown, Settings } from "lucide-react";
 
 const navLinks = [
   { label: "프로그램", href: "#programs" },
@@ -86,6 +86,15 @@ export default function Header() {
               className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-light transition-all shadow-md hover:shadow-lg"
             >
               예약하기
+            </a>
+            <a
+              href="/admin-login"
+              className={`p-2 rounded-full transition-all opacity-30 hover:opacity-100 ${
+                scrolled ? "text-text-light hover:bg-gray-100" : "text-white/40 hover:bg-white/10"
+              }`}
+              title="관리자"
+            >
+              <Settings size={16} />
             </a>
           </div>
 

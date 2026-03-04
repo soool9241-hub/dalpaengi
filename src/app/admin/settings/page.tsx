@@ -1,32 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Settings, DollarSign, HelpCircle } from "lucide-react";
-import { PRICING } from "@/types/admin";
+import { useState, useEffect } from "react";
+import { Settings, DollarSign, HelpCircle, Save, Loader2, Check } from "lucide-react";
+import type { PricingData, BusRoutes } from "@/context/SettingsContext";
 
 const TABS = [
   { id: "pricing", label: "가격 설정", icon: DollarSign },
   { id: "info", label: "운영 정보", icon: HelpCircle },
 ];
 
-const PRICE_ITEMS = [
-  { key: "stay", label: "숙박 기본가 (15인)", value: PRICING.stay.base },
-  { key: "half", label: "3시간 대여 기본가", value: PRICING.half.base },
-  { key: "daynight", label: "주/야간 패키지 기본가", value: PRICING.daynight.base },
-  { key: "extraGuest", label: "추가인원 (1인)", value: PRICING.extraGuest },
-  { key: "bbqGrill", label: "BBQ 그릴 (1개)", value: PRICING.bbqGrill },
-  { key: "gasRange", label: "가스렌지 (1개)", value: PRICING.gasRange },
-  { key: "dinner", label: "저녁식사 (1인)", value: PRICING.dinner },
-  { key: "woodcraft", label: "목공키트 (1개)", value: PRICING.woodcraft },
-  { key: "potBbq", label: "항아리BBQ (1인분)", value: PRICING.potBbq },
+const PRICE_FIELDS: { key: keyof PricingData; label: string }[] = [
+  { key: "stay", label: "숙박 기본가 (15인)" },
+  { key: "half", label: "3시간 대여 기본가" },
+  { key: "daynight", label: "주/야간 패키지 기본가" },
+  { key: "extraGuest", label: "추가인원 (1인)" },
+  { key: "bbqGrill", label: "BBQ 그릴 (1개)" },
+  { key: "gasRange", label: "가스렌지 (1개)" },
+  { key: "dinner", label: "저녁식사 (1인)" },
+  { key: "woodcraft", label: "목공키트 (1개)" },
+  { key: "potBbq", label: "항아리BBQ (1인분)" },
 ];
 
-const BUS_ROUTES = [
-  { name: "전북대", price: 500000 },
-  { name: "전주대", price: 450000 },
-  { name: "원광대", price: 550000 },
-  { name: "우석대", price: 500000 },
-];
+const DEFAULT_PRICING: PricingData = {
+  stay: 700000, half: 300000, daynight: 400000,
+  extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
+  dinner: 10000, woodcraft: 20000, potBbq: 30000,
+};
+
+const DEFAULT_BUS_ROUTES: BusRoutes = {
+  "전북대": 500000, "전주대": 450000, "원광대": 550000, "우석대": 500000,
+};
 
 const OPERATION_INFO = [
   { label: "체크인", value: "오후 3:00" },
@@ -40,12 +43,87 @@ const OPERATION_INFO = [
 
 export default function SettingsPage() {
   const [tab, setTab] = useState("pricing");
+  const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING);
+  const [busRoutes, setBusRoutes] = useState<BusRoutes>(DEFAULT_BUS_ROUTES);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.pricing) setPricing(data.pricing);
+        if (data.bus_routes) setBusRoutes(data.bus_routes);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pricing, bus_routes: busRoutes }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      alert("저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePricing = (key: keyof PricingData, value: string) => {
+    const num = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
+    setPricing((prev) => ({ ...prev, [key]: num }));
+  };
+
+  const updateBusRoute = (name: string, value: string) => {
+    const num = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
+    setBusRoutes((prev) => ({ ...prev, [name]: num }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-gray-400" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-        <Settings size={24} /> 설정
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <Settings size={24} /> 설정
+        </h1>
+        {tab === "pricing" && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              saved
+                ? "bg-green-500 text-white"
+                : "bg-primary text-white hover:bg-primary/90"
+            } disabled:opacity-50`}
+          >
+            {saving ? (
+              <><Loader2 size={16} className="animate-spin" /> 저장 중...</>
+            ) : saved ? (
+              <><Check size={16} /> 저장됨</>
+            ) : (
+              <><Save size={16} /> 저장</>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2">
@@ -71,25 +149,38 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <h3 className="text-base font-bold text-gray-900 mb-4">프로그램 & 옵션 가격</h3>
             <div className="space-y-0">
-              {PRICE_ITEMS.map((item) => (
+              {PRICE_FIELDS.map((item) => (
                 <div key={item.key} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
                   <span className="text-sm text-gray-700 font-medium">{item.label}</span>
-                  <span className="text-sm font-bold text-gray-900">{item.value.toLocaleString()}원</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={pricing[item.key].toLocaleString()}
+                      onChange={(e) => updatePricing(item.key, e.target.value)}
+                      className="w-32 text-right text-sm font-bold text-gray-900 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                    <span className="text-sm text-gray-500">원</span>
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-gray-400 mt-4">
-              * 가격 변경은 코드에서 직접 수정 필요 (types/admin.ts)
-            </p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <h3 className="text-base font-bold text-gray-900 mb-4">버스 렌트 가격</h3>
             <div className="space-y-0">
-              {BUS_ROUTES.map((route) => (
-                <div key={route.name} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
-                  <span className="text-sm text-gray-700 font-medium">{route.name} (왕복)</span>
-                  <span className="text-sm font-bold text-gray-900">{route.price.toLocaleString()}원</span>
+              {Object.entries(busRoutes).map(([name, price]) => (
+                <div key={name} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
+                  <span className="text-sm text-gray-700 font-medium">{name} (왕복)</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={price.toLocaleString()}
+                      onChange={(e) => updateBusRoute(name, e.target.value)}
+                      className="w-32 text-right text-sm font-bold text-gray-900 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                    <span className="text-sm text-gray-500">원</span>
+                  </div>
                 </div>
               ))}
             </div>

@@ -23,7 +23,7 @@ export interface ReservationRow {
   time_slot: string | null;
   referral_source: string | null;
   source: string | null;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "confirmed" | "pending" | "cancelled" | "visited" | "reviewed";
   notes: string | null;
   reservation_year: number | null;
   reservation_month: number | null;
@@ -83,15 +83,32 @@ export const PRICING = {
   potBbq: 30000,
 } as const;
 
-export function calculateRevenue(r: ReservationRow): number {
-  const program = PRICING[r.program_type];
-  let total = program.base * (r.stay_nights || 1);
-  total += (r.extra_guests || 0) * PRICING.extraGuest;
-  total += (r.bbq_count || 0) * PRICING.bbqGrill;
-  total += (r.burner_count || 0) * PRICING.gasRange;
-  total += (r.dinner_count || 0) * PRICING.dinner;
-  total += (r.woodcraft_count || 0) * PRICING.woodcraft;
-  total += (r.pot_bbq_count || 0) * PRICING.potBbq;
+export interface DynamicPricing {
+  stay: number;
+  half: number;
+  daynight: number;
+  extraGuest: number;
+  bbqGrill: number;
+  gasRange: number;
+  dinner: number;
+  woodcraft: number;
+  potBbq: number;
+}
+
+export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPricing): number {
+  const p = dynamicPricing || {
+    stay: PRICING.stay.base, half: PRICING.half.base, daynight: PRICING.daynight.base,
+    extraGuest: PRICING.extraGuest, bbqGrill: PRICING.bbqGrill, gasRange: PRICING.gasRange,
+    dinner: PRICING.dinner, woodcraft: PRICING.woodcraft, potBbq: PRICING.potBbq,
+  };
+  const basePrice = p[r.program_type];
+  let total = basePrice * (r.stay_nights || 1);
+  total += (r.extra_guests || 0) * p.extraGuest;
+  total += (r.bbq_count || 0) * p.bbqGrill;
+  total += (r.burner_count || 0) * p.gasRange;
+  total += (r.dinner_count || 0) * p.dinner;
+  total += (r.woodcraft_count || 0) * p.woodcraft;
+  total += (r.pot_bbq_count || 0) * p.potBbq;
   return total;
 }
 
@@ -102,7 +119,9 @@ export const PROGRAM_LABELS: Record<string, string> = {
 };
 
 export const STATUS_LABELS: Record<string, string> = {
-  confirmed: "확정",
+  confirmed: "예약확정",
   pending: "대기",
   cancelled: "취소",
+  visited: "방문완료",
+  reviewed: "후기완료",
 };

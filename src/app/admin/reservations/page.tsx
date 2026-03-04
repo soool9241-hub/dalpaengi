@@ -6,7 +6,9 @@ import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS } from "@/types/admin";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "전체" },
-  { value: "confirmed", label: "확정" },
+  { value: "confirmed", label: "예약확정" },
+  { value: "visited", label: "방문완료" },
+  { value: "reviewed", label: "후기완료" },
   { value: "pending", label: "대기" },
   { value: "cancelled", label: "취소" },
 ];
@@ -17,6 +19,23 @@ const PROGRAM_OPTIONS = [
   { value: "half", label: "3시간" },
   { value: "daynight", label: "주/야간" },
 ];
+
+const STATUS_COLORS: Record<string, string> = {
+  confirmed: "bg-green-100 text-green-800",
+  visited: "bg-blue-100 text-blue-800",
+  reviewed: "bg-purple-100 text-purple-800",
+  pending: "bg-amber-100 text-amber-800",
+  cancelled: "bg-red-100 text-red-700",
+};
+
+function formatOptions(r: ReservationRow): string {
+  const opts: string[] = [];
+  if (r.dinner_count > 0) opts.push(`석식${r.dinner_count}`);
+  if (r.woodcraft_count > 0) opts.push(`목공${r.woodcraft_count}`);
+  if (r.pot_bbq_count > 0) opts.push(`항아리${r.pot_bbq_count}`);
+  if (r.bus_requested) opts.push("버스");
+  return opts.length > 0 ? opts.join(", ") : "-";
+}
 
 export default function ReservationsPage() {
   const [data, setData] = useState<ReservationRow[]>([]);
@@ -154,43 +173,52 @@ export default function ReservationsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">예약자</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm hidden md:table-cell">연락처</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">연락처</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">체크인</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm hidden lg:table-cell">프로그램</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">체크아웃</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">프로그램</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">인원</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">BBQ</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">부가옵션</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">상태</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">액션</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">
+                <tr><td colSpan={10} className="text-center py-12 text-gray-400">
                   <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
                   불러오는 중...
                 </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">예약이 없습니다</td></tr>
+                <tr><td colSpan={10} className="text-center py-12 text-gray-400">예약이 없습니다</td></tr>
               ) : (
                 data.map((r) => (
                   <tr key={r.id} className="border-b border-gray-100 hover:bg-green-50/30 cursor-pointer transition-colors" onClick={() => setDetail(r)}>
                     <td className="px-4 py-3">
                       <p className="font-semibold text-gray-900 text-sm">{r.guest_name}</p>
-                      <p className="text-xs text-gray-500 md:hidden">{r.guest_phone}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{r.guest_phone}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{r.guest_phone}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {r.reservation_date}
-                      <span className="text-sm text-gray-400 ml-1">({r.stay_nights}박)</span>
+                      <span className="text-gray-400 ml-1">({r.stay_nights}박)</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{PROGRAM_LABELS[r.program_type]}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.guest_count}명</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{r.checkout_date || "-"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{PROGRAM_LABELS[r.program_type]}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">
+                      {r.guest_count}명
+                      {r.extra_guests > 0 && <span className="text-gray-400 text-xs ml-0.5">(+{r.extra_guests})</span>}
+                    </td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">
+                      {r.bbq_count > 0 ? `${r.bbq_count}개` : "-"}
+                      {r.burner_count > 0 && <span className="text-gray-400 text-xs block">렌지{r.burner_count}</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {formatOptions(r)}
+                    </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
-                        r.status === "confirmed" ? "bg-green-100 text-green-800" :
-                        r.status === "pending" ? "bg-amber-100 text-amber-800" :
-                        "bg-red-100 text-red-700"
-                      }`}>
-                        {STATUS_LABELS[r.status]}
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>
+                        {STATUS_LABELS[r.status] || r.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -198,15 +226,17 @@ export default function ReservationsPage() {
                         <select
                           value={r.status}
                           onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                          className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white"
                         >
-                          <option value="confirmed">확정</option>
+                          <option value="confirmed">예약확정</option>
+                          <option value="visited">방문완료</option>
+                          <option value="reviewed">후기완료</option>
                           <option value="pending">대기</option>
                           <option value="cancelled">취소</option>
                         </select>
                         <button
                           onClick={() => handleDelete(r.id, r.guest_name)}
-                          className="text-sm px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium"
+                          className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium"
                           title="삭제"
                         >
                           삭제
@@ -263,7 +293,9 @@ export default function ReservationsPage() {
                   onChange={(e) => handleStatusChange(detail.id, e.target.value)}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium"
                 >
-                  <option value="confirmed">확정</option>
+                  <option value="confirmed">예약확정</option>
+                  <option value="visited">방문완료</option>
+                  <option value="reviewed">후기완료</option>
                   <option value="pending">대기</option>
                   <option value="cancelled">취소</option>
                 </select>

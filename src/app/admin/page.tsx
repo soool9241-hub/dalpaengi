@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CalendarCheck, Users, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { DashboardData, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue } from "@/types/admin";
@@ -25,20 +25,43 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
   );
 }
 
+const RECENT_OPTIONS = [
+  { value: 7, label: "7일" },
+  { value: 14, label: "2주" },
+  { value: 28, label: "4주" },
+];
+
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [recentDays, setRecentDays] = useState(7);
+  const [recentReservations, setRecentReservations] = useState<ReservationRow[]>([]);
+  const [recentLoading, setRecentLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/dashboard")
+    fetch("/api/admin/dashboard?recentDays=7")
       .then((r) => {
         if (!r.ok) throw new Error("데이터 로드 실패");
         return r.json();
       })
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        setRecentReservations(d.recentReservations || []);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  }, []);
+
+  const fetchRecent = useCallback(async (days: number) => {
+    setRecentDays(days);
+    setRecentLoading(true);
+    try {
+      const res = await fetch(`/api/admin/dashboard?recentDays=${days}`);
+      const json = await res.json();
+      setRecentReservations(json.recentReservations || []);
+    } catch {}
+    setRecentLoading(false);
   }, []);
 
   if (loading) {
@@ -128,26 +151,53 @@ export default function AdminDashboard() {
         {/* Recent Reservations */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-gray-900">최근 예약</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-base font-bold text-gray-900">최근 예약</h3>
+              <div className="flex gap-1">
+                {RECENT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => fetchRecent(opt.value)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      recentDays === opt.value
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <a href="/admin/reservations" className="text-sm text-primary font-medium hover:underline">전체 보기 →</a>
           </div>
-          <div className="space-y-3">
-            {data.recentReservations.map((r: ReservationRow) => (
-              <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{r.guest_name}</p>
-                  <p className="text-sm text-gray-500">{r.reservation_date} · {r.guest_count}명 · {PROGRAM_LABELS[r.program_type]}</p>
+          {recentLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : recentReservations.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8 text-center">해당 기간 접수된 예약이 없습니다</p>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {recentReservations.map((r: ReservationRow) => (
+                <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{r.guest_name}</p>
+                    <p className="text-sm text-gray-500">{r.reservation_date} · {r.guest_count}명 · {PROGRAM_LABELS[r.program_type]}</p>
+                  </div>
+                  <span className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap ${
+                    r.status === "confirmed" ? "bg-green-100 text-green-800" :
+                    r.status === "visited" ? "bg-blue-100 text-blue-800" :
+                    r.status === "reviewed" ? "bg-purple-100 text-purple-800" :
+                    r.status === "pending" ? "bg-amber-100 text-amber-800" :
+                    "bg-red-100 text-red-700"
+                  }`}>
+                    {STATUS_LABELS[r.status]}
+                  </span>
                 </div>
-                <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
-                  r.status === "confirmed" ? "bg-green-100 text-green-800" :
-                  r.status === "pending" ? "bg-amber-100 text-amber-800" :
-                  "bg-red-100 text-red-700"
-                }`}>
-                  {STATUS_LABELS[r.status]}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Upcoming Checkins */}

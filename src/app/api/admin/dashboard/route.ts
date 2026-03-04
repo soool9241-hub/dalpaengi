@@ -29,7 +29,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const today = getDateStr(new Date());
+  const recentDays = parseInt(req.nextUrl.searchParams.get("recentDays") || "7");
+  const now = new Date();
+  const today = getDateStr(now);
+  const recentAgo = new Date(now);
+  recentAgo.setDate(now.getDate() - recentDays);
+  const recentFrom = getDateStr(recentAgo);
   const [weekStart, weekEnd] = getWeekRange();
   const [monthStart, monthEnd] = getMonthRange(0);
   const [prevMonthStart, prevMonthEnd] = getMonthRange(-1);
@@ -49,7 +54,7 @@ export async function GET(req: NextRequest) {
     supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", weekStart).lte("reservation_date", weekEnd).eq("status", "confirmed"),
     supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", monthStart).lte("reservation_date", monthEnd).eq("status", "confirmed"),
     supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).eq("status", "confirmed"),
-    supabaseAdmin.from("reservations").select("*").order("created_at", { ascending: false }).limit(5),
+    supabaseAdmin.from("reservations").select("*").gte("created_at", recentFrom).order("created_at", { ascending: false }),
     supabaseAdmin.from("reservations").select("*").gte("reservation_date", today).eq("status", "confirmed").order("reservation_date", { ascending: true }).limit(5),
     supabaseAdmin.from("reservations").select("*").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).eq("status", "confirmed"),
     supabaseAdmin.from("reservations").select("*").gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).eq("status", "confirmed"),
