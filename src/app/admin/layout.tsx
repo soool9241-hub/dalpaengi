@@ -6,7 +6,7 @@ export const metadata = { title: "관리자 | 달팽이아지트" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const authed = await isAuthenticated();
-  if (!authed) redirect("/admin/login");
+  if (!authed) redirect("/admin-login");
 
   return (
     <div className="flex min-h-screen bg-background">
