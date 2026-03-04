@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, DollarSign, HelpCircle, Star } from "lucide-react";
+import { Settings, DollarSign, HelpCircle } from "lucide-react";
 import { PRICING } from "@/types/admin";
 
 const TABS = [
@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-text-dark flex items-center gap-2">
+      <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
         <Settings size={24} /> 설정
       </h1>
 
@@ -55,8 +55,8 @@ export default function SettingsPage() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                tab === t.id ? "bg-primary text-white" : "bg-white border border-border text-text-mid hover:bg-sage/50"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                tab === t.id ? "bg-primary text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             >
               <Icon size={16} /> {t.label}
@@ -68,28 +68,28 @@ export default function SettingsPage() {
       {/* Pricing Tab */}
       {tab === "pricing" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-border p-5">
-            <h3 className="text-sm font-semibold text-text-dark mb-4">프로그램 & 옵션 가격</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="text-base font-bold text-gray-900 mb-4">프로그램 & 옵션 가격</h3>
+            <div className="space-y-0">
               {PRICE_ITEMS.map((item) => (
-                <div key={item.key} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
-                  <span className="text-sm text-text-mid">{item.label}</span>
-                  <span className="text-sm font-bold text-text-dark">{item.value.toLocaleString()}원</span>
+                <div key={item.key} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
+                  <span className="text-sm text-gray-700 font-medium">{item.label}</span>
+                  <span className="text-sm font-bold text-gray-900">{item.value.toLocaleString()}원</span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-text-light mt-4">
-              * 가격 변경은 코드에서 직접 수정 필요 (Reservation.tsx 및 types/admin.ts)
+            <p className="text-sm text-gray-400 mt-4">
+              * 가격 변경은 코드에서 직접 수정 필요 (types/admin.ts)
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-border p-5">
-            <h3 className="text-sm font-semibold text-text-dark mb-4">버스 렌트 가격</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="text-base font-bold text-gray-900 mb-4">버스 렌트 가격</h3>
+            <div className="space-y-0">
               {BUS_ROUTES.map((route) => (
-                <div key={route.name} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
-                  <span className="text-sm text-text-mid">{route.name} (왕복)</span>
-                  <span className="text-sm font-bold text-text-dark">{route.price.toLocaleString()}원</span>
+                <div key={route.name} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
+                  <span className="text-sm text-gray-700 font-medium">{route.name} (왕복)</span>
+                  <span className="text-sm font-bold text-gray-900">{route.price.toLocaleString()}원</span>
                 </div>
               ))}
             </div>
@@ -99,21 +99,21 @@ export default function SettingsPage() {
 
       {/* Info Tab */}
       {tab === "info" && (
-        <div className="bg-white rounded-2xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-text-dark mb-4">운영 정보</h3>
-          <div className="space-y-3">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-base font-bold text-gray-900 mb-4">운영 정보</h3>
+          <div className="space-y-0">
             {OPERATION_INFO.map((info) => (
-              <div key={info.label} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
-                <span className="text-sm text-text-light font-medium">{info.label}</span>
-                <span className="text-sm text-text-dark">{info.value}</span>
+              <div key={info.label} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
+                <span className="text-sm text-gray-500 font-semibold">{info.label}</span>
+                <span className="text-sm text-gray-900 font-medium">{info.value}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-sage/30 rounded-xl">
-            <h4 className="text-sm font-semibold text-text-dark mb-2">SMS 알림 수신 번호</h4>
-            <div className="space-y-1 text-sm text-text-mid">
-              <p>010-8531-9531 (대표)</p>
+          <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+            <h4 className="text-sm font-bold text-gray-900 mb-3">SMS 알림 수신 번호</h4>
+            <div className="space-y-1.5 text-sm text-gray-700">
+              <p className="font-medium">010-8531-9531 (대표)</p>
               <p>010-5314-0146</p>
               <p>010-4696-8497</p>
               <p>010-4696-5529</p>
@@ -121,8 +121,8 @@ export default function SettingsPage() {
           </div>
 
           <div className="mt-6 p-4 bg-amber-50 rounded-xl">
-            <h4 className="text-sm font-semibold text-amber-800 mb-2">환불 규정</h4>
-            <p className="text-sm text-amber-700">예약일 2주 전 취소 시 100% 환불 / 이후 환불 불가</p>
+            <h4 className="text-sm font-bold text-amber-900 mb-2">환불 규정</h4>
+            <p className="text-sm text-amber-800 font-medium">예약일 2주 전 취소 시 100% 환불 / 이후 환불 불가</p>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS } from "@/types/admin";
 
 const STATUS_OPTIONS = [
@@ -36,17 +36,21 @@ export default function ReservationsPage() {
     setLoading(true);
     const params = new URLSearchParams({ status, program, page: page.toString(), sort: "reservation_date", order: "desc" });
     if (search) params.set("search", search);
-    const res = await fetch(`/api/admin/reservations?${params}`);
-    const json = await res.json();
-    setData(json.data || []);
-    setTotal(json.total || 0);
+    try {
+      const res = await fetch(`/api/admin/reservations?${params}`);
+      const json = await res.json();
+      setData(json.data || []);
+      setTotal(json.total || 0);
+    } catch {
+      setData([]);
+      setTotal(0);
+    }
     setLoading(false);
   }, [status, program, search, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleStatusChange = async (id: number, newStatus: string) => {
-    // 취소는 확인 팝업
     if (newStatus === "cancelled") {
       const r = data.find((x) => x.id === id);
       setConfirm({ type: "cancel", id, name: r?.guest_name || "" });
@@ -68,18 +72,22 @@ export default function ReservationsPage() {
   const executeConfirm = async () => {
     if (!confirm) return;
     setActionLoading(true);
-    if (confirm.type === "cancel") {
-      await fetch("/api/admin/reservations", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: confirm.id, status: "cancelled" }),
-      });
-    } else {
-      await fetch("/api/admin/reservations", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: confirm.id }),
-      });
+    try {
+      if (confirm.type === "cancel") {
+        await fetch("/api/admin/reservations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: confirm.id, status: "cancelled" }),
+        });
+      } else {
+        await fetch("/api/admin/reservations", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: confirm.id }),
+        });
+      }
+    } catch {
+      alert("처리 중 오류가 발생했습니다.");
     }
     setActionLoading(false);
     setConfirm(null);
@@ -92,33 +100,33 @@ export default function ReservationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-dark">예약 관리</h1>
-        <a href="/admin/reservations/calendar" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors">
+        <h1 className="text-2xl font-bold text-gray-900">예약 관리</h1>
+        <a href="/admin/reservations/calendar" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors">
           <CalendarDays size={16} /> 달력 보기
         </a>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-border p-4 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { setStatus(opt.value); setPage(0); }}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                status === opt.value ? "bg-primary text-white" : "bg-sage/50 text-text-mid hover:bg-sage"
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                status === opt.value ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {opt.label}
             </button>
           ))}
-          <span className="border-l border-border mx-2" />
+          <span className="border-l border-gray-200 mx-2" />
           {PROGRAM_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { setProgram(opt.value); setPage(0); }}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                program === opt.value ? "bg-accent text-white" : "bg-sage/50 text-text-mid hover:bg-sage"
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                program === opt.value ? "bg-accent text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {opt.label}
@@ -127,57 +135,60 @@ export default function ReservationsPage() {
         </div>
         <form onSubmit={(e) => { e.preventDefault(); setSearch(searchInput); setPage(0); }} className="flex gap-2">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="이름 또는 전화번호 검색..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <button type="submit" className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">검색</button>
+          <button type="submit" className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold">검색</button>
         </form>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-border bg-sage/30">
-                <th className="text-left px-4 py-3 font-medium text-text-mid">예약자</th>
-                <th className="text-left px-4 py-3 font-medium text-text-mid hidden md:table-cell">연락처</th>
-                <th className="text-left px-4 py-3 font-medium text-text-mid">체크인</th>
-                <th className="text-left px-4 py-3 font-medium text-text-mid hidden lg:table-cell">프로그램</th>
-                <th className="text-center px-4 py-3 font-medium text-text-mid">인원</th>
-                <th className="text-center px-4 py-3 font-medium text-text-mid">상태</th>
-                <th className="text-center px-4 py-3 font-medium text-text-mid">액션</th>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">예약자</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm hidden md:table-cell">연락처</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm">체크인</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 text-sm hidden lg:table-cell">프로그램</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">인원</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">상태</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 text-sm">액션</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-text-light">불러오는 중...</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                  불러오는 중...
+                </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-text-light">예약이 없습니다</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">예약이 없습니다</td></tr>
               ) : (
                 data.map((r) => (
-                  <tr key={r.id} className="border-b border-border/50 hover:bg-sage/20 cursor-pointer transition-colors" onClick={() => setDetail(r)}>
+                  <tr key={r.id} className="border-b border-gray-100 hover:bg-green-50/30 cursor-pointer transition-colors" onClick={() => setDetail(r)}>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-text-dark">{r.guest_name}</p>
-                      <p className="text-xs text-text-light md:hidden">{r.guest_phone}</p>
+                      <p className="font-semibold text-gray-900 text-sm">{r.guest_name}</p>
+                      <p className="text-xs text-gray-500 md:hidden">{r.guest_phone}</p>
                     </td>
-                    <td className="px-4 py-3 text-text-mid hidden md:table-cell">{r.guest_phone}</td>
-                    <td className="px-4 py-3 text-text-mid">
+                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{r.guest_phone}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
                       {r.reservation_date}
-                      <span className="text-xs text-text-light ml-1">({r.stay_nights}박)</span>
+                      <span className="text-sm text-gray-400 ml-1">({r.stay_nights}박)</span>
                     </td>
-                    <td className="px-4 py-3 text-text-mid hidden lg:table-cell">{PROGRAM_LABELS[r.program_type]}</td>
-                    <td className="px-4 py-3 text-center text-text-mid">{r.guest_count}명</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{PROGRAM_LABELS[r.program_type]}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.guest_count}명</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        r.status === "confirmed" ? "bg-green-50 text-green-700" :
-                        r.status === "pending" ? "bg-amber-50 text-amber-700" :
-                        "bg-red-50 text-red-600"
+                      <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
+                        r.status === "confirmed" ? "bg-green-100 text-green-800" :
+                        r.status === "pending" ? "bg-amber-100 text-amber-800" :
+                        "bg-red-100 text-red-700"
                       }`}>
                         {STATUS_LABELS[r.status]}
                       </span>
@@ -187,7 +198,7 @@ export default function ReservationsPage() {
                         <select
                           value={r.status}
                           onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                          className="text-xs border border-border rounded-lg px-2 py-1 bg-white"
+                          className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
                         >
                           <option value="confirmed">확정</option>
                           <option value="pending">대기</option>
@@ -195,7 +206,7 @@ export default function ReservationsPage() {
                         </select>
                         <button
                           onClick={() => handleDelete(r.id, r.guest_name)}
-                          className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                          className="text-sm px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium"
                           title="삭제"
                         >
                           삭제
@@ -211,11 +222,12 @@ export default function ReservationsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <p className="text-xs text-text-light">총 {total}건 중 {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total)}</p>
-            <div className="flex gap-1">
-              <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="p-2 rounded-lg hover:bg-sage disabled:opacity-30"><ChevronLeft size={16} /></button>
-              <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="p-2 rounded-lg hover:bg-sage disabled:opacity-30"><ChevronRight size={16} /></button>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+            <p className="text-sm text-gray-500">총 {total}건 중 {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total)}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{page + 1} / {totalPages}</span>
+              <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30"><ChevronLeft size={16} /></button>
+              <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30"><ChevronRight size={16} /></button>
             </div>
           </div>
         )}
@@ -226,9 +238,9 @@ export default function ReservationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setDetail(null)} />
           <div className="relative bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6">
-            <button onClick={() => setDetail(null)} className="absolute top-4 right-4 text-text-light hover:text-text-dark text-lg">✕</button>
-            <h2 className="text-lg font-bold text-text-dark mb-4">예약 상세</h2>
-            <div className="space-y-3 text-sm">
+            <button onClick={() => setDetail(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">✕</button>
+            <h2 className="text-xl font-bold text-gray-900 mb-5">예약 상세</h2>
+            <div className="space-y-3">
               <Row label="예약자" value={detail.guest_name} />
               <Row label="연락처" value={detail.guest_phone} />
               <Row label="체크인" value={`${detail.reservation_date} (${detail.stay_nights}박)`} />
@@ -249,7 +261,7 @@ export default function ReservationsPage() {
                 <select
                   value={detail.status}
                   onChange={(e) => handleStatusChange(detail.id, e.target.value)}
-                  className="border border-border rounded-lg px-3 py-1.5 text-sm"
+                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium"
                 >
                   <option value="confirmed">확정</option>
                   <option value="pending">대기</option>
@@ -257,18 +269,18 @@ export default function ReservationsPage() {
                 </select>
               </Row>
             </div>
-            <div className="flex gap-2 mt-6 pt-4 border-t border-border">
+            <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200">
               {detail.status !== "cancelled" && (
                 <button
                   onClick={() => { setDetail(null); setConfirm({ type: "cancel", id: detail.id, name: detail.guest_name }); }}
-                  className="flex-1 py-2.5 rounded-xl bg-amber-50 text-amber-700 font-medium text-sm hover:bg-amber-100 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-50 text-amber-700 font-semibold text-sm hover:bg-amber-100 transition-colors"
                 >
                   예약 취소
                 </button>
               )}
               <button
                 onClick={() => { setDetail(null); handleDelete(detail.id, detail.guest_name); }}
-                className="flex-1 py-2.5 rounded-xl bg-red-50 text-red-600 font-medium text-sm hover:bg-red-100 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-red-50 text-red-600 font-semibold text-sm hover:bg-red-100 transition-colors"
               >
                 완전 삭제
               </button>
@@ -288,10 +300,10 @@ export default function ReservationsPage() {
               }`}>
                 <span className="text-2xl">{confirm.type === "delete" ? "🗑️" : "⚠️"}</span>
               </div>
-              <h3 className="text-lg font-bold text-text-dark">
+              <h3 className="text-xl font-bold text-gray-900">
                 {confirm.type === "delete" ? "예약 삭제" : "예약 취소"}
               </h3>
-              <p className="text-sm text-text-mid mt-2">
+              <p className="text-sm text-gray-600 mt-2">
                 <strong>{confirm.name}</strong>님의 예약을{" "}
                 {confirm.type === "delete" ? (
                   <span className="text-red-600 font-bold">완전히 삭제</span>
@@ -301,7 +313,7 @@ export default function ReservationsPage() {
                 하시겠습니까?
               </p>
               {confirm.type === "delete" && (
-                <p className="text-xs text-red-500 mt-2 bg-red-50 rounded-lg px-3 py-2">
+                <p className="text-sm text-red-600 mt-2 bg-red-50 rounded-lg px-3 py-2 font-medium">
                   삭제된 예약은 복구할 수 없습니다
                 </p>
               )}
@@ -309,14 +321,14 @@ export default function ReservationsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirm(null)}
-                className="flex-1 py-2.5 rounded-xl border border-border text-text-mid font-medium text-sm hover:bg-sage/50 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors"
               >
                 아니오
               </button>
               <button
                 onClick={executeConfirm}
                 disabled={actionLoading}
-                className={`flex-1 py-2.5 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 ${
+                className={`flex-1 py-2.5 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-50 ${
                   confirm.type === "delete" ? "bg-red-500 hover:bg-red-600" : "bg-amber-500 hover:bg-amber-600"
                 }`}
               >
@@ -332,9 +344,9 @@ export default function ReservationsPage() {
 
 function Row({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between py-2 border-b border-border/50">
-      <span className="text-text-light font-medium min-w-[80px]">{label}</span>
-      {children || <span className="text-text-dark text-right">{value}</span>}
+    <div className="flex items-start justify-between py-2.5 border-b border-gray-100">
+      <span className="text-gray-500 font-medium min-w-[80px] text-sm">{label}</span>
+      {children || <span className="text-gray-900 text-right text-sm">{value}</span>}
     </div>
   );
 }

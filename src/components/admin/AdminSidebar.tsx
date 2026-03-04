@@ -29,11 +29,11 @@ export default function AdminSidebar() {
 
   const navContent = (
     <>
-      <div className="p-5 border-b border-border">
-        <h2 className="text-lg font-bold text-text-dark flex items-center gap-2">
+      <div className="p-5 border-b border-gray-200">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <span>🐌</span> 관리자
         </h2>
-        <p className="text-xs text-text-light mt-1">달팽이아지트</p>
+        <p className="text-sm text-gray-500 mt-1">달팽이아지트</p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
@@ -45,10 +45,10 @@ export default function AdminSidebar() {
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 active
                   ? "bg-primary/10 text-primary"
-                  : "text-text-mid hover:bg-sage/50 hover:text-text-dark"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               }`}
             >
               <Icon size={18} />
@@ -58,18 +58,18 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t border-border space-y-1">
+      <div className="p-3 border-t border-gray-200 space-y-1">
         <a
           href="/"
           target="_blank"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-text-mid hover:bg-sage/50 transition-all"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all"
         >
           <ExternalLink size={18} />
           사이트 보기
         </a>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-all w-full"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all w-full"
         >
           <LogOut size={18} />
           로그아웃
@@ -83,9 +83,9 @@ export default function AdminSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-xl shadow-md border border-border"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-xl shadow-md border border-gray-200"
       >
-        <Menu size={20} className="text-text-dark" />
+        <Menu size={20} className="text-gray-900" />
       </button>
 
       {/* Mobile overlay */}
@@ -95,7 +95,7 @@ export default function AdminSidebar() {
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white flex flex-col shadow-xl">
             <button
               onClick={() => setOpen(false)}
-              className="absolute top-4 right-4 p-1 text-text-light hover:text-text-dark"
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600"
             >
               <X size={18} />
             </button>
@@ -105,7 +105,7 @@ export default function AdminSidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 bg-white border-r border-border flex-col h-screen sticky top-0">
+      <aside className="hidden lg:flex lg:w-64 bg-white border-r border-gray-200 flex-col h-screen sticky top-0">
         {navContent}
       </aside>
     </>
