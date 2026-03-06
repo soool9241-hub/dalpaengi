@@ -20,20 +20,21 @@ export default function AnalyticsPage() {
   } | null>(null);
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
   const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [month, setMonth] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`/api/admin/analytics?year=${year}`)
+    fetch(`/api/admin/analytics?year=${year}&month=${month}`)
       .then((r) => {
         if (!r.ok) throw new Error("데이터 로드 실패");
         return r.json();
       })
       .then((d) => { setData(d); setLoading(false); })
       .catch((e) => { setError(e.message); setLoading(false); });
-  }, [year]);
+  }, [year, month]);
 
   if (loading) {
     return (
@@ -46,6 +47,8 @@ export default function AnalyticsPage() {
   if (error) return <p className="text-red-500 text-base font-medium bg-red-50 px-4 py-3 rounded-xl">{error}</p>;
   if (!data) return <p className="text-gray-500 text-base">데이터를 불러올 수 없습니다.</p>;
 
+  const periodLabel = month === "all" ? `${year}년` : `${year}년 ${parseInt(month)}월`;
+
   const pieData = data.programBreakdown.map((p) => ({
     name: PROGRAM_LABELS[p.type] || p.type,
     value: p.count,
@@ -55,17 +58,30 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">매출/지표 분석</h1>
-        <select
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold"
-        >
-          {(data.years || [year]).map((y) => (
-            <option key={y} value={y}>{y}년</option>
-          ))}
-        </select>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">매출/지표 분석</h1>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="px-3 sm:px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold"
+          >
+            {(data.years || [year]).map((y) => (
+              <option key={y} value={y}>{y}년</option>
+            ))}
+          </select>
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="px-3 sm:px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold"
+          >
+            <option value="all">전체</option>
+            {Array.from({ length: 12 }, (_, i) => {
+              const m = String(i + 1).padStart(2, "0");
+              return <option key={m} value={m}>{i + 1}월</option>;
+            })}
+          </select>
+        </div>
       </div>
 
       {/* Summary KPIs */}
@@ -73,17 +89,17 @@ export default function AnalyticsPage() {
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <DollarSign size={18} className="text-green-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
-          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 매출</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 매출</p>
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Calendar size={18} className="text-blue-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
-          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 예약</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 예약</p>
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-amber-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalGuests || 0).toLocaleString()}명</p>
-          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 방문자</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 방문자</p>
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-cyan-600 mb-1.5 sm:mb-2" />

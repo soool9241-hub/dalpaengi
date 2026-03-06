@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   const url = req.nextUrl.searchParams;
   const year = url.get("year") || new Date().getFullYear().toString();
+  const month = url.get("month") || "all"; // "all" or "01"~"12"
 
   const { data: allData } = await supabaseAdmin
     .from("reservations")
@@ -19,6 +20,9 @@ export async function GET(req: NextRequest) {
 
   const reservations = (allData || []) as ReservationRow[];
   const yearData = reservations.filter((r) => r.reservation_date?.startsWith(year));
+  const filteredData = month === "all"
+    ? yearData
+    : yearData.filter((r) => r.reservation_date?.substring(5, 7) === month);
 
   // Monthly revenue + guests
   const monthlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
@@ -55,9 +59,9 @@ export async function GET(req: NextRequest) {
     .map(([y, v]) => ({ year: y, ...v }))
     .sort((a, b) => a.year.localeCompare(b.year));
 
-  // Program breakdown
+  // Program breakdown (filtered by month if selected)
   const programMap: Record<string, { count: number; guests: number; revenue: number }> = {};
-  yearData.forEach((r) => {
+  filteredData.forEach((r) => {
     const t = r.program_type;
     if (!programMap[t]) programMap[t] = { count: 0, guests: 0, revenue: 0 };
     programMap[t].count += 1;
@@ -71,9 +75,9 @@ export async function GET(req: NextRequest) {
     totalRevenue: v.revenue,
   }));
 
-  // Purpose breakdown
+  // Purpose breakdown (filtered by month if selected)
   const purposeMap: Record<string, number> = {};
-  yearData.forEach((r) => {
+  filteredData.forEach((r) => {
     const p = r.purpose || r.purpose_raw || "기타";
     purposeMap[p] = (purposeMap[p] || 0) + 1;
   });
@@ -82,8 +86,8 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  // Guest stats
-  const guestCounts = yearData.map((r) => r.guest_count || 0).filter(Boolean);
+  // Guest stats (filtered by month if selected)
+  const guestCounts = filteredData.map((r) => r.guest_count || 0).filter(Boolean);
   const avg = guestCounts.length > 0 ? Math.round(guestCounts.reduce((a, b) => a + b, 0) / guestCounts.length) : 0;
   const max = guestCounts.length > 0 ? Math.max(...guestCounts) : 0;
   const distribution = [
@@ -103,9 +107,9 @@ export async function GET(req: NextRequest) {
     purposeBreakdown,
     guestStats: { avg, max, distribution },
     years,
-    totalRevenue: yearData.reduce((sum, r) => sum + calculateRevenue(r), 0),
-    totalReservations: yearData.length,
-    totalGuests: yearData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
+    totalRevenue: filteredData.reduce((sum, r) => sum + calculateRevenue(r), 0),
+    totalReservations: filteredData.length,
+    totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
     cumulativeGuests,
     yearlyStats,
   });
