@@ -258,43 +258,6 @@ export default function Reservation() {
         return;
       }
 
-      // 1. 고객 생성 또는 조회
-      const phone = guestPhone.trim().replace(/[^0-9]/g, "");
-      let customerId: number | null = null;
-
-      const { data: existingCustomer } = await supabase
-        .from("customers")
-        .select("id")
-        .eq("phone", phone)
-        .limit(1)
-        .single();
-
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-      } else {
-        const { data: newCustomer, error: custErr } = await supabase
-          .from("customers")
-          .insert({
-            name: guestName.trim(),
-            phone: phone,
-            visit_count: 1,
-            first_visit: reservationDate,
-            last_visit: reservationDate,
-            total_guests_brought: totalGuests,
-          })
-          .select("id")
-          .single();
-
-        if (custErr) {
-          console.error("고객 생성 실패:", custErr);
-          alert("예약 저장에 실패했습니다. 다시 시도해주세요.");
-          return;
-        }
-        customerId = newCustomer.id;
-      }
-
-      // 2. 예약 생성
-      const resDate = new Date(reservationDate);
       const purposeMap: Record<string, string> = {
         stay: "숙박", half: "3시간 대여", daynight: "주/야간 패키지",
       };
@@ -313,57 +276,38 @@ export default function Reservation() {
       ciDate.setDate(ciDate.getDate() + stayNights);
       const checkoutDate = `${ciDate.getFullYear()}-${String(ciDate.getMonth() + 1).padStart(2, "0")}-${String(ciDate.getDate()).padStart(2, "0")}`;
 
-      const reservationData = {
-        customer_id: customerId,
-        guest_name: guestName.trim(),
-        guest_phone: phone,
-        reservation_date: reservationDate,
-        checkout_date: checkoutDate,
-        submitted_at: new Date().toISOString(),
-        stay_nights: stayNights,
-        guest_count: totalGuests,
-        bbq_count: bbqGrills,
-        burner_count: gasRanges,
-        program_type: programType,
-        extra_guests: extraGuests,
-        dinner_count: dinnerCount,
-        woodcraft_count: woodcraftCount,
-        pot_bbq_count: potBbqCount,
-        bus_requested: showBusForm,
-        bus_pickup_info: null,
-        bus_dropoff_info: null,
-        time_slot: selectedTimeSlot || null,
-        purpose: purposeMap[programType] || programType,
-        purpose_raw: purposeMap[programType] || programType,
-        referral_source: "website",
-        source: "website",
-        status: "confirmed",
-        notes: notes,
-      };
+      // API를 통해 예약 저장 (service_role key 사용)
+      const apiRes = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestName: guestName.trim(),
+          guestPhone: guestPhone.trim(),
+          reservationDate,
+          checkoutDate,
+          stayNights,
+          totalGuests,
+          extraGuests,
+          programType,
+          bbqGrills,
+          gasRanges,
+          dinnerCount,
+          woodcraftCount,
+          potBbqCount,
+          busRequested: showBusForm,
+          busForm: showBusForm ? busForm : null,
+          selectedTimeSlot: selectedTimeSlot || null,
+          totalPrice,
+          notes,
+          purpose: purposeMap[programType] || programType,
+        }),
+      });
 
-      const { data: insertedRes, error } = await supabase.from("reservations").insert(reservationData).select("id").single();
-
-      if (error || !insertedRes) {
-        console.error("예약 저장 실패:", error);
-        alert("예약 저장에 실패했습니다. 다시 시도해주세요.");
+      const apiJson = await apiRes.json();
+      if (!apiRes.ok || !apiJson.success) {
+        console.error("예약 API 실패:", apiJson);
+        alert("예약 저장에 실패했습니다. 다시 시도해주세요.\n" + (apiJson.error || ""));
         return;
-      }
-
-      // 버스 렌트 요청 시 bus_requests 테이블에 저장
-      if (showBusForm) {
-        const actualPickup = busForm.pickupPlace === "기타" ? busForm.customPickup : busForm.pickupPlace;
-        const actualDropoff = busForm.pickupPlace === "기타" ? busForm.customDropoff : busForm.pickupPlace;
-        await supabase.from("bus_requests").insert({
-          reservation_id: insertedRes.id,
-          manager_name: busForm.managerName,
-          manager_phone: busForm.managerPhone,
-          pickup_place: actualPickup,
-          pickup_people: busForm.pickupPeople,
-          pickup_time: busForm.pickupTime,
-          dropoff_place: actualDropoff,
-          dropoff_people: busForm.dropoffPeople,
-          dropoff_time: busForm.dropoffTime,
-        });
       }
 
       // SMS 발송
@@ -398,7 +342,7 @@ export default function Reservation() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             guestName: guestName.trim(),
-            guestPhone: phone,
+            guestPhone: guestPhone.trim().replace(/[^0-9]/g, ""),
             reservationDate: dateLabel,
             stayNights: stayNights,
             totalGuests: totalGuests,
