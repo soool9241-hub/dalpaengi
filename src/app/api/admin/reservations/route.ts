@@ -49,7 +49,12 @@ export async function PATCH(req: NextRequest) {
   const { id, ...updates } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const allowed = ["status", "notes"];
+  const allowed = [
+    "status", "notes", "guest_count", "extra_guests",
+    "bbq_count", "burner_count", "dinner_count", "woodcraft_count",
+    "pot_bbq_count", "bus_requested", "stay_nights", "reservation_date",
+    "checkout_date", "time_slot", "program_type", "guest_name", "guest_phone",
+  ];
   const filtered: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in updates) filtered[key] = updates[key];

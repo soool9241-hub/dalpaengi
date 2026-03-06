@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyRequest } from "@/lib/admin-auth";
+import { SolapiMessageService } from "solapi";
+
+const OWNER_NUMBERS = ["01085319531", "01053140146", "01046968497", "01046965529"];
+
+const messageService = new SolapiMessageService(
+  (process.env.SOLAPI_API_KEY || "").trim(),
+  (process.env.SOLAPI_API_SECRET || "").trim()
+);
+
+const fmt = (n: number) => n.toLocaleString("ko-KR") + "원";
+
+const PROGRAM_LABELS: Record<string, string> = {
+  stay: "숙박", half: "3시간 대여", daynight: "주/야간 패키지",
+};
+
+interface NotifyBody {
+  guestName: string;
+  guestPhone: string;
+  reservationDate: string;
+  stayNights: number;
+  guestCount: number;
+  extraGuests: number;
+  programType: string;
+  bbqCount: number;
+  burnerCount: number;
+  dinnerCount: number;
+  woodcraftCount: number;
+  potBbqCount: number;
+  busRequested: boolean;
+  timeSlot: string | null;
+  notes: string | null;
+  changes: string[];
+}
+
+function buildChangeMessage(d: NotifyBody): string {
+  const programLabel = PROGRAM_LABELS[d.programType] || d.programType;
+  const changesStr = d.changes.length > 0 ? d.changes.join("\n") : "옵션 변경";
+
+  return `[달팽이아지트] 예약 변경 안내
+
+■ 예약자: ${d.guestName}님
+■ 날짜: ${d.reservationDate} (${d.stayNights}박)
+■ 프로그램: ${programLabel}
+■ 인원: ${d.guestCount}명${d.extraGuests > 0 ? ` (추가 ${d.extraGuests}명)` : ""}
+${d.timeSlot ? `■ 시간대: ${d.timeSlot}\n` : ""}
+━━ 변경 내역 ━━
+${changesStr}
+
+━━ 현재 옵션 ━━
+${d.bbqCount > 0 ? `• BBQ 그릴: ${d.bbqCount}개\n` : ""}${d.burnerCount > 0 ? `• 가스렌지: ${d.burnerCount}개\n` : ""}${d.dinnerCount > 0 ? `• 저녁식사: ${d.dinnerCount}명\n` : ""}${d.woodcraftCount > 0 ? `• 목공키트: ${d.woodcraftCount}개\n` : ""}${d.potBbqCount > 0 ? `• 항아리BBQ: ${d.potBbqCount}인분\n` : ""}${d.busRequested ? "• 버스 렌트: 요청\n" : ""}${d.notes ? `\n메모: ${d.notes}` : ""}
+문의: 010-8531-9531`;
+}
+
+export async function POST(req: NextRequest) {
+  if (!(await verifyRequest(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const data: NotifyBody = await req.json();
+    const sender = (process.env.SOLAPI_SENDER || "").trim();
+    const customerPhone = data.guestPhone.replace(/[^0-9]/g, "");
+    const msg = buildChangeMessage(data);
+
+    const results = [];
+
+    // 고객에게 발송
+    results.push(await messageService.sendOne({
+      to: customerPhone, from: sender, text: msg, type: "LMS", subject: "달팽이아지트 예약변경"
+    }));
+
+    // 대표님들께 발송
+    for (const num of OWNER_NUMBERS) {
+      results.push(await messageService.sendOne({
+        to: num, from: sender, text: `[예약변경] ${data.guestName} (${data.guestPhone})\n\n${msg}`, type: "LMS", subject: "예약 변경 알림"
+      }));
+    }
+
+    return NextResponse.json({ success: true, count: results.length });
+  } catch (error) {
+    console.error("변경 알림 SMS 실패:", error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  }
+}
