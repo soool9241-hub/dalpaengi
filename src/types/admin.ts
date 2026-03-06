@@ -53,10 +53,11 @@ export interface DashboardData {
   upcomingCheckins: ReservationRow[];
   weeklyRevenue: { date: string; amount: number }[];
   programDistribution: { type: string; count: number }[];
+  totalCumulativeGuests: number;
 }
 
 export interface AnalyticsData {
-  monthlyRevenue: { month: string; amount: number; count: number; guests: number }[];
+  monthlyRevenue: { month: string; amount: number; count: number; guests: number; scheduledAmount: number; scheduledCount: number; scheduledGuests: number }[];
   programBreakdown: {
     type: string;
     count: number;

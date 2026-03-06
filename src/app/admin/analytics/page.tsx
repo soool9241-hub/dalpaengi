@@ -14,7 +14,10 @@ function formatPrice(n: number) {
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData & {
-    years?: string[]; totalRevenue?: number; totalReservations?: number; totalGuests?: number;
+    years?: string[]; totalRevenue?: number; scheduledRevenue?: number;
+    totalReservations?: number; scheduledReservations?: number;
+    totalGuests?: number; scheduledGuests?: number;
+    allTimeTotalGuests?: number;
     cumulativeGuests?: { month: string; guests: number; cumulative: number }[];
     yearlyStats?: { year: string; amount: number; count: number; guests: number }[];
   } | null>(null);
@@ -89,17 +92,26 @@ export default function AnalyticsPage() {
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <DollarSign size={18} className="text-green-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 매출</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 확정 매출</p>
+          {(data.scheduledRevenue || 0) > 0 && (
+            <p className="text-xs text-blue-500 mt-0.5">+{formatPrice(data.scheduledRevenue || 0)}원 예정</p>
+          )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Calendar size={18} className="text-blue-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 예약</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 확정 예약</p>
+          {(data.scheduledReservations || 0) > 0 && (
+            <p className="text-xs text-blue-500 mt-0.5">+{data.scheduledReservations}건 예정</p>
+          )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-amber-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalGuests || 0).toLocaleString()}명</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 방문자</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 방문자</p>
+          {(data.scheduledGuests || 0) > 0 && (
+            <p className="text-xs text-blue-500 mt-0.5">+{(data.scheduledGuests || 0).toLocaleString()}명 예정</p>
+          )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-cyan-600 mb-1.5 sm:mb-2" />
@@ -108,8 +120,8 @@ export default function AnalyticsPage() {
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <TrendingUp size={18} className="text-primary mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.guestStats.max}명</p>
-          <p className="text-xs sm:text-sm text-gray-500">최대 인원</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.allTimeTotalGuests || 0).toLocaleString()}명</p>
+          <p className="text-xs sm:text-sm text-gray-500">전체 누적 방문자</p>
         </div>
       </div>
 
@@ -128,10 +140,15 @@ export default function AnalyticsPage() {
               <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => formatPrice(v)} />
               <Tooltip
-                formatter={(v, name) => [(v as number).toLocaleString() + (name === "amount" ? "원" : "명"), name === "amount" ? "매출" : "방문자"]}
+                formatter={(v, name) => [
+                  (v as number).toLocaleString() + "원",
+                  name === "amount" ? "확정 매출" : "예정 매출",
+                ]}
                 labelFormatter={(l) => String(l).slice(5) + "월"}
               />
-              <Bar dataKey="amount" fill="#2d5016" radius={[6, 6, 0, 0]} name="amount" />
+              <Legend formatter={(v) => v === "amount" ? "확정 매출" : "예정 매출"} />
+              <Bar dataKey="amount" stackId="revenue" fill="#2d5016" radius={[0, 0, 0, 0]} name="amount" />
+              <Bar dataKey="scheduledAmount" stackId="revenue" fill="#93c5fd" radius={[6, 6, 0, 0]} name="scheduledAmount" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -140,25 +157,28 @@ export default function AnalyticsPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 px-2 text-gray-500 font-semibold">월</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약 건수</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">방문자 수</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">매출</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">방문자</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">확정 매출</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예정 매출</th>
                 </tr>
               </thead>
               <tbody>
                 {data.monthlyRevenue.map((m) => (
                   <tr key={m.month} className="border-b border-gray-100">
                     <td className="py-2 px-2 font-medium text-gray-900">{m.month.slice(5)}월</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{m.count}건</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{(m.guests || 0).toLocaleString()}명</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{m.count + (m.scheduledCount || 0)}건</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{((m.guests || 0) + (m.scheduledGuests || 0)).toLocaleString()}명</td>
                     <td className="py-2 px-2 text-right font-semibold text-gray-900">{(m.amount || 0).toLocaleString()}원</td>
+                    <td className="py-2 px-2 text-right text-blue-500">{(m.scheduledAmount || 0) > 0 ? (m.scheduledAmount || 0).toLocaleString() + "원" : "-"}</td>
                   </tr>
                 ))}
                 <tr className="bg-gray-50 font-bold">
                   <td className="py-2 px-2 text-gray-900">합계</td>
-                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + m.count, 0)}건</td>
-                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.guests || 0), 0).toLocaleString()}명</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + m.count + (m.scheduledCount || 0), 0)}건</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.guests || 0) + (m.scheduledGuests || 0), 0).toLocaleString()}명</td>
                   <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.amount || 0), 0).toLocaleString()}원</td>
+                  <td className="py-2 px-2 text-right text-blue-600">{data.monthlyRevenue.reduce((s, m) => s + (m.scheduledAmount || 0), 0).toLocaleString()}원</td>
                 </tr>
               </tbody>
             </table>
@@ -186,7 +206,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Yearly Comparison */}
-      {data.yearlyStats && data.yearlyStats.length > 1 && (
+      {data.yearlyStats && data.yearlyStats.length > 0 && (
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">연도별 비교</h3>
           <div className="overflow-x-auto">
@@ -194,20 +214,28 @@ export default function AnalyticsPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 px-2 text-gray-500 font-semibold">연도</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약 건수</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">총 방문자</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">총 매출</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">방문자</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">누적 방문자</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">매출</th>
                 </tr>
               </thead>
               <tbody>
-                {data.yearlyStats.map((ys) => (
-                  <tr key={ys.year} className={`border-b border-gray-100 ${ys.year === year ? "bg-primary/5" : ""}`}>
-                    <td className="py-2 px-2 font-medium text-gray-900">{ys.year}년</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{ys.count}건</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{ys.guests.toLocaleString()}명</td>
-                    <td className="py-2 px-2 text-right font-semibold text-gray-900">{ys.amount.toLocaleString()}원</td>
-                  </tr>
-                ))}
+                {(() => {
+                  let cumTotal = 0;
+                  return data.yearlyStats!.map((ys) => {
+                    cumTotal += ys.guests;
+                    return (
+                      <tr key={ys.year} className={`border-b border-gray-100 ${ys.year === year ? "bg-primary/5" : ""}`}>
+                        <td className="py-2 px-2 font-medium text-gray-900">{ys.year}년</td>
+                        <td className="py-2 px-2 text-right text-gray-700">{ys.count}건</td>
+                        <td className="py-2 px-2 text-right text-gray-700">{ys.guests.toLocaleString()}명</td>
+                        <td className="py-2 px-2 text-right font-semibold text-amber-700">{cumTotal.toLocaleString()}명</td>
+                        <td className="py-2 px-2 text-right font-semibold text-gray-900">{ys.amount.toLocaleString()}원</td>
+                      </tr>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
           </div>

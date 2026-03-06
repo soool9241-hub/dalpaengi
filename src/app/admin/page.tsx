@@ -101,6 +101,7 @@ export default function AdminDashboard() {
     { label: "이번 주 예약", value: `${data.weekReservations}건`, icon: CalendarCheck, color: "bg-blue-50 text-blue-600" },
     { label: "이번 달 예약", value: `${data.monthReservations.count}건`, icon: Users, color: "bg-amber-50 text-amber-600", change: { current: data.monthReservations.count, previous: data.monthReservations.prevMonthCount } },
     { label: "이번 달 매출", value: formatPrice(data.monthRevenue.amount), icon: DollarSign, color: "bg-green-50 text-green-600", change: { current: data.monthRevenue.amount, previous: data.monthRevenue.prevMonthAmount } },
+    { label: "누적 방문자", value: `${(data.totalCumulativeGuests || 0).toLocaleString()}명`, icon: Users, color: "bg-purple-50 text-purple-600" },
   ];
 
   const pieData = data.programDistribution.map((p) => ({
@@ -113,7 +114,7 @@ export default function AdminDashboard() {
       <h1 className="text-xl sm:text-2xl font-bold text-gray-900">대시보드</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           return (

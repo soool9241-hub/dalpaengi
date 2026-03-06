@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
       supabaseAdmin.from("reservations").select("*").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),
       supabaseAdmin.from("reservations").select("*").gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).neq("status", "cancelled"),
       supabaseAdmin.from("reservations").select("program_type").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),
+      supabaseAdmin.from("reservations").select("guest_count").neq("status", "cancelled"),
     ]);
 
     const safe = <T,>(i: number, fallback: T): T => {
@@ -83,6 +84,7 @@ export async function GET(req: NextRequest) {
     const monthAllRes = safe(6, { data: [] });
     const prevMonthAllRes = safe(7, { data: [] });
     const programRes = safe(8, { data: [] });
+    const allGuestsRes = safe(9, { data: [] });
 
     const todayData = todayRes.data || [];
     const monthAllData = (monthAllRes.data || []) as ReservationRow[];
@@ -122,6 +124,7 @@ export async function GET(req: NextRequest) {
       upcomingCheckins: upcomingRes.data || [],
       weeklyRevenue,
       programDistribution,
+      totalCumulativeGuests: (allGuestsRes.data || []).reduce((sum: number, r: { guest_count: number }) => sum + (r.guest_count || 0), 0),
     });
   } catch (e) {
     console.error("Dashboard API error:", e);

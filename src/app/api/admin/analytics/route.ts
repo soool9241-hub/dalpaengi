@@ -19,23 +19,32 @@ export async function GET(req: NextRequest) {
     .order("reservation_date", { ascending: true });
 
   const reservations = (allData || []) as ReservationRow[];
+  const today = new Date().toISOString().split("T")[0];
   const yearData = reservations.filter((r) => r.reservation_date?.startsWith(year));
   const filteredData = month === "all"
     ? yearData
     : yearData.filter((r) => r.reservation_date?.substring(5, 7) === month);
 
-  // Monthly revenue + guests
-  const monthlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
+  // Monthly revenue + guests (past only, exclude future dates)
+  const monthlyMap: Record<string, { amount: number; count: number; guests: number; scheduledAmount: number; scheduledCount: number; scheduledGuests: number }> = {};
   yearData.forEach((r) => {
-    const month = r.reservation_date?.substring(0, 7);
-    if (!month) return;
-    if (!monthlyMap[month]) monthlyMap[month] = { amount: 0, count: 0, guests: 0 };
-    monthlyMap[month].amount += calculateRevenue(r);
-    monthlyMap[month].count += 1;
-    monthlyMap[month].guests += r.guest_count || 0;
+    const m = r.reservation_date?.substring(0, 7);
+    if (!m) return;
+    if (!monthlyMap[m]) monthlyMap[m] = { amount: 0, count: 0, guests: 0, scheduledAmount: 0, scheduledCount: 0, scheduledGuests: 0 };
+    const rev = calculateRevenue(r);
+    const isFuture = r.reservation_date > today;
+    if (isFuture) {
+      monthlyMap[m].scheduledAmount += rev;
+      monthlyMap[m].scheduledCount += 1;
+      monthlyMap[m].scheduledGuests += r.guest_count || 0;
+    } else {
+      monthlyMap[m].amount += rev;
+      monthlyMap[m].count += 1;
+      monthlyMap[m].guests += r.guest_count || 0;
+    }
   });
   const monthlyRevenue = Object.entries(monthlyMap)
-    .map(([month, v]) => ({ month, ...v }))
+    .map(([m, v]) => ({ month: m, ...v }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
   // Cumulative guests
@@ -107,10 +116,14 @@ export async function GET(req: NextRequest) {
     purposeBreakdown,
     guestStats: { avg, max, distribution },
     years,
-    totalRevenue: filteredData.reduce((sum, r) => sum + calculateRevenue(r), 0),
-    totalReservations: filteredData.length,
-    totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
+    totalRevenue: filteredData.filter((r) => r.reservation_date <= today).reduce((sum, r) => sum + calculateRevenue(r), 0),
+    scheduledRevenue: filteredData.filter((r) => r.reservation_date > today).reduce((sum, r) => sum + calculateRevenue(r), 0),
+    totalReservations: filteredData.filter((r) => r.reservation_date <= today).length,
+    scheduledReservations: filteredData.filter((r) => r.reservation_date > today).length,
+    totalGuests: filteredData.filter((r) => r.reservation_date <= today).reduce((sum, r) => sum + (r.guest_count || 0), 0),
+    scheduledGuests: filteredData.filter((r) => r.reservation_date > today).reduce((sum, r) => sum + (r.guest_count || 0), 0),
     cumulativeGuests,
     yearlyStats,
+    allTimeTotalGuests: reservations.reduce((sum, r) => sum + (r.guest_count || 0), 0),
   });
 }
