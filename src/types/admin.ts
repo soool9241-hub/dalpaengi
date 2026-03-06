@@ -23,7 +23,7 @@ export interface ReservationRow {
   time_slot: string | null;
   referral_source: string | null;
   source: string | null;
-  status: "confirmed" | "pending" | "cancelled" | "visited" | "reviewed";
+  status: "confirmed" | "upcoming" | "visited" | "reviewed" | "cancelled";
   notes: string | null;
   reservation_year: number | null;
   reservation_month: number | null;
@@ -120,8 +120,8 @@ export const PROGRAM_LABELS: Record<string, string> = {
 
 export const STATUS_LABELS: Record<string, string> = {
   confirmed: "예약확정",
-  pending: "대기",
-  cancelled: "취소",
+  upcoming: "방문예정",
   visited: "방문완료",
-  reviewed: "후기완료",
+  reviewed: "후기남김",
+  cancelled: "예약취소",
 };

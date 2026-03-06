@@ -33,6 +33,13 @@ export async function GET(req: NextRequest) {
     const recentDays = parseInt(req.nextUrl.searchParams.get("recentDays") || "7");
     const now = new Date();
     const today = getDateStr(now);
+
+    // 자동 상태 업데이트: 체크아웃 날짜가 오늘 이전인 confirmed/upcoming → visited
+    await supabaseAdmin
+      .from("reservations")
+      .update({ status: "visited", updated_at: new Date().toISOString() })
+      .in("status", ["confirmed", "upcoming"])
+      .lt("checkout_date", today);
     const recentAgo = new Date(now);
     recentAgo.setDate(now.getDate() - recentDays);
     const recentFrom = recentAgo.toISOString();
@@ -40,16 +47,17 @@ export async function GET(req: NextRequest) {
     const [monthStart, monthEnd] = getMonthRange(0);
     const [prevMonthStart, prevMonthEnd] = getMonthRange(-1);
 
+    const activeStatuses = ["confirmed", "upcoming"];
     const results = await Promise.allSettled([
-      supabaseAdmin.from("reservations").select("guest_count").eq("reservation_date", today).eq("status", "confirmed"),
-      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", weekStart).lte("reservation_date", weekEnd).eq("status", "confirmed"),
-      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", monthStart).lte("reservation_date", monthEnd).eq("status", "confirmed"),
-      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).eq("status", "confirmed"),
+      supabaseAdmin.from("reservations").select("guest_count").eq("reservation_date", today).in("status", activeStatuses),
+      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", weekStart).lte("reservation_date", weekEnd).in("status", activeStatuses),
+      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", monthStart).lte("reservation_date", monthEnd).in("status", activeStatuses),
+      supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).in("status", activeStatuses),
       supabaseAdmin.from("reservations").select("*").gte("created_at", recentFrom).order("created_at", { ascending: false }),
-      supabaseAdmin.from("reservations").select("*").gte("reservation_date", today).eq("status", "confirmed").order("reservation_date", { ascending: true }).limit(5),
-      supabaseAdmin.from("reservations").select("*").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).eq("status", "confirmed"),
-      supabaseAdmin.from("reservations").select("*").gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).eq("status", "confirmed"),
-      supabaseAdmin.from("reservations").select("program_type").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).eq("status", "confirmed"),
+      supabaseAdmin.from("reservations").select("*").gte("reservation_date", today).in("status", activeStatuses).order("reservation_date", { ascending: true }).limit(5),
+      supabaseAdmin.from("reservations").select("*").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),
+      supabaseAdmin.from("reservations").select("*").gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).neq("status", "cancelled"),
+      supabaseAdmin.from("reservations").select("program_type").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),
     ]);
 
     const safe = <T,>(i: number, fallback: T): T => {

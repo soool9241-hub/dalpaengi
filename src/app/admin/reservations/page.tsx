@@ -6,11 +6,11 @@ import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS } from "@/types/admin";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "전체" },
-  { value: "confirmed", label: "확정" },
-  { value: "visited", label: "방문" },
-  { value: "reviewed", label: "후기" },
-  { value: "pending", label: "대기" },
-  { value: "cancelled", label: "취소" },
+  { value: "confirmed", label: "예약확정" },
+  { value: "upcoming", label: "방문예정" },
+  { value: "visited", label: "방문완료" },
+  { value: "reviewed", label: "후기남김" },
+  { value: "cancelled", label: "예약취소" },
 ];
 
 const PROGRAM_OPTIONS = [
@@ -22,9 +22,9 @@ const PROGRAM_OPTIONS = [
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: "bg-green-100 text-green-800",
+  upcoming: "bg-cyan-100 text-cyan-800",
   visited: "bg-blue-100 text-blue-800",
   reviewed: "bg-purple-100 text-purple-800",
-  pending: "bg-amber-100 text-amber-800",
   cancelled: "bg-red-100 text-red-700",
 };
 
@@ -298,10 +298,10 @@ export default function ReservationsPage() {
                       <div className="flex items-center gap-1 justify-center">
                         <select value={r.status} onChange={(e) => handleStatusChange(r.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white">
                           <option value="confirmed">예약확정</option>
+                          <option value="upcoming">방문예정</option>
                           <option value="visited">방문완료</option>
-                          <option value="reviewed">후기완료</option>
-                          <option value="pending">대기</option>
-                          <option value="cancelled">취소</option>
+                          <option value="reviewed">후기남김</option>
+                          <option value="cancelled">예약취소</option>
                         </select>
                         <button onClick={() => handleDelete(r.id, r.guest_name)} className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium">삭제</button>
                       </div>
@@ -474,10 +474,10 @@ export default function ReservationsPage() {
                   <select value={editData.status || detail.status} onChange={(e) => setEd("status", e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
                     <option value="confirmed">예약확정</option>
+                    <option value="upcoming">방문예정</option>
                     <option value="visited">방문완료</option>
-                    <option value="reviewed">후기완료</option>
-                    <option value="pending">대기</option>
-                    <option value="cancelled">취소</option>
+                    <option value="reviewed">후기남김</option>
+                    <option value="cancelled">예약취소</option>
                   </select>
                 </div>
 

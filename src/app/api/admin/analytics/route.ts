@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const { data: allData } = await supabaseAdmin
     .from("reservations")
     .select("*")
-    .eq("status", "confirmed")
+    .neq("status", "cancelled")
     .order("reservation_date", { ascending: true });
 
   const reservations = (allData || []) as ReservationRow[];
