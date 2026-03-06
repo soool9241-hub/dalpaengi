@@ -7,6 +7,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 버스 요청 단건 조회
+  const busReservationId = req.nextUrl.searchParams.get("bus_reservation_id");
+  if (busReservationId) {
+    const { data: busRequest } = await supabaseAdmin
+      .from("bus_requests")
+      .select("*")
+      .eq("reservation_id", parseInt(busReservationId))
+      .limit(1)
+      .single();
+    return NextResponse.json({ bus_request: busRequest || null });
+  }
+
   // 자동 상태 업데이트
   const today = new Date().toISOString().split("T")[0];
   const nowISO = new Date().toISOString();
@@ -64,7 +76,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, ...updates } = await req.json();
+  const { id, bus_form, ...updates } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const allowed = [
@@ -81,6 +93,38 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabaseAdmin.from("reservations").update(filtered).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 버스 렌트 요청 upsert
+  if (bus_form && updates.bus_requested) {
+    const busData = {
+      reservation_id: id,
+      manager_name: bus_form.managerName || "",
+      manager_phone: bus_form.managerPhone || "",
+      pickup_place: bus_form.pickupPlace === "기타" ? bus_form.customPickup : bus_form.pickupPlace,
+      pickup_people: bus_form.pickupPeople || "",
+      pickup_time: bus_form.pickupTime || "",
+      dropoff_place: bus_form.pickupPlace === "기타" ? bus_form.customDropoff : bus_form.pickupPlace,
+      dropoff_people: bus_form.dropoffPeople || "",
+      dropoff_time: bus_form.dropoffTime || "",
+    };
+
+    // 기존 bus_request 확인
+    const { data: existing } = await supabaseAdmin
+      .from("bus_requests")
+      .select("id")
+      .eq("reservation_id", id)
+      .limit(1)
+      .single();
+
+    if (existing) {
+      await supabaseAdmin.from("bus_requests").update(busData).eq("id", existing.id);
+    } else {
+      await supabaseAdmin.from("bus_requests").insert(busData);
+    }
+  } else if (updates.bus_requested === false) {
+    // 버스 요청 해제 시 bus_requests 삭제
+    await supabaseAdmin.from("bus_requests").delete().eq("reservation_id", id);
+  }
 
   return NextResponse.json({ success: true });
 }
