@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BarChart, Bar, ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, ComposedChart, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
 import { PROGRAM_LABELS, AnalyticsData } from "@/types/admin";
 
 const COLORS = ["#2d5016", "#4a7c28", "#8B6914", "#c49a2a", "#e8ede4"];
+const YEAR_COLORS = ["#2d5016", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
 
 function formatPrice(n: number) {
   if (n >= 10000) return (n / 10000).toFixed(0) + "만";
@@ -14,11 +15,13 @@ function formatPrice(n: number) {
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData & {
-    years?: string[]; totalRevenue?: number; scheduledRevenue?: number;
-    totalReservations?: number; scheduledReservations?: number;
-    totalGuests?: number; scheduledGuests?: number;
+    years?: string[]; totalRevenue?: number;
+    totalReservations?: number;
+    totalGuests?: number;
     allTimeTotalGuests?: number;
     cumulativeGuests?: { month: string; guests: number; cumulative: number }[];
+    monthlyGuestsByYear?: Record<string, number | string>[];
+    chartYears?: string[];
     yearlyStats?: { year: string; amount: number; count: number; guests: number }[];
   } | null>(null);
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
@@ -87,31 +90,43 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* 목차 */}
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        {[
+          { id: "kpi", label: "주요 지표" },
+          { id: "monthly-revenue", label: "월별 매출" },
+          { id: "monthly-guests", label: "연도별 방문자" },
+          { id: "yearly-compare", label: "연도별 비교" },
+          { id: "program", label: "프로그램별" },
+          { id: "purpose", label: "목적별" },
+          { id: "guest-dist", label: "인원 분포" },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-primary hover:text-white transition-colors"
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       {/* Summary KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      <div id="kpi" className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <DollarSign size={18} className="text-green-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 확정 매출</p>
-          {(data.scheduledRevenue || 0) > 0 && (
-            <p className="text-xs text-blue-500 mt-0.5">+{formatPrice(data.scheduledRevenue || 0)}원 예정</p>
-          )}
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 매출</p>
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Calendar size={18} className="text-blue-600 mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalReservations || 0) + (data.scheduledReservations || 0)}건</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
           <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 예약</p>
-          {(data.scheduledReservations || 0) > 0 && (
-            <p className="text-xs text-gray-400 mt-0.5">확정 {data.totalReservations}건 · 예정 {data.scheduledReservations}건</p>
-          )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-amber-600 mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{((data.totalGuests || 0) + (data.scheduledGuests || 0)).toLocaleString()}명</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalGuests || 0).toLocaleString()}명</p>
           <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 누적 방문자</p>
-          {(data.scheduledGuests || 0) > 0 && (
-            <p className="text-xs text-gray-400 mt-0.5">확정 {(data.totalGuests || 0).toLocaleString()}명 · 예정 {(data.scheduledGuests || 0).toLocaleString()}명</p>
-          )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <TrendingUp size={18} className="text-primary mb-1.5 sm:mb-2" />
@@ -122,7 +137,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Monthly Revenue - Chart/Table Toggle */}
-      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+      <div id="monthly-revenue" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <h3 className="text-sm sm:text-base font-bold text-gray-900">월별 매출 추이</h3>
           <div className="flex gap-1">
@@ -136,15 +151,10 @@ export default function AnalyticsPage() {
               <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => formatPrice(v)} />
               <Tooltip
-                formatter={(v, name) => [
-                  (v as number).toLocaleString() + "원",
-                  name === "amount" ? "확정 매출" : "예정 매출",
-                ]}
+                formatter={(v) => [(v as number).toLocaleString() + "원", "매출"]}
                 labelFormatter={(l) => String(l).slice(5) + "월"}
               />
-              <Legend formatter={(v) => v === "amount" ? "확정 매출" : "예정 매출"} />
-              <Bar dataKey="amount" stackId="revenue" fill="#2d5016" radius={[0, 0, 0, 0]} name="amount" />
-              <Bar dataKey="scheduledAmount" stackId="revenue" fill="#93c5fd" radius={[6, 6, 0, 0]} name="scheduledAmount" />
+              <Bar dataKey="amount" fill="#2d5016" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -155,26 +165,23 @@ export default function AnalyticsPage() {
                   <th className="text-left py-2 px-2 text-gray-500 font-semibold">월</th>
                   <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약</th>
                   <th className="text-right py-2 px-2 text-gray-500 font-semibold">방문자</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">확정 매출</th>
-                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예정 매출</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">매출</th>
                 </tr>
               </thead>
               <tbody>
                 {data.monthlyRevenue.map((m) => (
                   <tr key={m.month} className="border-b border-gray-100">
                     <td className="py-2 px-2 font-medium text-gray-900">{m.month.slice(5)}월</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{m.count + (m.scheduledCount || 0)}건</td>
-                    <td className="py-2 px-2 text-right text-gray-700">{((m.guests || 0) + (m.scheduledGuests || 0)).toLocaleString()}명</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{m.count}건</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{(m.guests || 0).toLocaleString()}명</td>
                     <td className="py-2 px-2 text-right font-semibold text-gray-900">{(m.amount || 0).toLocaleString()}원</td>
-                    <td className="py-2 px-2 text-right text-blue-500">{(m.scheduledAmount || 0) > 0 ? (m.scheduledAmount || 0).toLocaleString() + "원" : "-"}</td>
                   </tr>
                 ))}
                 <tr className="bg-gray-50 font-bold">
                   <td className="py-2 px-2 text-gray-900">합계</td>
-                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + m.count + (m.scheduledCount || 0), 0)}건</td>
-                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.guests || 0) + (m.scheduledGuests || 0), 0).toLocaleString()}명</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + m.count, 0)}건</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.guests || 0), 0).toLocaleString()}명</td>
                   <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.amount || 0), 0).toLocaleString()}원</td>
-                  <td className="py-2 px-2 text-right text-blue-600">{data.monthlyRevenue.reduce((s, m) => s + (m.scheduledAmount || 0), 0).toLocaleString()}원</td>
                 </tr>
               </tbody>
             </table>
@@ -182,28 +189,38 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Cumulative Guests + Monthly Guests */}
-      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
-        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">월별 / 누적 방문자 수</h3>
-        <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={data.cumulativeGuests || []}>
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
-            <Tooltip
-              formatter={(v, name) => [(v as number).toLocaleString() + "명", name === "guests" ? "월별 방문자" : "누적 방문자"]}
-              labelFormatter={(l) => String(l).slice(5) + "월"}
-            />
-            <Legend formatter={(v) => v === "guests" ? "월별 방문자" : "누적 방문자"} />
-            <Bar yAxisId="left" dataKey="guests" fill="#4a7c28" radius={[4, 4, 0, 0]} name="guests" />
-            <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="#c49a2a" strokeWidth={2.5} dot={{ r: 3 }} name="cumulative" />
-          </ComposedChart>
-        </ResponsiveContainer>
+      {/* Monthly Guests by Year Comparison */}
+      <div id="monthly-guests" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">연도별 월별 방문자 수 비교</h3>
+        {data.monthlyGuestsByYear && data.chartYears && data.chartYears.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data.monthlyGuestsByYear}>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v, name) => [(v as number).toLocaleString() + "명", `${name}년`]} />
+              <Legend formatter={(v) => `${v}년`} />
+              {data.chartYears.map((y, i) => (
+                <Line
+                  key={y}
+                  type="monotone"
+                  dataKey={y}
+                  stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                  strokeWidth={y === year ? 3 : 1.5}
+                  dot={{ r: y === year ? 4 : 2 }}
+                  opacity={y === year ? 1 : 0.6}
+                  name={y}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">데이터 없음</div>
+        )}
       </div>
 
       {/* Yearly Comparison */}
       {data.yearlyStats && data.yearlyStats.length > 0 && (
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <div id="yearly-compare" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">연도별 비교</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -219,7 +236,7 @@ export default function AnalyticsPage() {
               <tbody>
                 {(() => {
                   let cumTotal = 0;
-                  return data.yearlyStats!.map((ys) => {
+                  const rows = data.yearlyStats!.map((ys) => {
                     cumTotal += ys.guests;
                     return (
                       <tr key={ys.year} className={`border-b border-gray-100 ${ys.year === year ? "bg-primary/5" : ""}`}>
@@ -231,6 +248,19 @@ export default function AnalyticsPage() {
                       </tr>
                     );
                   });
+                  const totalCount = data.yearlyStats!.reduce((s, y) => s + y.count, 0);
+                  const totalGuests = data.yearlyStats!.reduce((s, y) => s + y.guests, 0);
+                  const totalAmount = data.yearlyStats!.reduce((s, y) => s + y.amount, 0);
+                  rows.push(
+                    <tr key="total" className="bg-gray-50 font-bold">
+                      <td className="py-2 px-2 text-gray-900">총합</td>
+                      <td className="py-2 px-2 text-right text-gray-900">{totalCount}건</td>
+                      <td className="py-2 px-2 text-right text-gray-900">{totalGuests.toLocaleString()}명</td>
+                      <td className="py-2 px-2 text-right text-amber-700">{totalGuests.toLocaleString()}명</td>
+                      <td className="py-2 px-2 text-right text-gray-900">{totalAmount.toLocaleString()}원</td>
+                    </tr>
+                  );
+                  return rows;
                 })()}
               </tbody>
             </table>
@@ -240,7 +270,7 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Program Breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div id="program" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <h3 className="text-base font-bold text-gray-900 mb-4">프로그램별 분석</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
@@ -301,7 +331,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Guest Distribution */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div id="guest-dist" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
         <h3 className="text-base font-bold text-gray-900 mb-4">인원 구간별 분포</h3>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={data.guestStats.distribution}>

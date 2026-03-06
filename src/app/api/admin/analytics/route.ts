@@ -25,34 +25,47 @@ export async function GET(req: NextRequest) {
     ? yearData
     : yearData.filter((r) => r.reservation_date?.substring(5, 7) === month);
 
-  // Monthly revenue + guests (past only, exclude future dates)
-  const monthlyMap: Record<string, { amount: number; count: number; guests: number; scheduledAmount: number; scheduledCount: number; scheduledGuests: number }> = {};
+  // Monthly revenue + guests (all reservations = confirmed)
+  const monthlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
   yearData.forEach((r) => {
     const m = r.reservation_date?.substring(0, 7);
     if (!m) return;
-    if (!monthlyMap[m]) monthlyMap[m] = { amount: 0, count: 0, guests: 0, scheduledAmount: 0, scheduledCount: 0, scheduledGuests: 0 };
-    const rev = calculateRevenue(r);
-    const isFuture = r.reservation_date > today;
-    if (isFuture) {
-      monthlyMap[m].scheduledAmount += rev;
-      monthlyMap[m].scheduledCount += 1;
-      monthlyMap[m].scheduledGuests += r.guest_count || 0;
-    } else {
-      monthlyMap[m].amount += rev;
-      monthlyMap[m].count += 1;
-      monthlyMap[m].guests += r.guest_count || 0;
-    }
+    if (!monthlyMap[m]) monthlyMap[m] = { amount: 0, count: 0, guests: 0 };
+    monthlyMap[m].amount += calculateRevenue(r);
+    monthlyMap[m].count += 1;
+    monthlyMap[m].guests += r.guest_count || 0;
   });
   const monthlyRevenue = Object.entries(monthlyMap)
     .map(([m, v]) => ({ month: m, ...v }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
-  // Cumulative guests
+  // Cumulative guests (current year)
   let cumGuests = 0;
   const cumulativeGuests = monthlyRevenue.map((m) => {
     cumGuests += m.guests;
     return { month: m.month, guests: m.guests, cumulative: cumGuests };
   });
+
+  // All years monthly guests for comparison chart
+  const allYearsMonthly: Record<string, Record<string, number>> = {};
+  reservations.forEach((r) => {
+    const y = r.reservation_date?.substring(0, 4);
+    const mm = r.reservation_date?.substring(5, 7);
+    if (!y || !mm) return;
+    if (!allYearsMonthly[y]) allYearsMonthly[y] = {};
+    allYearsMonthly[y][mm] = (allYearsMonthly[y][mm] || 0) + (r.guest_count || 0);
+  });
+  // Build comparison data: rows = 01~12, cols = each year
+  const monthlyGuestsByYear: Record<string, number | string>[] = [];
+  for (let i = 1; i <= 12; i++) {
+    const mm = String(i).padStart(2, "0");
+    const row: Record<string, number | string> = { month: `${i}월` };
+    for (const y of Object.keys(allYearsMonthly).sort()) {
+      row[y] = allYearsMonthly[y][mm] || 0;
+    }
+    monthlyGuestsByYear.push(row);
+  }
+  const availableYearsForChart = Object.keys(allYearsMonthly).sort();
 
   // Yearly totals (all years)
   const yearlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
@@ -116,13 +129,12 @@ export async function GET(req: NextRequest) {
     purposeBreakdown,
     guestStats: { avg, max, distribution },
     years,
-    totalRevenue: filteredData.filter((r) => r.reservation_date <= today).reduce((sum, r) => sum + calculateRevenue(r), 0),
-    scheduledRevenue: filteredData.filter((r) => r.reservation_date > today).reduce((sum, r) => sum + calculateRevenue(r), 0),
-    totalReservations: filteredData.filter((r) => r.reservation_date <= today).length,
-    scheduledReservations: filteredData.filter((r) => r.reservation_date > today).length,
-    totalGuests: filteredData.filter((r) => r.reservation_date <= today).reduce((sum, r) => sum + (r.guest_count || 0), 0),
-    scheduledGuests: filteredData.filter((r) => r.reservation_date > today).reduce((sum, r) => sum + (r.guest_count || 0), 0),
+    totalRevenue: filteredData.reduce((sum, r) => sum + calculateRevenue(r), 0),
+    totalReservations: filteredData.length,
+    totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
     cumulativeGuests,
+    monthlyGuestsByYear,
+    chartYears: availableYearsForChart,
     yearlyStats,
     allTimeTotalGuests: reservations.reduce((sum, r) => sum + (r.guest_count || 0), 0),
   });
