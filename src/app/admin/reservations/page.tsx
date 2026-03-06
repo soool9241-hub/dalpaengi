@@ -112,6 +112,7 @@ export default function ReservationsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [busForm, setBusForm] = useState<BusFormData>(EMPTY_BUS_FORM);
   const [busLoading, setBusLoading] = useState(false);
+  const [busToggle, setBusToggle] = useState(false);
   const pageSize = 20;
 
   const fetchData = useCallback(async () => {
@@ -148,6 +149,7 @@ export default function ReservationsPage() {
       status: r.status,
     });
     setBusForm(EMPTY_BUS_FORM);
+    setBusToggle(r.bus_requested);
     setIsEditing(false);
 
     // 버스 요청 데이터 fetch
@@ -223,7 +225,7 @@ export default function ReservationsPage() {
         body: JSON.stringify({
           id: detail.id,
           ...editData,
-          bus_form: (editData.bus_requested ?? detail.bus_requested) ? busForm : null,
+          bus_form: busToggle ? busForm : null,
         }),
       });
 
@@ -557,14 +559,14 @@ export default function ReservationsPage() {
                       <Bus size={14} className="text-primary" /> 버스 렌트
                     </label>
                     <div className="flex bg-gray-100 rounded-full p-0.5">
-                      <button type="button" onClick={() => setEditData((prev) => ({ ...prev, bus_requested: false }))}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${(editData.bus_requested ?? detail.bus_requested) === false ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"}`}>없음</button>
-                      <button type="button" onClick={() => setEditData((prev) => ({ ...prev, bus_requested: true }))}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${(editData.bus_requested ?? detail.bus_requested) === true ? "bg-primary text-white shadow-sm" : "text-gray-400"}`}>요청</button>
+                      <button type="button" onClick={() => { setBusToggle(false); setEditData((prev) => ({ ...prev, bus_requested: false })); }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${!busToggle ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"}`}>없음</button>
+                      <button type="button" onClick={() => { setBusToggle(true); setEditData((prev) => ({ ...prev, bus_requested: true })); }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${busToggle ? "bg-primary text-white shadow-sm" : "text-gray-400"}`}>요청</button>
                     </div>
                   </div>
 
-                  {(editData.bus_requested ?? detail.bus_requested) && (
+                  {busToggle && (
                     busLoading ? (
                       <div className="flex items-center justify-center py-4 text-gray-400 text-xs">
                         <Loader2 size={14} className="animate-spin mr-1" /> 버스 정보 불러오는 중...
