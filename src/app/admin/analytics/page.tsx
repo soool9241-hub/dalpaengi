@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <DollarSign size={18} className="text-green-600 mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
@@ -99,29 +99,25 @@ export default function AnalyticsPage() {
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Calendar size={18} className="text-blue-600 mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 확정 예약</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalReservations || 0) + (data.scheduledReservations || 0)}건</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 총 예약</p>
           {(data.scheduledReservations || 0) > 0 && (
-            <p className="text-xs text-blue-500 mt-0.5">+{data.scheduledReservations}건 예정</p>
+            <p className="text-xs text-gray-400 mt-0.5">확정 {data.totalReservations}건 · 예정 {data.scheduledReservations}건</p>
           )}
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <Users size={18} className="text-amber-600 mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalGuests || 0).toLocaleString()}명</p>
-          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 방문자</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{((data.totalGuests || 0) + (data.scheduledGuests || 0)).toLocaleString()}명</p>
+          <p className="text-xs sm:text-sm text-gray-500">{periodLabel} 누적 방문자</p>
           {(data.scheduledGuests || 0) > 0 && (
-            <p className="text-xs text-blue-500 mt-0.5">+{(data.scheduledGuests || 0).toLocaleString()}명 예정</p>
+            <p className="text-xs text-gray-400 mt-0.5">확정 {(data.totalGuests || 0).toLocaleString()}명 · 예정 {(data.scheduledGuests || 0).toLocaleString()}명</p>
           )}
-        </div>
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
-          <Users size={18} className="text-cyan-600 mb-1.5 sm:mb-2" />
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.guestStats.avg}명</p>
-          <p className="text-xs sm:text-sm text-gray-500">평균 인원</p>
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
           <TrendingUp size={18} className="text-primary mb-1.5 sm:mb-2" />
           <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.allTimeTotalGuests || 0).toLocaleString()}명</p>
           <p className="text-xs sm:text-sm text-gray-500">전체 누적 방문자</p>
+          <p className="text-xs text-gray-400 mt-0.5">평균 {data.guestStats.avg}명/건</p>
         </div>
       </div>
 
@@ -275,16 +271,32 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Purpose Breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h3 className="text-base font-bold text-gray-900 mb-4">예약 목적별 분석</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.purposeBreakdown} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis dataKey="purpose" type="category" tick={{ fontSize: 12 }} width={100} />
-              <Tooltip formatter={(v) => [(v as number) + "건", "예약"]} />
-              <Bar dataKey="count" fill="#4a7c28" radius={[0, 6, 6, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">예약 목적별 분석</h3>
+          {(() => {
+            const purposeTotal = data.purposeBreakdown.reduce((s, p) => s + p.count, 0);
+            return (
+              <div className="space-y-2.5">
+                {data.purposeBreakdown.map((p) => {
+                  const pct = purposeTotal > 0 ? Math.round((p.count / purposeTotal) * 100) : 0;
+                  return (
+                    <div key={p.purpose}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-gray-700 font-medium">{p.purpose}</span>
+                        <span className="text-sm font-semibold text-gray-900">{p.count}건 <span className="text-gray-400">({pct}%)</span></span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-primary h-2.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                {purposeTotal > 0 && (
+                  <p className="text-xs text-gray-400 text-right pt-1">총 {purposeTotal}건</p>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
