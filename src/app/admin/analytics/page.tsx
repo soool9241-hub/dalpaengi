@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
 import { PROGRAM_LABELS, AnalyticsData } from "@/types/admin";
 
@@ -13,7 +13,12 @@ function formatPrice(n: number) {
 }
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<AnalyticsData & { years?: string[]; totalRevenue?: number; totalReservations?: number } | null>(null);
+  const [data, setData] = useState<AnalyticsData & {
+    years?: string[]; totalRevenue?: number; totalReservations?: number; totalGuests?: number;
+    cumulativeGuests?: { month: string; guests: number; cumulative: number }[];
+    yearlyStats?: { year: string; amount: number; count: number; guests: number }[];
+  } | null>(null);
+  const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,44 +69,134 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <DollarSign size={20} className="text-green-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
-          <p className="text-sm text-gray-500">{year}년 총 매출</p>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <DollarSign size={18} className="text-green-600 mb-1.5 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatPrice(data.totalRevenue || 0)}원</p>
+          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 매출</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <Calendar size={20} className="text-blue-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
-          <p className="text-sm text-gray-500">{year}년 총 예약</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <Calendar size={18} className="text-blue-600 mb-1.5 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.totalReservations || 0}건</p>
+          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 예약</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <Users size={20} className="text-amber-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{data.guestStats.avg}명</p>
-          <p className="text-sm text-gray-500">평균 인원</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <Users size={18} className="text-amber-600 mb-1.5 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{(data.totalGuests || 0).toLocaleString()}명</p>
+          <p className="text-xs sm:text-sm text-gray-500">{year}년 총 방문자</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <TrendingUp size={20} className="text-primary mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{data.guestStats.max}명</p>
-          <p className="text-sm text-gray-500">최대 인원</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <Users size={18} className="text-cyan-600 mb-1.5 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.guestStats.avg}명</p>
+          <p className="text-xs sm:text-sm text-gray-500">평균 인원</p>
+        </div>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <TrendingUp size={18} className="text-primary mb-1.5 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{data.guestStats.max}명</p>
+          <p className="text-xs sm:text-sm text-gray-500">최대 인원</p>
         </div>
       </div>
 
-      {/* Monthly Revenue Chart */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h3 className="text-base font-bold text-gray-900 mb-4">월별 매출 추이</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data.monthlyRevenue}>
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
-            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatPrice(v)} />
+      {/* Monthly Revenue - Chart/Table Toggle */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h3 className="text-sm sm:text-base font-bold text-gray-900">월별 매출 추이</h3>
+          <div className="flex gap-1">
+            <button onClick={() => setViewMode("chart")} className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${viewMode === "chart" ? "bg-primary text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>차트</button>
+            <button onClick={() => setViewMode("table")} className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${viewMode === "table" ? "bg-primary text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>표</button>
+          </div>
+        </div>
+        {viewMode === "chart" ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.monthlyRevenue}>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => formatPrice(v)} />
+              <Tooltip
+                formatter={(v, name) => [(v as number).toLocaleString() + (name === "amount" ? "원" : "명"), name === "amount" ? "매출" : "방문자"]}
+                labelFormatter={(l) => String(l).slice(5) + "월"}
+              />
+              <Bar dataKey="amount" fill="#2d5016" radius={[6, 6, 0, 0]} name="amount" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-2 text-gray-500 font-semibold">월</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약 건수</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">방문자 수</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">매출</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.monthlyRevenue.map((m) => (
+                  <tr key={m.month} className="border-b border-gray-100">
+                    <td className="py-2 px-2 font-medium text-gray-900">{m.month.slice(5)}월</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{m.count}건</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{(m.guests || 0).toLocaleString()}명</td>
+                    <td className="py-2 px-2 text-right font-semibold text-gray-900">{(m.amount || 0).toLocaleString()}원</td>
+                  </tr>
+                ))}
+                <tr className="bg-gray-50 font-bold">
+                  <td className="py-2 px-2 text-gray-900">합계</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + m.count, 0)}건</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.guests || 0), 0).toLocaleString()}명</td>
+                  <td className="py-2 px-2 text-right text-gray-900">{data.monthlyRevenue.reduce((s, m) => s + (m.amount || 0), 0).toLocaleString()}원</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Cumulative Guests + Monthly Guests */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">월별 / 누적 방문자 수</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={data.cumulativeGuests || []}>
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5) + "월"} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
             <Tooltip
-              formatter={(v) => [(v as number).toLocaleString() + "원", "매출"]}
+              formatter={(v, name) => [(v as number).toLocaleString() + "명", name === "guests" ? "월별 방문자" : "누적 방문자"]}
               labelFormatter={(l) => String(l).slice(5) + "월"}
             />
-            <Bar dataKey="amount" fill="#2d5016" radius={[6, 6, 0, 0]} />
-          </BarChart>
+            <Legend formatter={(v) => v === "guests" ? "월별 방문자" : "누적 방문자"} />
+            <Bar yAxisId="left" dataKey="guests" fill="#4a7c28" radius={[4, 4, 0, 0]} name="guests" />
+            <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="#c49a2a" strokeWidth={2.5} dot={{ r: 3 }} name="cumulative" />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Yearly Comparison */}
+      {data.yearlyStats && data.yearlyStats.length > 1 && (
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">연도별 비교</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-2 text-gray-500 font-semibold">연도</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">예약 건수</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">총 방문자</th>
+                  <th className="text-right py-2 px-2 text-gray-500 font-semibold">총 매출</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.yearlyStats.map((ys) => (
+                  <tr key={ys.year} className={`border-b border-gray-100 ${ys.year === year ? "bg-primary/5" : ""}`}>
+                    <td className="py-2 px-2 font-medium text-gray-900">{ys.year}년</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{ys.count}건</td>
+                    <td className="py-2 px-2 text-right text-gray-700">{ys.guests.toLocaleString()}명</td>
+                    <td className="py-2 px-2 text-right font-semibold text-gray-900">{ys.amount.toLocaleString()}원</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Program Breakdown */}

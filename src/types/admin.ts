@@ -56,7 +56,7 @@ export interface DashboardData {
 }
 
 export interface AnalyticsData {
-  monthlyRevenue: { month: string; amount: number; count: number }[];
+  monthlyRevenue: { month: string; amount: number; count: number; guests: number }[];
   programBreakdown: {
     type: string;
     count: number;

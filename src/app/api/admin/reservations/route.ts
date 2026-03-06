@@ -7,13 +7,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 자동 상태 업데이트: 체크아웃 날짜 지난 confirmed/upcoming → visited
+  // 자동 상태 업데이트
   const today = new Date().toISOString().split("T")[0];
+  const nowISO = new Date().toISOString();
+
+  // 1) 체크아웃 지난 예약 → 방문완료
   await supabaseAdmin
     .from("reservations")
-    .update({ status: "visited", updated_at: new Date().toISOString() })
+    .update({ status: "visited", updated_at: nowISO })
     .in("status", ["confirmed", "upcoming"])
     .lt("checkout_date", today);
+
+  // 2) 입실일이 오늘 이후인 confirmed → 방문예정
+  await supabaseAdmin
+    .from("reservations")
+    .update({ status: "upcoming", updated_at: nowISO })
+    .eq("status", "confirmed")
+    .gte("reservation_date", today);
 
   const url = req.nextUrl.searchParams;
   const status = url.get("status");

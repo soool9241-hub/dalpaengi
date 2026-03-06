@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       purpose_raw: purpose,
       referral_source: "website",
       source: "website",
-      status: "confirmed",
+      status: reservationDate >= new Date().toISOString().split("T")[0] ? "upcoming" : "confirmed",
       notes,
     };
 

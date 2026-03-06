@@ -20,18 +20,40 @@ export async function GET(req: NextRequest) {
   const reservations = (allData || []) as ReservationRow[];
   const yearData = reservations.filter((r) => r.reservation_date?.startsWith(year));
 
-  // Monthly revenue
-  const monthlyMap: Record<string, { amount: number; count: number }> = {};
+  // Monthly revenue + guests
+  const monthlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
   yearData.forEach((r) => {
     const month = r.reservation_date?.substring(0, 7);
     if (!month) return;
-    if (!monthlyMap[month]) monthlyMap[month] = { amount: 0, count: 0 };
+    if (!monthlyMap[month]) monthlyMap[month] = { amount: 0, count: 0, guests: 0 };
     monthlyMap[month].amount += calculateRevenue(r);
     monthlyMap[month].count += 1;
+    monthlyMap[month].guests += r.guest_count || 0;
   });
   const monthlyRevenue = Object.entries(monthlyMap)
     .map(([month, v]) => ({ month, ...v }))
     .sort((a, b) => a.month.localeCompare(b.month));
+
+  // Cumulative guests
+  let cumGuests = 0;
+  const cumulativeGuests = monthlyRevenue.map((m) => {
+    cumGuests += m.guests;
+    return { month: m.month, guests: m.guests, cumulative: cumGuests };
+  });
+
+  // Yearly totals (all years)
+  const yearlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
+  reservations.forEach((r) => {
+    const y = r.reservation_date?.substring(0, 4);
+    if (!y) return;
+    if (!yearlyMap[y]) yearlyMap[y] = { amount: 0, count: 0, guests: 0 };
+    yearlyMap[y].amount += calculateRevenue(r);
+    yearlyMap[y].count += 1;
+    yearlyMap[y].guests += r.guest_count || 0;
+  });
+  const yearlyStats = Object.entries(yearlyMap)
+    .map(([y, v]) => ({ year: y, ...v }))
+    .sort((a, b) => a.year.localeCompare(b.year));
 
   // Program breakdown
   const programMap: Record<string, { count: number; guests: number; revenue: number }> = {};
@@ -83,5 +105,8 @@ export async function GET(req: NextRequest) {
     years,
     totalRevenue: yearData.reduce((sum, r) => sum + calculateRevenue(r), 0),
     totalReservations: yearData.length,
+    totalGuests: yearData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
+    cumulativeGuests,
+    yearlyStats,
   });
 }
