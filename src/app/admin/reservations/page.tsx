@@ -559,93 +559,104 @@ export default function ReservationsPage() {
                       <Bus size={14} className="text-primary" /> 버스 렌트
                     </label>
                     <div className="flex bg-gray-100 rounded-full p-0.5">
-                      <button type="button" onClick={() => { setBusToggle(false); setEditData((prev) => ({ ...prev, bus_requested: false })); }}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${!busToggle ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"}`}>없음</button>
-                      <button type="button" onClick={() => { setBusToggle(true); setEditData((prev) => ({ ...prev, bus_requested: true })); }}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${busToggle ? "bg-primary text-white shadow-sm" : "text-gray-400"}`}>요청</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBusToggle(false);
+                          setEditData((prev) => ({ ...prev, bus_requested: false }));
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                          !busToggle ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"
+                        }`}
+                      >
+                        없음
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBusToggle(true);
+                          setEditData((prev) => ({ ...prev, bus_requested: true }));
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                          busToggle ? "bg-primary text-white shadow-sm" : "text-gray-400"
+                        }`}
+                      >
+                        요청
+                      </button>
                     </div>
                   </div>
 
-                  {busToggle && (
-                    busLoading ? (
-                      <div className="flex items-center justify-center py-4 text-gray-400 text-xs">
-                        <Loader2 size={14} className="animate-spin mr-1" /> 버스 정보 불러오는 중...
+                  <div style={{ display: busToggle ? "block" : "none" }}>
+                    <div className="bg-gray-50 rounded-xl p-3 space-y-3">
+                      <p className="text-xs font-semibold text-gray-700">책임자 정보</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input placeholder="담당자 이름" value={busForm.managerName}
+                          onChange={(e) => setBusForm((p) => ({ ...p, managerName: e.target.value }))}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        <input placeholder="연락처" value={busForm.managerPhone}
+                          onChange={(e) => setBusForm((p) => ({ ...p, managerPhone: e.target.value }))}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
                       </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-xl p-3 space-y-3">
-                        {/* 책임자 정보 */}
-                        <p className="text-xs font-semibold text-gray-700">책임자 정보</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input placeholder="담당자 이름" value={busForm.managerName}
-                            onChange={(e) => setBusForm({ ...busForm, managerName: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                          <input placeholder="연락처" value={busForm.managerPhone}
-                            onChange={(e) => setBusForm({ ...busForm, managerPhone: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        </div>
 
-                        {/* 승차 정보 */}
-                        <p className="text-xs font-semibold text-gray-700">승차 정보</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <select value={busForm.pickupPlace}
-                            onChange={(e) => setBusForm({ ...busForm, pickupPlace: e.target.value, dropoffPlace: e.target.value })}
-                            className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">출발지 선택</option>
-                            {Object.entries(BUS_ROUTES).map(([name, price]) => (
-                              <option key={name} value={name}>{name} ({(price / 10000).toFixed(0)}만원)</option>
-                            ))}
-                            <option value="기타">기타 (직접입력)</option>
-                          </select>
-                          <input placeholder="인원" value={busForm.pickupPeople}
-                            onChange={(e) => setBusForm({ ...busForm, pickupPeople: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                          <select value={busForm.pickupTime}
-                            onChange={(e) => setBusForm({ ...busForm, pickupTime: e.target.value })}
-                            className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">시간 선택</option>
-                            {TIME_OPTIONS_PICKUP.map((t) => (
-                              <option key={t} value={t}>{t}</option>
-                            ))}
-                          </select>
-                        </div>
-                        {busForm.pickupPlace === "기타" && (
-                          <input placeholder="승차지 직접 입력" value={busForm.customPickup}
-                            onChange={(e) => setBusForm({ ...busForm, customPickup: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        )}
-
-                        {/* 하차 정보 */}
-                        <p className="text-xs font-semibold text-gray-700">하차 정보 <span className="font-normal text-gray-400">(퇴실 11시 기준)</span></p>
-                        {busForm.pickupPlace && busForm.pickupPlace !== "기타" && (
-                          <p className="text-xs text-primary">하차지: {busForm.pickupPlace} (승차지와 동일)</p>
-                        )}
-                        {busForm.pickupPlace === "기타" && (
-                          <input placeholder="하차지 직접 입력" value={busForm.customDropoff}
-                            onChange={(e) => setBusForm({ ...busForm, customDropoff: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        )}
-                        <div className="grid grid-cols-2 gap-2">
-                          <input placeholder="인원" value={busForm.dropoffPeople}
-                            onChange={(e) => setBusForm({ ...busForm, dropoffPeople: e.target.value })}
-                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                          <select value={busForm.dropoffTime}
-                            onChange={(e) => setBusForm({ ...busForm, dropoffTime: e.target.value })}
-                            className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">하차 출발시간</option>
-                            {TIME_OPTIONS_DROPOFF.map((t) => (
-                              <option key={t} value={t}>{t}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {busForm.pickupPlace && busForm.pickupPlace !== "기타" && BUS_ROUTES[busForm.pickupPlace] && (
-                          <div className="p-2 bg-primary/5 border border-primary/20 rounded-lg">
-                            <p className="text-xs text-gray-600">왕복 견적: <span className="font-bold text-primary">{BUS_ROUTES[busForm.pickupPlace].toLocaleString()}원</span></p>
-                          </div>
-                        )}
+                      <p className="text-xs font-semibold text-gray-700">승차 정보</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <select value={busForm.pickupPlace}
+                          onChange={(e) => setBusForm((p) => ({ ...p, pickupPlace: e.target.value, dropoffPlace: e.target.value }))}
+                          className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                          <option value="">출발지 선택</option>
+                          {Object.entries(BUS_ROUTES).map(([name, price]) => (
+                            <option key={name} value={name}>{name} ({(price / 10000).toFixed(0)}만원)</option>
+                          ))}
+                          <option value="기타">기타 (직접입력)</option>
+                        </select>
+                        <input placeholder="인원" value={busForm.pickupPeople}
+                          onChange={(e) => setBusForm((p) => ({ ...p, pickupPeople: e.target.value }))}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        <select value={busForm.pickupTime}
+                          onChange={(e) => setBusForm((p) => ({ ...p, pickupTime: e.target.value }))}
+                          className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                          <option value="">시간 선택</option>
+                          {TIME_OPTIONS_PICKUP.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
                       </div>
-                    )
-                  )}
+                      {busForm.pickupPlace === "기타" && (
+                        <input placeholder="승차지 직접 입력" value={busForm.customPickup}
+                          onChange={(e) => setBusForm((p) => ({ ...p, customPickup: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                      )}
+
+                      <p className="text-xs font-semibold text-gray-700">하차 정보 <span className="font-normal text-gray-400">(퇴실 11시 기준)</span></p>
+                      {busForm.pickupPlace && busForm.pickupPlace !== "기타" && (
+                        <p className="text-xs text-primary">하차지: {busForm.pickupPlace} (승차지와 동일)</p>
+                      )}
+                      {busForm.pickupPlace === "기타" && (
+                        <input placeholder="하차지 직접 입력" value={busForm.customDropoff}
+                          onChange={(e) => setBusForm((p) => ({ ...p, customDropoff: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <input placeholder="인원" value={busForm.dropoffPeople}
+                          onChange={(e) => setBusForm((p) => ({ ...p, dropoffPeople: e.target.value }))}
+                          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        <select value={busForm.dropoffTime}
+                          onChange={(e) => setBusForm((p) => ({ ...p, dropoffTime: e.target.value }))}
+                          className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                          <option value="">하차 출발시간</option>
+                          {TIME_OPTIONS_DROPOFF.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {busForm.pickupPlace && busForm.pickupPlace !== "기타" && BUS_ROUTES[busForm.pickupPlace] && (
+                        <div className="p-2 bg-primary/5 border border-primary/20 rounded-lg">
+                          <p className="text-xs text-gray-600">왕복 견적: <span className="font-bold text-primary">{BUS_ROUTES[busForm.pickupPlace].toLocaleString()}원</span></p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* 상태 */}
