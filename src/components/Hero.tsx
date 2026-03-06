@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useReservation } from "@/context/ReservationContext";
 
 function dateToStr(d: Date): string {
@@ -23,22 +22,25 @@ export default function Hero() {
   const [preferredDay, setPreferredDay] = useState(6); // 기본: 토요일
 
   const fetchBookedDates = useCallback(async () => {
-    const { data } = await supabase
-      .from("reservation_calendar")
-      .select("reservation_date, checkout_date");
+    try {
+      const res = await fetch("/api/calendar");
+      const json = await res.json();
+      const data = json.dates || [];
 
-    if (!data) return;
-    const dates = new Set<string>();
-    data.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
-      if (!r.reservation_date) return;
-      const start = new Date(r.reservation_date);
-      const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
-      if (!r.checkout_date) end.setDate(end.getDate() + 1);
-      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-        dates.add(dateToStr(d));
-      }
-    });
-    setBookedDates(dates);
+      const dates = new Set<string>();
+      data.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
+        if (!r.reservation_date) return;
+        const start = new Date(r.reservation_date);
+        const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
+        if (!r.checkout_date) end.setDate(end.getDate() + 1);
+        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+          dates.add(dateToStr(d));
+        }
+      });
+      setBookedDates(dates);
+    } catch (err) {
+      console.error("예약 날짜 조회 오류:", err);
+    }
   }, []);
 
   useEffect(() => {

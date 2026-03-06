@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
-import { supabase } from "@/lib/supabase";
 
 const POT_BBQ_MIN = 10;
 
@@ -140,22 +139,17 @@ export default function Reservation() {
   ];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
-  // Supabase에서 예약 데이터 조회 - 체크인~체크아웃 전날까지 차단 (에어비앤비 방식)
+  // 서버 API에서 예약 데이터 조회 - 체크인~체크아웃 전날까지 차단 (에어비앤비 방식)
   // 체크인 오후 3시 ~ 체크아웃 오전 11시 → 체크아웃 날짜는 새 체크인 가능
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
-      const { data, error } = await supabase
-        .from("reservation_calendar")
-        .select("reservation_date, checkout_date");
-
-      if (error) {
-        console.error("예약 데이터 조회 실패:", error);
-        return;
-      }
+      const res = await fetch("/api/calendar");
+      const json = await res.json();
+      const data = json.dates || [];
 
       const dates = new Set<string>();
-      data?.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
+      data.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
         if (!r.reservation_date) return;
         const start = new Date(r.reservation_date);
         const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
