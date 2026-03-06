@@ -7,6 +7,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 자동 상태 업데이트: 체크아웃 날짜 지난 confirmed/upcoming → visited
+  const today = new Date().toISOString().split("T")[0];
+  await supabaseAdmin
+    .from("reservations")
+    .update({ status: "visited", updated_at: new Date().toISOString() })
+    .in("status", ["confirmed", "upcoming"])
+    .lt("checkout_date", today);
+
   const url = req.nextUrl.searchParams;
   const status = url.get("status");
   const program = url.get("program");
