@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import Recommend from "@/components/Recommend";
 import Programs from "@/components/Programs";
 import Spaces from "@/components/Spaces";
+import Gallery from "@/components/Gallery";
 import Reviews from "@/components/Reviews";
 import Reservation from "@/components/Reservation";
 import FAQ from "@/components/FAQ";
@@ -21,6 +22,7 @@ export default function Home() {
         <Recommend />
         <Programs />
         <Spaces />
+        <Gallery />
         <Reviews />
         <Reservation />
         <FAQ />

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Users, Maximize, Bed, Bath, CookingPot, Sofa, DoorOpen, ShowerHead, TreePine, Shield } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Users, Maximize, Bed, Bath, CookingPot, Sofa, DoorOpen, ShowerHead, TreePine, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 
 const spaces = [
   {
@@ -12,6 +12,14 @@ const spaces = [
     amenities: ["100인치 TV", "전자레인지 4개", "정수기", "개별 난방기", "야외 바베큐 (최대 6개)", "야외 식사공간"],
     gradient: "from-emerald-500 to-teal-600",
     icon: "🏠",
+    images: [
+      "/images/living-room.jpg",
+      "/images/living-room-wide.jpg",
+      "/images/living-tv.jpg",
+      "/images/living-angle2.jpg",
+      "/images/whiteboard.jpg",
+      "/images/games.jpg",
+    ],
   },
   {
     name: "방 4개",
@@ -21,6 +29,15 @@ const spaces = [
     amenities: ["이불/베개 제공", "에어컨/난방", "콘센트 다수", "조명 개별조절"],
     gradient: "from-violet-500 to-purple-600",
     icon: "🛏️",
+    images: [
+      "/images/room.jpg",
+      "/images/room2.jpg",
+      "/images/room-1.jpg",
+      "/images/room-2.jpg",
+      "/images/room-3.jpg",
+      "/images/room-blue.jpg",
+      "/images/vr-tour.jpg",
+    ],
   },
   {
     name: "부엌",
@@ -30,6 +47,15 @@ const spaces = [
     amenities: ["대형 냉장고", "가스렌지", "전자레인지", "식기류 완비"],
     gradient: "from-amber-500 to-orange-600",
     icon: "🍳",
+    images: [
+      "/images/kitchen.jpg",
+      "/images/kitchen-wide.jpg",
+      "/images/kitchen-detail.jpg",
+      "/images/kitchen-dining.jpg",
+      "/images/dining-room.jpg",
+      "/images/dining-wide.jpg",
+      "/images/window-view.jpg",
+    ],
   },
   {
     name: "남녀 화장실 & 샤워",
@@ -39,6 +65,12 @@ const spaces = [
     amenities: ["샤워부스 남4 여4", "온수 24시간", "드라이기 비치", "수건 제공"],
     gradient: "from-sky-500 to-blue-600",
     icon: "🚿",
+    images: [
+      "/images/shower.jpg",
+      "/images/shower-2.jpg",
+      "/images/bathroom.jpg",
+      "/images/toilet.jpg",
+    ],
   },
 ];
 
@@ -52,6 +84,30 @@ const ICON_MAP = [Sofa, Bed, CookingPot, ShowerHead];
 
 export default function Spaces() {
   const [active, setActive] = useState(0);
+  const [imgIdx, setImgIdx] = useState(0);
+
+  const currentImages = spaces[active].images;
+
+  // Reset image index when tab changes
+  useEffect(() => {
+    setImgIdx(0);
+  }, [active]);
+
+  // Auto-advance slideshow
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setImgIdx((prev) => (prev + 1) % currentImages.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [active, currentImages.length]);
+
+  const prevImg = useCallback(() => {
+    setImgIdx((prev) => (prev - 1 + currentImages.length) % currentImages.length);
+  }, [currentImages.length]);
+
+  const nextImg = useCallback(() => {
+    setImgIdx((prev) => (prev + 1) % currentImages.length);
+  }, [currentImages.length]);
 
   return (
     <section id="spaces" className="py-16 sm:py-24 px-4 bg-white">
@@ -98,40 +154,76 @@ export default function Spaces() {
 
         {/* Active space detail */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Visual */}
-          <div className="relative">
-            <div
-              className={`relative h-72 sm:h-96 rounded-3xl bg-gradient-to-br ${spaces[active].gradient} flex items-center justify-center overflow-hidden transition-all duration-500`}
-            >
-              <div className="absolute inset-0 opacity-20">
-                <div
-                  className="w-full h-full"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,0.1) 35px, rgba(255,255,255,0.1) 70px)",
-                  }}
+          {/* Visual - Slideshow */}
+          <div className="relative group">
+            <div className="relative h-72 sm:h-96 rounded-3xl overflow-hidden">
+              {currentImages.map((src, i) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt={`${spaces[active].name} ${i + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                    i === imgIdx ? "opacity-100" : "opacity-0"
+                  }`}
                 />
-              </div>
-              <div className="relative text-center text-white z-10">
-                <p className="text-6xl mb-3">{spaces[active].icon}</p>
-                <p className="text-2xl font-bold">{spaces[active].name}</p>
-                <p className="text-white/70 text-sm mt-1">
+              ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {/* Info overlay */}
+              <div className="absolute bottom-6 left-6 text-white z-10">
+                <p className="text-3xl mb-1">{spaces[active].icon}</p>
+                <p className="text-xl font-bold">{spaces[active].name}</p>
+                <p className="text-white/80 text-sm mt-1">
                   {spaces[active].capacity} &middot; {spaces[active].size}
                 </p>
               </div>
 
-              {/* Navigation dots */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {spaces.map((_, i) => (
+              {/* Prev/Next arrows */}
+              <button
+                onClick={prevImg}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/50 z-10"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={nextImg}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/50 z-10"
+              >
+                <ChevronRight size={18} />
+              </button>
+
+              {/* Counter badge */}
+              <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full z-10">
+                {imgIdx + 1} / {currentImages.length}
+              </div>
+
+              {/* Dots */}
+              <div className="absolute bottom-4 right-4 flex gap-1.5 z-10">
+                {currentImages.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setActive(i)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      active === i ? "bg-white w-6" : "bg-white/40"
+                    onClick={() => setImgIdx(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === imgIdx ? "bg-white w-5" : "bg-white/40 w-1.5"
                     }`}
                   />
                 ))}
               </div>
+            </div>
+
+            {/* Thumbnail strip */}
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {currentImages.map((src, i) => (
+                <button
+                  key={src}
+                  onClick={() => setImgIdx(i)}
+                  className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
+                    i === imgIdx ? "border-primary shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           </div>
 

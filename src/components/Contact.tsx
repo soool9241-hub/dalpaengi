@@ -4,8 +4,13 @@ import { MessageCircle, Phone, Clock, CalendarCheck, LogOut } from "lucide-react
 
 export default function Contact() {
   return (
-    <section id="contact" className="py-24 px-4 bg-white">
-      <div className="max-w-4xl mx-auto">
+    <section id="contact" className="relative py-24 px-4 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-10"
+        style={{ backgroundImage: "url('/images/nature-yard.jpg')" }}
+      />
+      <div className="absolute inset-0 bg-white/90" />
+      <div className="relative max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">
             CONTACT

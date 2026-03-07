@@ -6,6 +6,7 @@ import { Menu, X, Phone, ChevronDown, Settings } from "lucide-react";
 const navLinks = [
   { label: "프로그램", href: "#programs" },
   { label: "공간", href: "#spaces" },
+  { label: "갤러리", href: "#gallery" },
   { label: "후기", href: "#reviews" },
   { label: "예약", href: "#reservation" },
   { label: "FAQ", href: "#faq" },

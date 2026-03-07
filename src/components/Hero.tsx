@@ -1,7 +1,16 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
+
+const HERO_IMAGES = [
+  "/images/exterior-main.jpg",
+  "/images/outdoor-night.jpg",
+  "/images/exterior-front.jpg",
+  "/images/bbq-area.jpg",
+  "/images/living-room-wide.jpg",
+  "/images/bbq-night.jpg",
+];
 import { useReservation } from "@/context/ReservationContext";
 
 function dateToStr(d: Date): string {
@@ -17,7 +26,16 @@ const HERO_PROGRAMS = [
 
 export default function Hero() {
   const { setSelectedProgramId, setSelectedCheckInDate, setIsMTPackage } = useReservation();
+  const [heroImgIdx, setHeroImgIdx] = useState(0);
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+
+  // Hero background slideshow
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroImgIdx((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
   const [selectedHeroProgram, setSelectedHeroProgram] = useState(0); // 0: 숙박, 1: MT
   const [preferredDay, setPreferredDay] = useState(6); // 기본: 토요일
 
@@ -86,24 +104,17 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/95 via-primary/90 to-primary-light/85" />
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
-        }}
-      />
-      <div className="absolute inset-0 opacity-20">
+      {/* Background Slideshow */}
+      {HERO_IMAGES.map((src, i) => (
         <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)",
-          }}
+          key={src}
+          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[2000ms] ${
+            i === heroImgIdx ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ backgroundImage: `url('${src}')` }}
         />
-      </div>
+      ))}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 via-primary-dark/80 to-primary-dark/70" />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <div className="animate-fade-in-up">

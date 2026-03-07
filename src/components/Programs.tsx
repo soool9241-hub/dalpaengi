@@ -30,7 +30,7 @@ export default function Programs() {
       tags: ["대학MT", "동아리", "대규모"],
       tagColors: ["bg-violet-100 text-violet-600", "bg-blue-100 text-blue-600", "bg-emerald-100 text-emerald-600"],
       gradient: "from-violet-500 to-indigo-500",
-      image: "bg-gradient-to-br from-violet-600 to-indigo-600",
+      image: "/images/bbq-night.jpg",
       features: [
         "독채 전체 사용 (인원 제한 없음)",
         "그릴 최대 6개 + 숯/토치 세트 제공",
@@ -53,7 +53,7 @@ export default function Programs() {
       tags: ["숙박", "독채", "15명기본"],
       tagColors: ["bg-primary/10 text-primary", "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-600"],
       gradient: "from-primary to-primary-light",
-      image: "bg-gradient-to-br from-emerald-700 to-teal-600",
+      image: "/images/exterior-front.jpg",
       features: [
         "독채 전체 사용 (1박)",
         "넓은 거실 + 방 3개 + 테라스",
@@ -75,7 +75,7 @@ export default function Programs() {
       tags: ["단기대여", "미팅", "소모임"],
       tagColors: ["bg-blue-100 text-blue-600", "bg-purple-100 text-purple-600", "bg-sage text-primary"],
       gradient: "from-amber-500 to-orange-500",
-      image: "bg-gradient-to-br from-amber-600 to-orange-500",
+      image: "/images/living-room.jpg",
       features: [
         "독채 3시간 이용",
         "오전/낮/오후/저녁 선택",
@@ -96,7 +96,7 @@ export default function Programs() {
       tags: ["주간권", "야간권", "파티"],
       tagColors: ["bg-orange-100 text-orange-600", "bg-indigo-100 text-indigo-600", "bg-pink-100 text-pink-600"],
       gradient: "from-rose-500 to-pink-500",
-      image: "bg-gradient-to-br from-rose-600 to-pink-500",
+      image: "/images/outdoor-night.jpg",
       features: [
         "독채 5시간 이용",
         "주간 (10:00~15:00) 또는 야간 (17:00~22:00)",
@@ -164,8 +164,9 @@ export default function Programs() {
                   className="group bg-white rounded-3xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   {/* Image Area */}
-                  <div className={`relative h-48 ${prog.image} flex items-center justify-center`}>
-                    <div className="absolute inset-0 bg-black/10" />
+                  <div className="relative h-48 overflow-hidden flex items-center justify-center">
+                    <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40" />
                     <div className="relative text-center text-white z-10">
                       <Icon size={40} className="mx-auto mb-2 opacity-80" />
                       <p className="text-lg font-bold">{prog.title}</p>
@@ -227,8 +228,9 @@ export default function Programs() {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedProgram(null)} />
           <div className="relative bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
             {/* Header */}
-            <div className={`relative h-44 ${popupProgram.image} rounded-t-3xl flex items-center justify-center`}>
-              <div className="absolute inset-0 bg-black/20 rounded-t-3xl" />
+            <div className="relative h-44 rounded-t-3xl flex items-center justify-center overflow-hidden">
+              <img src={popupProgram.image} alt={popupProgram.title} className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/40 rounded-t-3xl" />
               <div className="relative text-center text-white z-10">
                 <popupProgram.icon size={36} className="mx-auto mb-2 opacity-90" />
                 <h3 className="text-2xl font-bold">{popupProgram.title}</h3>
