@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
 
 const HERO_IMAGES = [
@@ -108,11 +109,12 @@ export default function Hero() {
       {HERO_IMAGES.map((src, i) => (
         <div
           key={src}
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[2000ms] ${
+          className={`absolute inset-0 transition-opacity duration-[2000ms] ${
             i === heroImgIdx ? "opacity-100" : "opacity-0"
           }`}
-          style={{ backgroundImage: `url('${src}')` }}
-        />
+        >
+          <Image src={src} alt="달팽이아지트" fill className="object-cover" sizes="100vw" priority={i === 0} quality={60} />
+        </div>
       ))}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 via-primary-dark/80 to-primary-dark/70" />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const categories = [
@@ -126,13 +127,15 @@ export default function Gallery() {
               <button
                 key={photo.src}
                 onClick={() => openLightbox(i)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer"
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
               >
-                <img
+                <Image
                   src={photo.src}
                   alt={photo.label}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  quality={50}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -175,11 +178,14 @@ export default function Gallery() {
           </button>
 
           {/* Image */}
-          <div className="max-w-5xl max-h-[85vh] px-16">
-            <img
+          <div className="relative max-w-5xl w-full px-16" style={{ height: "80vh" }}>
+            <Image
               src={filtered[lightbox].src}
               alt={filtered[lightbox].label}
-              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              fill
+              className="object-contain rounded-lg"
+              sizes="90vw"
+              quality={75}
             />
             <p className="text-center text-white/70 text-sm mt-3">{filtered[lightbox].label}</p>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -165,7 +166,7 @@ export default function Programs() {
                 >
                   {/* Image Area */}
                   <div className="relative h-48 overflow-hidden flex items-center justify-center">
-                    <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" />
+                    <Image src={prog.image} alt={prog.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" quality={50} />
                     <div className="absolute inset-0 bg-black/40" />
                     <div className="relative text-center text-white z-10">
                       <Icon size={40} className="mx-auto mb-2 opacity-80" />
@@ -229,7 +230,7 @@ export default function Programs() {
           <div className="relative bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
             {/* Header */}
             <div className="relative h-44 rounded-t-3xl flex items-center justify-center overflow-hidden">
-              <img src={popupProgram.image} alt={popupProgram.title} className="absolute inset-0 w-full h-full object-cover" />
+              <Image src={popupProgram.image} alt={popupProgram.title} fill className="object-cover" sizes="500px" quality={60} />
               <div className="absolute inset-0 bg-black/40 rounded-t-3xl" />
               <div className="relative text-center text-white z-10">
                 <popupProgram.icon size={36} className="mx-auto mb-2 opacity-90" />

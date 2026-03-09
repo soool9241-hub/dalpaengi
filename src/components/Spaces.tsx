@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Users, Maximize, Bed, Bath, CookingPot, Sofa, DoorOpen, ShowerHead, TreePine, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 
 const spaces = [
@@ -158,14 +159,11 @@ export default function Spaces() {
           <div className="relative group">
             <div className="relative h-72 sm:h-96 rounded-3xl overflow-hidden">
               {currentImages.map((src, i) => (
-                <img
-                  key={src}
-                  src={src}
-                  alt={`${spaces[active].name} ${i + 1}`}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                    i === imgIdx ? "opacity-100" : "opacity-0"
-                  }`}
-                />
+                <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${
+                  i === imgIdx ? "opacity-100" : "opacity-0"
+                }`}>
+                  <Image src={src} alt={`${spaces[active].name} ${i + 1}`} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" quality={60} />
+                </div>
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
@@ -217,11 +215,11 @@ export default function Spaces() {
                 <button
                   key={src}
                   onClick={() => setImgIdx(i)}
-                  className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`relative flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
                     i === imgIdx ? "border-primary shadow-md" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <Image src={src} alt="" fill className="object-cover" sizes="64px" quality={30} />
                 </button>
               ))}
             </div>
