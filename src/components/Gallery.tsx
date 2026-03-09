@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const categories = [
@@ -16,53 +15,53 @@ const categories = [
 
 const photos = [
   // 외관/야외
-  { src: "/images/exterior-main.jpg", cat: "exterior", label: "펜션 전경 (산 배경)" },
-  { src: "/images/exterior-front.jpg", cat: "exterior", label: "본관 정면" },
-  { src: "/images/exterior-side.jpg", cat: "exterior", label: "본관 측면" },
-  { src: "/images/entrance.jpg", cat: "exterior", label: "입구" },
-  { src: "/images/bbq-area.jpg", cat: "exterior", label: "야외 바베큐 공간" },
-  { src: "/images/bbq-tables.jpg", cat: "exterior", label: "야외 테이블" },
-  { src: "/images/nature-yard.jpg", cat: "exterior", label: "자연 속 마당" },
+  { src: "/img/exterior-main.jpg", cat: "exterior", label: "펜션 전경 (산 배경)" },
+  { src: "/img/exterior-front.jpg", cat: "exterior", label: "본관 정면" },
+  { src: "/img/exterior-side.jpg", cat: "exterior", label: "본관 측면" },
+  { src: "/img/entrance.jpg", cat: "exterior", label: "입구" },
+  { src: "/img/bbq-area.jpg", cat: "exterior", label: "야외 바베큐 공간" },
+  { src: "/img/bbq-tables.jpg", cat: "exterior", label: "야외 테이블" },
+  { src: "/img/nature-yard.jpg", cat: "exterior", label: "자연 속 마당" },
   // 거실
-  { src: "/images/living-room.jpg", cat: "living", label: "거실 대형 TV" },
-  { src: "/images/living-room-wide.jpg", cat: "living", label: "거실 전체" },
-  { src: "/images/living-tv.jpg", cat: "living", label: "거실 (다른 앵글)" },
-  { src: "/images/living-angle2.jpg", cat: "living", label: "거실 측면" },
-  { src: "/images/whiteboard.jpg", cat: "living", label: "화이트보드 & 쿠션" },
-  { src: "/images/games.jpg", cat: "living", label: "보드게임/놀이도구" },
+  { src: "/img/living-room.jpg", cat: "living", label: "거실 대형 TV" },
+  { src: "/img/living-room-wide.jpg", cat: "living", label: "거실 전체" },
+  { src: "/img/living-tv.jpg", cat: "living", label: "거실 (다른 앵글)" },
+  { src: "/img/living-angle2.jpg", cat: "living", label: "거실 측면" },
+  { src: "/img/whiteboard.jpg", cat: "living", label: "화이트보드 & 쿠션" },
+  { src: "/img/games.jpg", cat: "living", label: "보드게임/놀이도구" },
   // 방
-  { src: "/images/room.jpg", cat: "room", label: "방 (이불/창문)" },
-  { src: "/images/room2.jpg", cat: "room", label: "방 (TV/이불)" },
-  { src: "/images/room-1.jpg", cat: "room", label: "방 1" },
-  { src: "/images/room-2.jpg", cat: "room", label: "방 2" },
-  { src: "/images/room-3.jpg", cat: "room", label: "방 3" },
-  { src: "/images/room-blue.jpg", cat: "room", label: "방 (블루톤)" },
-  { src: "/images/vr-tour.jpg", cat: "room", label: "이불/침구 보관" },
+  { src: "/img/room.jpg", cat: "room", label: "방 (이불/창문)" },
+  { src: "/img/room2.jpg", cat: "room", label: "방 (TV/이불)" },
+  { src: "/img/room-1.jpg", cat: "room", label: "방 1" },
+  { src: "/img/room-2.jpg", cat: "room", label: "방 2" },
+  { src: "/img/room-3.jpg", cat: "room", label: "방 3" },
+  { src: "/img/room-blue.jpg", cat: "room", label: "방 (블루톤)" },
+  { src: "/img/vr-tour.jpg", cat: "room", label: "이불/침구 보관" },
   // 부엌/식당
-  { src: "/images/kitchen.jpg", cat: "kitchen", label: "부엌 (타일)" },
-  { src: "/images/kitchen-wide.jpg", cat: "kitchen", label: "부엌+식당 연결" },
-  { src: "/images/kitchen-detail.jpg", cat: "kitchen", label: "부엌+식탁 전경" },
-  { src: "/images/kitchen-dining.jpg", cat: "kitchen", label: "식당 전경" },
-  { src: "/images/dining-room.jpg", cat: "kitchen", label: "대형 식탁" },
-  { src: "/images/dining-wide.jpg", cat: "kitchen", label: "식당 (넓은 앵글)" },
-  { src: "/images/window-view.jpg", cat: "kitchen", label: "창문 뷰" },
+  { src: "/img/kitchen.jpg", cat: "kitchen", label: "부엌 (타일)" },
+  { src: "/img/kitchen-wide.jpg", cat: "kitchen", label: "부엌+식당 연결" },
+  { src: "/img/kitchen-detail.jpg", cat: "kitchen", label: "부엌+식탁 전경" },
+  { src: "/img/kitchen-dining.jpg", cat: "kitchen", label: "식당 전경" },
+  { src: "/img/dining-room.jpg", cat: "kitchen", label: "대형 식탁" },
+  { src: "/img/dining-wide.jpg", cat: "kitchen", label: "식당 (넓은 앵글)" },
+  { src: "/img/window-view.jpg", cat: "kitchen", label: "창문 뷰" },
   // 화장실/샤워
-  { src: "/images/shower.jpg", cat: "bath", label: "샤워부스" },
-  { src: "/images/shower-2.jpg", cat: "bath", label: "샤워실 2" },
-  { src: "/images/bathroom.jpg", cat: "bath", label: "화장실" },
-  { src: "/images/toilet.jpg", cat: "bath", label: "화장실 (세면대)" },
+  { src: "/img/shower.jpg", cat: "bath", label: "샤워부스" },
+  { src: "/img/shower-2.jpg", cat: "bath", label: "샤워실 2" },
+  { src: "/img/bathroom.jpg", cat: "bath", label: "화장실" },
+  { src: "/img/toilet.jpg", cat: "bath", label: "화장실 (세면대)" },
   // 활동/모임
-  { src: "/images/bbq-night.jpg", cat: "activity", label: "야간 바베큐 (MT)" },
-  { src: "/images/outdoor-night.jpg", cat: "activity", label: "야외 캠프파이어" },
-  { src: "/images/bbq-night-2.jpg", cat: "activity", label: "야간 모임" },
-  { src: "/images/campfire.jpg", cat: "activity", label: "캠프파이어" },
-  { src: "/images/group-indoor.jpg", cat: "activity", label: "단체 실내 모임" },
-  { src: "/images/group-indoor-2.jpg", cat: "activity", label: "대가족 식사" },
-  { src: "/images/group-dining.jpg", cat: "activity", label: "단체 식사" },
-  { src: "/images/yoga.jpg", cat: "activity", label: "요가/명상" },
-  { src: "/images/yoga-lying.jpg", cat: "activity", label: "힐링 프로그램" },
-  { src: "/images/group-event.jpg", cat: "activity", label: "단체 행사" },
-  { src: "/images/living-yoga.jpg", cat: "activity", label: "거실 요가 수업" },
+  { src: "/img/bbq-night.jpg", cat: "activity", label: "야간 바베큐 (MT)" },
+  { src: "/img/outdoor-night.jpg", cat: "activity", label: "야외 캠프파이어" },
+  { src: "/img/bbq-night-2.jpg", cat: "activity", label: "야간 모임" },
+  { src: "/img/campfire.jpg", cat: "activity", label: "캠프파이어" },
+  { src: "/img/group-indoor.jpg", cat: "activity", label: "단체 실내 모임" },
+  { src: "/img/group-indoor-2.jpg", cat: "activity", label: "대가족 식사" },
+  { src: "/img/group-dining.jpg", cat: "activity", label: "단체 식사" },
+  { src: "/img/yoga.jpg", cat: "activity", label: "요가/명상" },
+  { src: "/img/yoga-lying.jpg", cat: "activity", label: "힐링 프로그램" },
+  { src: "/img/group-event.jpg", cat: "activity", label: "단체 행사" },
+  { src: "/img/living-yoga.jpg", cat: "activity", label: "거실 요가 수업" },
 ];
 
 export default function Gallery() {
@@ -127,15 +126,13 @@ export default function Gallery() {
               <button
                 key={photo.src}
                 onClick={() => openLightbox(i)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer"
               >
-                <Image
+                <img
                   src={photo.src}
                   alt={photo.label}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  quality={50}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -178,14 +175,11 @@ export default function Gallery() {
           </button>
 
           {/* Image */}
-          <div className="relative max-w-5xl w-full px-16" style={{ height: "80vh" }}>
-            <Image
+          <div className="max-w-5xl max-h-[85vh] px-16">
+            <img
               src={filtered[lightbox].src}
               alt={filtered[lightbox].label}
-              fill
-              className="object-contain rounded-lg"
-              sizes="90vw"
-              quality={75}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
             />
             <p className="text-center text-white/70 text-sm mt-3">{filtered[lightbox].label}</p>
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { Users, Maximize, Bed, Bath, CookingPot, Sofa, DoorOpen, ShowerHead, TreePine, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 
 const spaces = [
@@ -14,12 +13,12 @@ const spaces = [
     gradient: "from-emerald-500 to-teal-600",
     icon: "🏠",
     images: [
-      "/images/living-room.jpg",
-      "/images/living-room-wide.jpg",
-      "/images/living-tv.jpg",
-      "/images/living-angle2.jpg",
-      "/images/whiteboard.jpg",
-      "/images/games.jpg",
+      "/img/living-room.jpg",
+      "/img/living-room-wide.jpg",
+      "/img/living-tv.jpg",
+      "/img/living-angle2.jpg",
+      "/img/whiteboard.jpg",
+      "/img/games.jpg",
     ],
   },
   {
@@ -31,13 +30,13 @@ const spaces = [
     gradient: "from-violet-500 to-purple-600",
     icon: "🛏️",
     images: [
-      "/images/room.jpg",
-      "/images/room2.jpg",
-      "/images/room-1.jpg",
-      "/images/room-2.jpg",
-      "/images/room-3.jpg",
-      "/images/room-blue.jpg",
-      "/images/vr-tour.jpg",
+      "/img/room.jpg",
+      "/img/room2.jpg",
+      "/img/room-1.jpg",
+      "/img/room-2.jpg",
+      "/img/room-3.jpg",
+      "/img/room-blue.jpg",
+      "/img/vr-tour.jpg",
     ],
   },
   {
@@ -49,13 +48,13 @@ const spaces = [
     gradient: "from-amber-500 to-orange-600",
     icon: "🍳",
     images: [
-      "/images/kitchen.jpg",
-      "/images/kitchen-wide.jpg",
-      "/images/kitchen-detail.jpg",
-      "/images/kitchen-dining.jpg",
-      "/images/dining-room.jpg",
-      "/images/dining-wide.jpg",
-      "/images/window-view.jpg",
+      "/img/kitchen.jpg",
+      "/img/kitchen-wide.jpg",
+      "/img/kitchen-detail.jpg",
+      "/img/kitchen-dining.jpg",
+      "/img/dining-room.jpg",
+      "/img/dining-wide.jpg",
+      "/img/window-view.jpg",
     ],
   },
   {
@@ -67,10 +66,10 @@ const spaces = [
     gradient: "from-sky-500 to-blue-600",
     icon: "🚿",
     images: [
-      "/images/shower.jpg",
-      "/images/shower-2.jpg",
-      "/images/bathroom.jpg",
-      "/images/toilet.jpg",
+      "/img/shower.jpg",
+      "/img/shower-2.jpg",
+      "/img/bathroom.jpg",
+      "/img/toilet.jpg",
     ],
   },
 ];
@@ -159,11 +158,15 @@ export default function Spaces() {
           <div className="relative group">
             <div className="relative h-72 sm:h-96 rounded-3xl overflow-hidden">
               {currentImages.map((src, i) => (
-                <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${
-                  i === imgIdx ? "opacity-100" : "opacity-0"
-                }`}>
-                  <Image src={src} alt={`${spaces[active].name} ${i + 1}`} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" quality={60} />
-                </div>
+                <img
+                  key={src}
+                  src={src}
+                  alt={`${spaces[active].name} ${i + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                    i === imgIdx ? "opacity-100" : "opacity-0"
+                  }`}
+                  loading="lazy"
+                />
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
@@ -215,11 +218,11 @@ export default function Spaces() {
                 <button
                   key={src}
                   onClick={() => setImgIdx(i)}
-                  className={`relative flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
                     i === imgIdx ? "border-primary shadow-md" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <Image src={src} alt="" fill className="object-cover" sizes="64px" quality={30} />
+                  <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
                 </button>
               ))}
             </div>

@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
 import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
 
 const HERO_IMAGES = [
-  "/images/exterior-main.jpg",
-  "/images/outdoor-night.jpg",
-  "/images/exterior-front.jpg",
-  "/images/bbq-area.jpg",
-  "/images/living-room-wide.jpg",
-  "/images/bbq-night.jpg",
+  "/img/exterior-main.jpg",
+  "/img/outdoor-night.jpg",
+  "/img/exterior-front.jpg",
+  "/img/bbq-area.jpg",
+  "/img/living-room-wide.jpg",
+  "/img/bbq-night.jpg",
 ];
 import { useReservation } from "@/context/ReservationContext";
 
@@ -109,12 +108,11 @@ export default function Hero() {
       {HERO_IMAGES.map((src, i) => (
         <div
           key={src}
-          className={`absolute inset-0 transition-opacity duration-[2000ms] ${
+          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[2000ms] ${
             i === heroImgIdx ? "opacity-100" : "opacity-0"
           }`}
-        >
-          <Image src={src} alt="달팽이아지트" fill className="object-cover" sizes="100vw" priority={i === 0} quality={60} />
-        </div>
+          style={{ backgroundImage: `url('${src}')` }}
+        />
       ))}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 via-primary-dark/80 to-primary-dark/70" />
 

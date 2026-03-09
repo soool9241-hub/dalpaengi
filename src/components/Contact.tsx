@@ -7,7 +7,7 @@ export default function Contact() {
     <section id="contact" className="relative py-24 px-4 overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-10"
-        style={{ backgroundImage: "url('/images/nature-yard.jpg')" }}
+        style={{ backgroundImage: "url('/img/nature-yard.jpg')" }}
       />
       <div className="absolute inset-0 bg-white/90" />
       <div className="relative max-w-4xl mx-auto">

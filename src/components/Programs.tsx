@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
 import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -31,7 +30,7 @@ export default function Programs() {
       tags: ["대학MT", "동아리", "대규모"],
       tagColors: ["bg-violet-100 text-violet-600", "bg-blue-100 text-blue-600", "bg-emerald-100 text-emerald-600"],
       gradient: "from-violet-500 to-indigo-500",
-      image: "/images/bbq-night.jpg",
+      image: "/img/bbq-night.jpg",
       features: [
         "독채 전체 사용 (인원 제한 없음)",
         "그릴 최대 6개 + 숯/토치 세트 제공",
@@ -54,7 +53,7 @@ export default function Programs() {
       tags: ["숙박", "독채", "15명기본"],
       tagColors: ["bg-primary/10 text-primary", "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-600"],
       gradient: "from-primary to-primary-light",
-      image: "/images/exterior-front.jpg",
+      image: "/img/exterior-front.jpg",
       features: [
         "독채 전체 사용 (1박)",
         "넓은 거실 + 방 3개 + 테라스",
@@ -76,7 +75,7 @@ export default function Programs() {
       tags: ["단기대여", "미팅", "소모임"],
       tagColors: ["bg-blue-100 text-blue-600", "bg-purple-100 text-purple-600", "bg-sage text-primary"],
       gradient: "from-amber-500 to-orange-500",
-      image: "/images/living-room.jpg",
+      image: "/img/living-room.jpg",
       features: [
         "독채 3시간 이용",
         "오전/낮/오후/저녁 선택",
@@ -97,7 +96,7 @@ export default function Programs() {
       tags: ["주간권", "야간권", "파티"],
       tagColors: ["bg-orange-100 text-orange-600", "bg-indigo-100 text-indigo-600", "bg-pink-100 text-pink-600"],
       gradient: "from-rose-500 to-pink-500",
-      image: "/images/outdoor-night.jpg",
+      image: "/img/outdoor-night.jpg",
       features: [
         "독채 5시간 이용",
         "주간 (10:00~15:00) 또는 야간 (17:00~22:00)",
@@ -166,7 +165,7 @@ export default function Programs() {
                 >
                   {/* Image Area */}
                   <div className="relative h-48 overflow-hidden flex items-center justify-center">
-                    <Image src={prog.image} alt={prog.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" quality={50} />
+                    <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                     <div className="absolute inset-0 bg-black/40" />
                     <div className="relative text-center text-white z-10">
                       <Icon size={40} className="mx-auto mb-2 opacity-80" />
@@ -230,7 +229,7 @@ export default function Programs() {
           <div className="relative bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
             {/* Header */}
             <div className="relative h-44 rounded-t-3xl flex items-center justify-center overflow-hidden">
-              <Image src={popupProgram.image} alt={popupProgram.title} fill className="object-cover" sizes="500px" quality={60} />
+              <img src={popupProgram.image} alt={popupProgram.title} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 rounded-t-3xl" />
               <div className="relative text-center text-white z-10">
                 <popupProgram.icon size={36} className="mx-auto mb-2 opacity-90" />
