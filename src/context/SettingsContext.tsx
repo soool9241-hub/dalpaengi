@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 export interface PricingData {
   stay: number;
   half: number;
+  halfExtra: number;
   daynight: number;
   extraGuest: number;
   bbqGrill: number;
@@ -26,7 +27,8 @@ interface SettingsContextType {
 
 const DEFAULT_PRICING: PricingData = {
   stay: 700000,
-  half: 300000,
+  half: 400000,
+  halfExtra: 200000,
   daynight: 400000,
   extraGuest: 10000,
   bbqGrill: 30000,

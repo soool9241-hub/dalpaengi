@@ -43,7 +43,7 @@ interface ReservationSMS {
 
 async function loadPricing(): Promise<PricingData> {
   const defaults: PricingData = {
-    stay: 700000, half: 300000, daynight: 400000,
+    stay: 700000, half: 400000, halfExtra: 200000, daynight: 400000,
     extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
     dinner: 10000, woodcraft: 20000, potBbq: 30000,
   };

@@ -11,8 +11,9 @@ const TABS = [
 
 const PRICE_FIELDS: { key: keyof PricingData; label: string }[] = [
   { key: "stay", label: "숙박 기본가 (15인)" },
-  { key: "half", label: "3시간 대여 기본가" },
-  { key: "daynight", label: "주/야간 패키지 기본가" },
+  { key: "half", label: "3시간 대여 기본가 (1타임)" },
+  { key: "halfExtra", label: "3시간 대여 추가 타임" },
+  { key: "daynight", label: "주/야간 패키지 (타임당)" },
   { key: "extraGuest", label: "추가인원 (1인)" },
   { key: "bbqGrill", label: "BBQ 그릴 (1개)" },
   { key: "gasRange", label: "가스렌지 (1개)" },
@@ -22,7 +23,7 @@ const PRICE_FIELDS: { key: keyof PricingData; label: string }[] = [
 ];
 
 const DEFAULT_PRICING: PricingData = {
-  stay: 700000, half: 300000, daynight: 400000,
+  stay: 700000, half: 400000, halfExtra: 200000, daynight: 400000,
   extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
   dinner: 10000, woodcraft: 20000, potBbq: 30000,
 };

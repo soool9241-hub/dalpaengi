@@ -55,7 +55,15 @@ export default function Reservation() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
   const [programType, setProgramType] = useState<ProgramType>("stay");
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
+
+  const toggleTimeSlot = (slotId: string) => {
+    setSelectedTimeSlots((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
+    );
+  };
 
   // Supabase 예약 데이터
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
@@ -73,7 +81,7 @@ export default function Reservation() {
       setCheckIn(null);
       setCheckOut(null);
       setSelectedDate(null);
-      setSelectedTimeSlot(null);
+      setSelectedTimeSlots([]);
       // MT 패키지면 버스 선택함, 숙박이면 선택안함
       setShowBusForm(isMTPackage);
     }
@@ -225,7 +233,7 @@ export default function Reservation() {
 
   const handleProgramChange = (type: ProgramType) => {
     setProgramType(type);
-    setCheckIn(null); setCheckOut(null); setSelectedDate(null); setSelectedTimeSlot(null);
+    setCheckIn(null); setCheckOut(null); setSelectedDate(null); setSelectedTimeSlots([]);
     setShowBusForm(type !== "stay");
   };
 
@@ -262,7 +270,7 @@ export default function Reservation() {
         woodcraftCount > 0 ? `목공키트 ${woodcraftCount}개` : "",
         potBbqCount > 0 ? `항아리BBQ ${potBbqCount}인분` : "",
         busRequested ? "버스 렌트 요청" : "",
-        selectedTimeSlot || "",
+        selectedTimeSlots.length > 0 ? `시간대: ${getTimeSlotLabel()}` : "",
       ].filter(Boolean).join(", ") || null;
 
       // checkout_date 계산
@@ -290,7 +298,7 @@ export default function Reservation() {
           potBbqCount,
           busRequested: showBusForm,
           busForm: showBusForm ? busForm : null,
-          selectedTimeSlot: selectedTimeSlot || null,
+          selectedTimeSlot: selectedTimeSlots.join(",") || null,
           totalPrice,
           notes,
           purpose: purposeMap[programType] || programType,
@@ -309,26 +317,7 @@ export default function Reservation() {
         ? `${checkIn.year}년 ${checkIn.month + 1}월 ${checkIn.day}일`
         : selectedDate ? `${selectedDate.year}년 ${selectedDate.month + 1}월 ${selectedDate.day}일` : "";
 
-      const timeSlotLabel = (() => {
-        if (!selectedTimeSlot) return null;
-        if (programType === "half") {
-          const s = [
-            { id: "09-12", label: "오전 (09:00~12:00)" },
-            { id: "12-15", label: "낮 (12:00~15:00)" },
-            { id: "15-18", label: "오후 (15:00~18:00)" },
-            { id: "18-21", label: "저녁 (18:00~21:00)" },
-          ].find((s) => s.id === selectedTimeSlot);
-          return s?.label || null;
-        }
-        if (programType === "daynight") {
-          const s = [
-            { id: "day", label: "주간 (10:00~15:00)" },
-            { id: "night", label: "야간 (17:00~22:00)" },
-          ].find((s) => s.id === selectedTimeSlot);
-          return s?.label || null;
-        }
-        return null;
-      })();
+      const timeSlotLabel = getTimeSlotLabel();
 
       try {
         await fetch("/api/send-sms", {
@@ -377,7 +366,7 @@ export default function Reservation() {
       setCheckIn(null);
       setCheckOut(null);
       setSelectedDate(null);
-      setSelectedTimeSlot(null);
+      setSelectedTimeSlots([]);
       setExtraGuests(0);
       setBbqGrills(0);
       setGasRanges(0);
@@ -408,8 +397,21 @@ export default function Reservation() {
 
   const busPrice = showBusForm && busForm.pickupPlace && busForm.pickupPlace !== "기타" ? (busRoutes[busForm.pickupPlace] || 0) : 0;
 
+  // 프로그램 기본 요금 (타임슬롯 기반)
+  const programPrice = useMemo(() => {
+    if (programType === "half") {
+      const count = Math.max(1, selectedTimeSlots.length);
+      return pricing.half + (count - 1) * pricing.halfExtra;
+    }
+    if (programType === "daynight") {
+      const count = Math.max(1, selectedTimeSlots.length);
+      return pricing.daynight * count;
+    }
+    return program.basePrice * nights;
+  }, [programType, selectedTimeSlots.length, pricing.half, pricing.halfExtra, pricing.daynight, program.basePrice, nights]);
+
   const totalPrice = useMemo(() => {
-    let total = program.basePrice * nights;
+    let total = programPrice;
     total += extraGuests * pricing.extraGuest;
     total += bbqGrills * pricing.bbqGrill;
     total += gasRanges * pricing.gasRange;
@@ -418,7 +420,7 @@ export default function Reservation() {
     total += potBbqCount * pricing.potBbq;
     total += busPrice;
     return total;
-  }, [program.basePrice, nights, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice, pricing]);
+  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice, pricing]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -431,9 +433,19 @@ export default function Reservation() {
   const formatFullDate = (d: { year: number; month: number; day: number }) => `${d.year}년 ${d.month + 1}월 ${d.day}일`;
 
   const getTimeSlotLabel = () => {
-    if (!selectedTimeSlot) return null;
-    if (programType === "half") { const s = HALF_TIME_SLOTS.find((s) => s.id === selectedTimeSlot); return s ? `${s.label} (${s.time})` : null; }
-    if (programType === "daynight") { const s = DAYNIGHT_TIME_SLOTS.find((s) => s.id === selectedTimeSlot); return s ? `${s.label} (${s.time})` : null; }
+    if (selectedTimeSlots.length === 0) return null;
+    if (programType === "half") {
+      return selectedTimeSlots.map((id) => {
+        const s = HALF_TIME_SLOTS.find((s) => s.id === id);
+        return s ? `${s.label} (${s.time})` : null;
+      }).filter(Boolean).join(", ");
+    }
+    if (programType === "daynight") {
+      return selectedTimeSlots.map((id) => {
+        const s = DAYNIGHT_TIME_SLOTS.find((s) => s.id === id);
+        return s ? `${s.label} (${s.time})` : null;
+      }).filter(Boolean).join(", ");
+    }
     return null;
   };
 
@@ -634,31 +646,51 @@ export default function Reservation() {
               {/* Time Slots */}
               {programType === "half" && (
                 <div className="mt-5">
-                  <div className="flex items-center gap-2 mb-3"><Clock size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택</h4></div>
+                  <div className="flex items-center gap-2 mb-1"><Clock size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택 <span className="text-xs font-normal text-text-light">(복수 선택 가능)</span></h4></div>
+                  <p className="text-xs text-primary mb-3">기본 1타임 {formatPrice(pricing.half)} / 추가 타임당 {formatPrice(pricing.halfExtra)}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {HALF_TIME_SLOTS.map((slot) => (
-                      <button key={slot.id} onClick={() => setSelectedTimeSlot(slot.id)}
-                        className={`p-3 rounded-xl border-2 text-center transition-all ${selectedTimeSlot === slot.id ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
-                        <p className={`text-sm font-semibold ${selectedTimeSlot === slot.id ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
-                        <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
-                      </button>
-                    ))}
+                    {HALF_TIME_SLOTS.map((slot) => {
+                      const selected = selectedTimeSlots.includes(slot.id);
+                      return (
+                        <button key={slot.id} onClick={() => toggleTimeSlot(slot.id)}
+                          className={`p-3 rounded-xl border-2 text-center transition-all ${selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
+                          <p className={`text-sm font-semibold ${selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
+                          <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
+                          {selected && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {selectedTimeSlots.length > 1 && (
+                    <div className="mt-2 p-2.5 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                      <p className="text-xs text-text-mid">{selectedTimeSlots.length}타임 선택: {formatPrice(pricing.half)} + {selectedTimeSlots.length - 1} × {formatPrice(pricing.halfExtra)} = <span className="font-bold text-primary">{formatPrice(programPrice)}</span></p>
+                    </div>
+                  )}
                 </div>
               )}
               {programType === "daynight" && (
                 <div className="mt-5">
-                  <div className="flex items-center gap-2 mb-3"><Sun size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택</h4></div>
+                  <div className="flex items-center gap-2 mb-1"><Sun size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택 <span className="text-xs font-normal text-text-light">(복수 선택 가능)</span></h4></div>
+                  <p className="text-xs text-primary mb-3">타임당 {formatPrice(pricing.daynight)}</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {DAYNIGHT_TIME_SLOTS.map((slot) => (
-                      <button key={slot.id} onClick={() => setSelectedTimeSlot(slot.id)}
-                        className={`p-4 rounded-xl border-2 text-center transition-all ${selectedTimeSlot === slot.id ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
-                        <span className="text-2xl block mb-1">{slot.emoji}</span>
-                        <p className={`text-sm font-semibold ${selectedTimeSlot === slot.id ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
-                        <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
-                      </button>
-                    ))}
+                    {DAYNIGHT_TIME_SLOTS.map((slot) => {
+                      const selected = selectedTimeSlots.includes(slot.id);
+                      return (
+                        <button key={slot.id} onClick={() => toggleTimeSlot(slot.id)}
+                          className={`p-4 rounded-xl border-2 text-center transition-all ${selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
+                          <span className="text-2xl block mb-1">{slot.emoji}</span>
+                          <p className={`text-sm font-semibold ${selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
+                          <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
+                          {selected && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {selectedTimeSlots.length > 1 && (
+                    <div className="mt-2 p-2.5 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                      <p className="text-xs text-text-mid">{selectedTimeSlots.length}타임 선택: {formatPrice(pricing.daynight)} × {selectedTimeSlots.length} = <span className="font-bold text-primary">{formatPrice(programPrice)}</span></p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -722,7 +754,7 @@ export default function Reservation() {
                 </div>
                 {program.rangeMode && checkIn && checkOut && (
                   <div className="mt-2 pt-2 border-t border-border">
-                    <p className="text-sm text-text-mid">{program.label} {formatPrice(program.basePrice)} × {nights}박 = <span className="font-semibold text-primary">{formatPrice(program.basePrice * nights)}</span></p>
+                    <p className="text-sm text-text-mid">{program.label} {formatPrice(program.basePrice)} × {nights}박 = <span className="font-semibold text-primary">{formatPrice(programPrice)}</span></p>
                   </div>
                 )}
               </div>
@@ -899,7 +931,7 @@ export default function Reservation() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">요금 요약</h3></div>
                 <div className="text-sm text-text-mid space-y-0.5">
-                  <p>{program.label} ({formatPrice(program.basePrice)}/{program.unit}{program.rangeMode && nights > 1 ? ` × ${nights}박` : ""}): {formatPrice(program.basePrice * nights)}</p>
+                  <p>{program.label} {programType === "half" && selectedTimeSlots.length > 1 ? `(${selectedTimeSlots.length}타임)` : programType === "daynight" && selectedTimeSlots.length > 1 ? `(${selectedTimeSlots.length}타임)` : `(${formatPrice(program.basePrice)}/${program.unit}${program.rangeMode && nights > 1 ? ` × ${nights}박` : ""})`}: {formatPrice(programPrice)}</p>
                   {getTimeSlotLabel() && <p>시간대: {getTimeSlotLabel()}</p>}
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * pricing.extraGuest)}</p>}
                   {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {formatPrice(bbqGrills * pricing.bbqGrill)}</p>}
@@ -973,7 +1005,7 @@ export default function Reservation() {
               {getTimeSlotLabel() && <div className="flex justify-between text-sm"><span className="text-text-light">시간대</span><span className="font-medium text-text-dark">{getTimeSlotLabel()}</span></div>}
               <div className="flex justify-between text-sm"><span className="text-text-light">인원</span><span className="font-medium text-text-dark">{totalGuests}명</span></div>
               <hr className="border-border" />
-              <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}</span><span className="font-medium text-text-dark">{formatPrice(program.basePrice * nights)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}{(programType === "half" || programType === "daynight") && selectedTimeSlots.length > 1 ? ` (${selectedTimeSlots.length}타임)` : ""}</span><span className="font-medium text-text-dark">{formatPrice(programPrice)}</span></div>
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * pricing.extraGuest)}</span></div>}
               {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여</span><span className="font-medium text-text-dark">{formatPrice(bbqGrills * pricing.bbqGrill)}</span></div>}
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
