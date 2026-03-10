@@ -46,8 +46,8 @@ export default function Reservation() {
 
   const PROGRAMS: Record<ProgramType, { label: string; icon: typeof Moon; basePrice: number; unit: string; rangeMode: boolean }> = useMemo(() => ({
     stay: { label: "숙박", icon: Moon, basePrice: pricing.stay, unit: "박", rangeMode: true },
-    half: { label: "3시간 대여", icon: Clock, basePrice: pricing.half, unit: "회", rangeMode: false },
-    daynight: { label: "주/야간 패키지", icon: Sun, basePrice: pricing.daynight, unit: "회", rangeMode: false },
+    half: { label: "3시간 대여(평일만 가능)", icon: Clock, basePrice: pricing.half, unit: "회", rangeMode: false },
+    daynight: { label: "주/야간 패키지(평일만 가능)", icon: Sun, basePrice: pricing.daynight, unit: "회", rangeMode: false },
   }), [pricing]);
 
   const today = new Date();
@@ -57,12 +57,15 @@ export default function Reservation() {
   const [programType, setProgramType] = useState<ProgramType>("stay");
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
 
+  const HALF_MAX_SLOTS = 3;
+
   const toggleTimeSlot = (slotId: string) => {
-    setSelectedTimeSlots((prev) =>
-      prev.includes(slotId)
-        ? prev.filter((id) => id !== slotId)
-        : [...prev, slotId]
-    );
+    setSelectedTimeSlots((prev) => {
+      if (prev.includes(slotId)) return prev.filter((id) => id !== slotId);
+      // 3시간 대여: 최대 3타임
+      if (programType === "half" && prev.length >= HALF_MAX_SLOTS) return prev;
+      return [...prev, slotId];
+    });
   };
 
   // Supabase 예약 데이터
@@ -204,7 +207,18 @@ export default function Reservation() {
 
   const handleDateClick = (day: number) => {
     const clicked = { year: currentYear, month: currentMonth, day };
-    if (!program.rangeMode) { setSelectedDate(clicked); return; }
+    if (!program.rangeMode) {
+      // 3시간 대여, 주/야간 패키지는 평일만 가능
+      if (programType === "half" || programType === "daynight") {
+        const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          alert("3시간 대여 및 주/야간 패키지는 평일만 예약 가능합니다.");
+          return;
+        }
+      }
+      setSelectedDate(clicked);
+      return;
+    }
     if (!checkIn || (checkIn && checkOut)) { setCheckIn(clicked); setCheckOut(null); }
     else {
       const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
@@ -261,7 +275,7 @@ export default function Reservation() {
       }
 
       const purposeMap: Record<string, string> = {
-        stay: "숙박", half: "3시간 대여", daynight: "주/야간 패키지",
+        stay: "숙박", half: "3시간 대여(평일)", daynight: "주/야간 패키지(평일)",
       };
 
       const notes = [
@@ -332,7 +346,10 @@ export default function Reservation() {
             baseGuests: BASE_PEOPLE,
             extraGuests: extraGuests,
             programLabel: purposeMap[programType] || programType,
+            programType,
             basePrice: program.basePrice,
+            programPrice,
+            slotCount: selectedTimeSlots.length,
             bbqGrills,
             gasRanges,
             dinnerCount,
@@ -394,6 +411,11 @@ export default function Reservation() {
   const isCheckOut = (day: number) => checkOut?.year === currentYear && checkOut?.month === currentMonth && checkOut?.day === day;
   const isSingleSelected = (day: number) => selectedDate?.year === currentYear && selectedDate?.month === currentMonth && selectedDate?.day === day;
   const isPastDate = (day: number) => new Date(currentYear, currentMonth, day) <= new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const isWeekend = (day: number) => {
+    const dow = new Date(currentYear, currentMonth, day).getDay();
+    return dow === 0 || dow === 6;
+  };
+  const isWeekdayOnly = programType === "half" || programType === "daynight";
 
   const busPrice = showBusForm && busForm.pickupPlace && busForm.pickupPlace !== "기타" ? (busRoutes[busForm.pickupPlace] || 0) : 0;
 
@@ -532,6 +554,7 @@ export default function Reservation() {
                 {loadingReservations && <span className="text-xs text-text-light animate-pulse ml-auto">불러오는 중...</span>}
               </div>
               {program.rangeMode && <p className="text-xs text-text-light mb-4">첫 번째 클릭 = 체크인, 두 번째 클릭 = 체크아웃</p>}
+              {isWeekdayOnly && <p className="text-xs text-amber-600 font-semibold mb-4">* 평일(월~금)만 예약 가능한 프로그램입니다</p>}
               <div className="flex items-center justify-between mb-6">
                 <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-sage transition-colors text-text-dark"><ChevronLeft className="w-5 h-5" /></button>
                 <h3 className="text-lg font-semibold text-text-dark">{currentYear}년 {monthNames[currentMonth]}</h3>
@@ -587,7 +610,9 @@ export default function Reservation() {
                       }
                     }
 
+                    const weekendBlocked = isWeekdayOnly && isWeekend(day);
                     const disabled = !!(past
+                      || weekendBlocked
                       || (booked && !isSelectingCheckout)
                       || (isSelectingCheckout && disabledInCheckoutMode));
                     const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
@@ -598,6 +623,7 @@ export default function Reservation() {
                       <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
                         className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
                           ${past ? "text-text-light/30 cursor-not-allowed"
+                          : weekendBlocked ? "text-text-light/30 cursor-not-allowed bg-gray-50"
                           : disabled && isSelectingCheckout ? "text-text-light/30 cursor-not-allowed"
                           : disabled ? "bg-red-100 text-red-400 cursor-not-allowed"
                           : isCheckoutAllowed ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
@@ -646,7 +672,7 @@ export default function Reservation() {
               {/* Time Slots */}
               {programType === "half" && (
                 <div className="mt-5">
-                  <div className="flex items-center gap-2 mb-1"><Clock size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택 <span className="text-xs font-normal text-text-light">(복수 선택 가능)</span></h4></div>
+                  <div className="flex items-center gap-2 mb-1"><Clock size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택 <span className="text-xs font-normal text-text-light">(최소 1개, 최대 {HALF_MAX_SLOTS}개)</span></h4></div>
                   <p className="text-xs text-primary mb-3">기본 1타임 {formatPrice(pricing.half)} / 추가 타임당 {formatPrice(pricing.halfExtra)}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {HALF_TIME_SLOTS.map((slot) => {

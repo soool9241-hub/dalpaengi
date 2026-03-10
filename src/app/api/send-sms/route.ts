@@ -21,7 +21,10 @@ interface ReservationSMS {
   baseGuests: number;
   extraGuests: number;
   programLabel: string;
+  programType?: string;
   basePrice: number;
+  programPrice?: number;
+  slotCount?: number;
   bbqGrills: number;
   gasRanges: number;
   dinnerCount: number;
@@ -56,9 +59,29 @@ async function loadPricing(): Promise<PricingData> {
 
 function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
   const lines: string[] = [];
-  const nights = data.stayNights;
+  const pType = data.programType || "stay";
+  const slotCount = data.slotCount || 1;
 
-  lines.push(`• ${data.programLabel} 기본${data.baseGuests}인 (${nights}박): ${formatPrice(data.basePrice * nights)}`);
+  if (pType === "half") {
+    const price = data.programPrice || p.half;
+    if (slotCount > 1) {
+      lines.push(`• ${data.programLabel} ${slotCount}타임: ${formatPrice(price)}`);
+      lines.push(`  (기본 ${formatPrice(p.half)} + 추가 ${slotCount - 1}타임 × ${formatPrice(p.halfExtra)})`);
+    } else {
+      lines.push(`• ${data.programLabel} 1타임: ${formatPrice(price)}`);
+    }
+  } else if (pType === "daynight") {
+    const price = data.programPrice || p.daynight;
+    if (slotCount > 1) {
+      lines.push(`• ${data.programLabel} ${slotCount}타임: ${formatPrice(price)}`);
+      lines.push(`  (${formatPrice(p.daynight)} × ${slotCount}타임)`);
+    } else {
+      lines.push(`• ${data.programLabel} 1타임: ${formatPrice(price)}`);
+    }
+  } else {
+    const nights = data.stayNights;
+    lines.push(`• ${data.programLabel} 기본${data.baseGuests}인 (${nights}박): ${formatPrice(data.basePrice * nights)}`);
+  }
 
   if (data.extraGuests > 0)
     lines.push(`• 추가인원 (${data.extraGuests}명 × ${formatPrice(p.extraGuest)}): ${formatPrice(data.extraGuests * p.extraGuest)}`);
@@ -76,6 +99,13 @@ function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
   return lines;
 }
 
+function getDurationLabel(data: ReservationSMS): string {
+  const pType = data.programType || "stay";
+  if (pType === "half") return `${data.slotCount || 1}타임`;
+  if (pType === "daynight") return `${data.slotCount || 1}타임`;
+  return `${data.stayNights}박`;
+}
+
 function buildCustomerMessage(data: ReservationSMS, p: PricingData): string {
   const optionLines = buildOptionLines(data, p);
   const perPerson = Math.round(data.totalPrice / data.totalGuests);
@@ -86,7 +116,7 @@ function buildCustomerMessage(data: ReservationSMS, p: PricingData): string {
   return `[달팽이아지트] 예약이 확정되었습니다!
 
 ■ 예약자: ${data.guestName}님
-■ 날짜: ${data.reservationDate} (${data.stayNights}박)
+■ 날짜: ${data.reservationDate} (${getDurationLabel(data)})
 ■ 인원: ${peopleDesc}
 ■ 프로그램: ${data.programLabel}
 ${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
@@ -120,7 +150,7 @@ function buildOwnerMessage(data: ReservationSMS, p: PricingData): string {
   return `[새 예약 접수]
 
 ■ 예약자: ${data.guestName} (${data.guestPhone})
-■ 날짜: ${data.reservationDate} (${data.stayNights}박)
+■ 날짜: ${data.reservationDate} (${getDurationLabel(data)})
 ■ 인원: ${peopleDesc}
 ■ 프로그램: ${data.programLabel}
 ${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
