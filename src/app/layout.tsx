@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SettingsProvider } from "@/context/SettingsContext";
 
@@ -46,6 +48,8 @@ export default function RootLayout({
         <SettingsProvider>
           {children}
         </SettingsProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
