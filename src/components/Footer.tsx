@@ -137,10 +137,18 @@ export default function Footer() {
         {/* Business Info */}
         <div className="border-t border-white/10 pt-8 mb-8">
           <p className="text-xs text-white/30 leading-relaxed break-keep">
-            달팽이아지트
-            <br className="sm:hidden" />
+            상호명: 스토리팜
             <span className="hidden sm:inline"> | </span>
+            <br className="sm:hidden" />
+            대표자: 임솔
+            <span className="hidden sm:inline"> | </span>
+            <br className="sm:hidden" />
+            사업자등록번호: 604-02-95735
+            <br />
             주소: 전북 완주군 소양면 해월신왕길 92
+            <span className="hidden sm:inline"> | </span>
+            <br className="sm:hidden" />
+            전화: 010-8531-9531
           </p>
         </div>
       </div>
