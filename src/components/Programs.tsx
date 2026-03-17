@@ -33,13 +33,16 @@ export default function Programs() {
       image: "/img/bbq-night.jpg",
       features: [
         "독채 전체 사용 (인원 제한 없음)",
-        "그릴 최대 6개 + 숯/토치 세트 제공",
         "넓은 야외 바베큐장",
-        "캠프파이어 가능",
         "보드게임/레크레이션 공간",
         "넉넉한 주차장 (대형버스 가능)",
       ],
-      description: "대학교 동아리 MT, 학과 MT에 최적화된 패키지! 인원 제한 없이 대규모 단체도 수용 가능합니다. 독채 전체를 사용하여 프라이빗하게 즐기세요. 그릴, 캠프파이어, 넓은 야외 공간까지 MT에 필요한 모든 것이 갖춰져 있습니다. 버스 렌트도 별도 요청 가능!",
+      extras: [
+        "그릴 최대 6개 제공",
+        "저녁 식사 가능",
+        "버스 렌트 가능",
+      ],
+      description: "대학교 동아리 MT, 학과 MT에 최적화된 패키지! 인원 제한 없이 대규모 단체도 수용 가능합니다. 독채 전체를 사용하여 프라이빗하게 즐기세요. 넓은 야외 공간과 다양한 추가 옵션으로 MT에 필요한 모든 것이 갖춰져 있습니다.",
       highlight: true,
     },
     {
@@ -61,6 +64,7 @@ export default function Programs() {
         "넉넉한 주차장 완비",
         `추가 인원 1인 ${pricing.extraGuest.toLocaleString()}원`,
       ],
+      extras: [],
       description: "15명 기본 독채 숙박 패키지입니다. 가족모임, 지인모임, 워크샵 등 다양한 목적으로 이용 가능합니다. 자연 속 프라이빗한 공간에서 편안한 1박 2일을 보내세요.",
       highlight: true,
     },
@@ -83,6 +87,7 @@ export default function Programs() {
         `추가 타임당 ${(pricing.halfExtra ?? 200000).toLocaleString()}원`,
         "바베큐장 이용 가능",
       ],
+      extras: [],
       description: "짧은 시간 효율적으로 모임이나 소규모 파티를 진행할 수 있는 패키지입니다. 3시간 단위로 원하는 시간대를 복수 선택할 수 있습니다.",
       highlight: false,
     },
@@ -105,6 +110,7 @@ export default function Programs() {
         "바베큐 또는 다과 준비 가능",
         "캠프파이어 (야간)",
       ],
+      extras: [],
       description: "5시간 동안 다양한 활동을 즐길 수 있는 주/야간 패키지입니다. 주간+야간 복수 선택도 가능합니다. 바베큐, 캠프파이어 등 풍성한 프로그램이 준비되어 있습니다.",
       highlight: false,
     },
@@ -284,6 +290,21 @@ export default function Programs() {
                   ))}
                 </div>
               </div>
+
+              {/* Extras */}
+              {popupProgram.extras.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-text-dark mb-3">추가 가능</p>
+                  <div className="space-y-2">
+                    {popupProgram.extras.map((ext, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-amber-50 rounded-xl px-4 py-3 text-sm text-text-mid">
+                        <span className="text-amber-500 flex-shrink-0 font-bold text-xs">+</span>
+                        {ext}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Info */}
               <div className="grid grid-cols-3 gap-3 mb-6">
