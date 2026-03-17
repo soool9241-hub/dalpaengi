@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, Calendar, Users, X, Moon, Clock, Sun, Bus, Boxes } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
 
 const POT_BBQ_MIN = 10;
 
-type ProgramType = "stay" | "half" | "daynight";
+type ProgramType = "stay" | "half" | "daynight" | "jolib";
 
 const HALF_TIME_SLOTS = [
   { id: "09-12", label: "오전", time: "09:00 ~ 12:00" },
@@ -48,6 +48,7 @@ export default function Reservation() {
     stay: { label: "숙박", icon: Moon, basePrice: pricing.stay, unit: "박", rangeMode: true },
     half: { label: "3시간 대여(평일만 가능)", icon: Clock, basePrice: pricing.half, unit: "회", rangeMode: false },
     daynight: { label: "주/야간 패키지(평일만 가능)", icon: Sun, basePrice: pricing.daynight, unit: "회", rangeMode: false },
+    jolib: { label: "조립공간 CNC 체험", icon: Boxes, basePrice: 0, unit: "회", rangeMode: false },
   }), [pricing]);
 
   const today = new Date();
@@ -209,10 +210,10 @@ export default function Reservation() {
     const clicked = { year: currentYear, month: currentMonth, day };
     if (!program.rangeMode) {
       // 3시간 대여, 주/야간 패키지는 평일만 가능
-      if (programType === "half" || programType === "daynight") {
+      if (programType === "half" || programType === "daynight" || programType === "jolib") {
         const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) {
-          alert("3시간 대여 및 주/야간 패키지는 평일만 예약 가능합니다.");
+          alert("해당 프로그램은 평일만 예약 가능합니다.");
           return;
         }
       }
@@ -415,7 +416,7 @@ export default function Reservation() {
     const dow = new Date(currentYear, currentMonth, day).getDay();
     return dow === 0 || dow === 6;
   };
-  const isWeekdayOnly = programType === "half" || programType === "daynight";
+  const isWeekdayOnly = programType === "half" || programType === "daynight" || programType === "jolib";
 
   const busPrice = showBusForm && busForm.pickupPlace && busForm.pickupPlace !== "기타" ? (busRoutes[busForm.pickupPlace] || 0) : 0;
 
@@ -429,6 +430,7 @@ export default function Reservation() {
       const count = Math.max(1, selectedTimeSlots.length);
       return pricing.daynight * count;
     }
+    if (programType === "jolib") return 0;
     return program.basePrice * nights;
   }, [programType, selectedTimeSlots.length, pricing.half, pricing.halfExtra, pricing.daynight, program.basePrice, nights]);
 
@@ -694,6 +696,15 @@ export default function Reservation() {
                   )}
                 </div>
               )}
+              {programType === "jolib" && selectedDate && (
+                <div className="mt-5">
+                  <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl">
+                    <p className="text-sm font-semibold text-teal-700 mb-1">조립공간 CNC 체험</p>
+                    <p className="text-xs text-teal-600">2시간 체험 · 최소 3인 이상 · 초기 이벤트 <span className="font-bold text-red-500">무료</span></p>
+                    <p className="text-xs text-teal-600 mt-1">(정가: 1인 50,000원)</p>
+                  </div>
+                </div>
+              )}
               {programType === "daynight" && (
                 <div className="mt-5">
                   <div className="flex items-center gap-2 mb-1"><Sun size={16} className="text-primary" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택 <span className="text-xs font-normal text-text-light">(복수 선택 가능)</span></h4></div>
@@ -727,6 +738,40 @@ export default function Reservation() {
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
                 <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-primary" /><h3 className="text-lg font-semibold text-text-dark">{showBusForm && programType === "stay" ? "대학생 MT 패키지 (60명 수용가능)" : program.label}</h3></div>
 
+                {programType === "jolib" ? (
+                  <div>
+                    <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mb-4">
+                      <p className="text-sm font-semibold text-teal-700 mb-2">조립공간 CNC 체험 안내</p>
+                      <ul className="text-xs text-teal-600 space-y-1">
+                        <li>• 2시간 체험 / 최소 3인 이상</li>
+                        <li>• 정가: 1인 50,000원</li>
+                        <li>• <span className="font-bold text-red-500">초기 이벤트 무료!</span></li>
+                      </ul>
+                    </div>
+                    <label className="text-sm font-medium text-text-dark mb-2 block">체험 인원</label>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setExtraGuests((v) => Math.max(3, (v || 3) - 1))}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Minus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                      <input type="number" min={3} value={Math.max(3, extraGuests || 3)}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => setExtraGuests(Math.max(3, parseInt(e.target.value) || 3))}
+                        className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary" />
+                      <button onClick={() => setExtraGuests((v) => (v || 3) + 1)}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Plus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                      <span className="text-sm text-text-mid">명</span>
+                    </div>
+                    {(extraGuests || 0) < 3 && <p className="text-xs text-red-500 mt-2">* 최소 3인 이상 예약 가능합니다</p>}
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
+                      <p className="text-lg font-bold text-red-500">무료 <span className="text-xs font-normal text-text-light line-through ml-1">{((extraGuests || 3) * 50000).toLocaleString()}원</span></p>
+                      <p className="text-xs text-text-light">초기 이벤트 진행 중</p>
+                    </div>
+                  </div>
+                ) : (
+                <>
                 {/* 인원 입력 */}
                 <div className="mb-4">
                   <label className="text-sm font-medium text-text-dark mb-2 block">예약 인원</label>
@@ -783,9 +828,12 @@ export default function Reservation() {
                     <p className="text-sm text-text-mid">{program.label} {formatPrice(program.basePrice)} × {nights}박 = <span className="font-semibold text-primary">{formatPrice(programPrice)}</span></p>
                   </div>
                 )}
+                </>
+                )}
               </div>
 
               {/* Extra Options */}
+              {programType !== "jolib" && (
               <div className="bg-background rounded-2xl shadow-sm border border-border p-6">
                 <h3 className="text-base font-semibold text-text-dark mb-2">추가 옵션</h3>
                 {extraGuests > 0 && (
@@ -948,11 +996,21 @@ export default function Reservation() {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
 
           {/* Price Summary */}
           <div className="mt-8 bg-background rounded-2xl shadow-sm border border-border p-4 sm:p-6">
+            {programType === "jolib" ? (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">예약 요약</h3></div>
+              <p className="text-sm text-text-mid mb-1">조립공간 CNC 체험 · {Math.max(3, extraGuests || 3)}명</p>
+              <p className="text-sm text-text-light line-through">{((Math.max(3, extraGuests || 3)) * 50000).toLocaleString()}원</p>
+              <p className="text-3xl font-bold text-red-500">무료</p>
+              <p className="text-xs text-text-light mt-1">초기 이벤트 진행 중</p>
+            </div>
+            ) : (
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">요금 요약</h3></div>
@@ -976,9 +1034,10 @@ export default function Reservation() {
                 {showBusForm && busPrice === 0 && <p className="text-xs text-text-light mt-1">+ 버스 렌트 별도 견적</p>}
               </div>
             </div>
+            )}
             <button onClick={() => setShowConfirm(true)}
               className="mt-6 w-full py-4 bg-primary text-white rounded-2xl font-semibold text-lg hover:bg-primary-light transition-colors shadow-md hover:shadow-lg">
-              예약하기
+              {programType === "jolib" ? "체험 신청하기" : "예약하기"}
             </button>
           </div>
         </div>

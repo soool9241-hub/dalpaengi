@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-type ProgramId = "stay" | "half" | "daynight" | null;
+type ProgramId = "stay" | "half" | "daynight" | "jolib" | null;
 
 interface SelectedDateInfo {
   year: number;

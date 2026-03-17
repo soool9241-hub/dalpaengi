@@ -11,9 +11,10 @@ const categories = [
   { id: "mt", label: "MT/단체" },
   { id: "family", label: "가족" },
   { id: "healing", label: "힐링" },
+  { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "half", "daynight", null] as const;
+const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib"] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
@@ -123,8 +124,8 @@ export default function Programs() {
       originalPrice: 50000,
       perPerson: 0,
       maxPeople: "제한없음",
-      categories: ["family"],
-      tags: ["가족체험", "CNC조립", "이벤트"],
+      categories: ["membership"],
+      tags: ["멤버십전용", "CNC조립", "이벤트"],
       tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-red-100 text-red-600"],
       gradient: "from-teal-500 to-cyan-500",
       image: "/img/exterior-front.jpg",
@@ -388,18 +389,15 @@ export default function Programs() {
 
               <button
                 onClick={() => {
-                  if (selectedProgram !== null && PROGRAM_IDS[selectedProgram]) {
+                  if (selectedProgram !== null) {
                     setSelectedProgramId(PROGRAM_IDS[selectedProgram]);
-                    setSelectedProgram(null);
-                    document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
-                  } else {
-                    setSelectedProgram(null);
-                    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
                   }
+                  setSelectedProgram(null);
+                  document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="block w-full bg-primary text-white text-center py-4 rounded-2xl font-semibold hover:bg-primary-light transition-colors"
               >
-                {selectedProgram !== null && PROGRAM_IDS[selectedProgram] ? "이 프로그램 예약하기" : "문의하기 / 신청하기"}
+                이 프로그램 예약하기
               </button>
             </div>
           </div>
