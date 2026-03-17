@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
 
@@ -13,7 +13,7 @@ const categories = [
   { id: "healing", label: "힐링" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "half", "daynight"] as const;
+const PROGRAM_IDS = ["stay", "stay", "half", "daynight", null] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
@@ -38,8 +38,8 @@ export default function Programs() {
         "넉넉한 주차장 (대형버스 가능)",
       ],
       extras: [
-        "그릴 최대 6개 제공",
-        "저녁 식사 가능",
+        "그릴 (개당 30,000원 / 최대 6개)",
+        "저녁 식사 1인 10,000원 (숯불목살1인+쌈장+쌈무+쌈채소+햇반 제공)",
         "버스 렌트 가능",
       ],
       description: "대학교 동아리 MT, 학과 MT에 최적화된 패키지! 인원 제한 없이 대규모 단체도 수용 가능합니다. 독채 전체를 사용하여 프라이빗하게 즐기세요. 넓은 야외 공간과 다양한 추가 옵션으로 MT에 필요한 모든 것이 갖춰져 있습니다.",
@@ -114,6 +114,32 @@ export default function Programs() {
       description: "5시간 동안 다양한 활동을 즐길 수 있는 주/야간 패키지입니다. 주간+야간 복수 선택도 가능합니다. 바베큐, 캠프파이어 등 풍성한 프로그램이 준비되어 있습니다.",
       highlight: false,
     },
+    {
+      icon: Boxes,
+      title: "조립공간 CNC 체험",
+      duration: "2시간",
+      price: 0,
+      priceLabel: "무료",
+      originalPrice: 50000,
+      perPerson: 0,
+      maxPeople: "제한없음",
+      categories: ["family"],
+      tags: ["가족체험", "CNC조립", "이벤트"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-red-100 text-red-600"],
+      gradient: "from-teal-500 to-cyan-500",
+      image: "/img/exterior-front.jpg",
+      features: [
+        "CNC 정밀 커팅 모듈러 피스 조립 체험",
+        "탭앤슬롯 방식 — 도구 없이 안전하게 조립",
+        "집, 상자, 자동차 등 다양한 형태 제작",
+        "최소 3인 이상 예약 시 이용 가능",
+        "어린이도 안전하게 참여 가능 (보호자 동반)",
+      ],
+      extras: [],
+      description: "CNC 공방의 기술력으로 정밀 커팅된 모듈러 피스를 직접 조립하는 체험 프로그램입니다. 접착제나 도구 없이 끼워 맞추는 탭앤슬롯 방식으로 어린이도 안전하게 참여할 수 있습니다. 공간 인지, 조립 능력, 창의력 향상에 도움이 됩니다. 현재 초기 이벤트로 무료 체험 가능!",
+      highlight: false,
+      isEvent: true,
+    },
   ], [pricing]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProgram, setSelectedProgram] = useState<number | null>(null);
@@ -184,6 +210,11 @@ export default function Programs() {
                         BEST
                       </div>
                     )}
+                    {prog.isEvent && (
+                      <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
+                        EVENT 무료
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
@@ -206,15 +237,32 @@ export default function Programs() {
                     <p className="text-sm text-text-light mb-4">{prog.duration}</p>
 
                     {/* Price */}
-                    <div className="flex items-end gap-2 mb-4">
-                      <span className="text-2xl font-bold text-text-dark">
-                        {prog.price.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-text-light mb-0.5">원</span>
-                    </div>
-                    <p className="text-xs text-text-light mb-5">
-                      기본 15명 / 추가 인원 제한 없음
-                    </p>
+                    {prog.isEvent ? (
+                      <>
+                        <div className="flex items-end gap-2 mb-1">
+                          <span className="text-sm text-text-light line-through">{(prog.originalPrice ?? 0).toLocaleString()}원/인</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-2xl font-bold text-red-500">무료</span>
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">초기 이벤트</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          최소 3인 이상 / 1인당 2시간 체험
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-end gap-2 mb-4">
+                          <span className="text-2xl font-bold text-text-dark">
+                            {prog.price.toLocaleString()}
+                          </span>
+                          <span className="text-sm text-text-light mb-0.5">원</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          기본 15명 / 추가 인원 제한 없음
+                        </p>
+                      </>
+                    )}
 
                     <button
                       onClick={() => setSelectedProgram(originalIndex)}
@@ -263,15 +311,28 @@ export default function Programs() {
               </div>
 
               {/* Price */}
-              <div className="flex flex-wrap items-end gap-1 sm:gap-2 mb-6">
-                <span className="text-2xl sm:text-3xl font-bold text-text-dark">
-                  {popupProgram.price.toLocaleString()}
-                </span>
-                <span className="text-sm text-text-light mb-0.5 sm:mb-1">원</span>
-                <span className="text-xs sm:text-sm text-text-light mb-0.5 sm:mb-1 ml-1">
-                  (기본 15명 / 추가 1인 {pricing.extraGuest.toLocaleString()}원)
-                </span>
-              </div>
+              {popupProgram.isEvent ? (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm text-text-light line-through">{(popupProgram.originalPrice ?? 0).toLocaleString()}원/인</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold text-red-500">무료</span>
+                    <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">초기 이벤트</span>
+                  </div>
+                  <p className="text-xs text-text-light mt-2">정가 1인 50,000원 · 최소 3인 이상 예약 시 이용 가능</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-end gap-1 sm:gap-2 mb-6">
+                  <span className="text-2xl sm:text-3xl font-bold text-text-dark">
+                    {popupProgram.price.toLocaleString()}
+                  </span>
+                  <span className="text-sm text-text-light mb-0.5 sm:mb-1">원</span>
+                  <span className="text-xs sm:text-sm text-text-light mb-0.5 sm:mb-1 ml-1">
+                    (기본 15명 / 추가 1인 {pricing.extraGuest.toLocaleString()}원)
+                  </span>
+                </div>
+              )}
 
               {/* Description */}
               <p className="text-text-mid text-sm leading-relaxed mb-6">
@@ -327,15 +388,18 @@ export default function Programs() {
 
               <button
                 onClick={() => {
-                  if (selectedProgram !== null) {
+                  if (selectedProgram !== null && PROGRAM_IDS[selectedProgram]) {
                     setSelectedProgramId(PROGRAM_IDS[selectedProgram]);
+                    setSelectedProgram(null);
+                    document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    setSelectedProgram(null);
+                    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
                   }
-                  setSelectedProgram(null);
-                  document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="block w-full bg-primary text-white text-center py-4 rounded-2xl font-semibold hover:bg-primary-light transition-colors"
               >
-                이 프로그램 예약하기
+                {selectedProgram !== null && PROGRAM_IDS[selectedProgram] ? "이 프로그램 예약하기" : "문의하기 / 신청하기"}
               </button>
             </div>
           </div>
