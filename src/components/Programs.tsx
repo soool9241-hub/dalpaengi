@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart } from "lucide-react";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
 
@@ -14,7 +14,7 @@ const categories = [
   { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib"] as const;
+const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib", "healing"] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
@@ -142,6 +142,32 @@ export default function Programs() {
       highlight: false,
       isEvent: true,
     },
+    {
+      icon: Heart,
+      title: "힐링캠프 1박2일",
+      duration: "1박 2일",
+      price: 290000,
+      priceLabel: "1인 290,000원",
+      perPerson: 290000,
+      maxPeople: "10~15명",
+      categories: ["healing"],
+      tags: ["힐링", "명상", "웰니스"],
+      tagColors: ["bg-emerald-100 text-emerald-600", "bg-purple-100 text-purple-600", "bg-rose-100 text-rose-600"],
+      gradient: "from-emerald-500 to-teal-500",
+      image: "/img/nature-yard.jpg",
+      features: [
+        "1박 2일 (오후 3시 입실 ~ 익일 11시 퇴실)",
+        "힐링 프로그램 4종 제공 (필라테스/명상/자기탐색/싱잉볼 등)",
+        "석식 (소양 맛집 화심두부마을) + 건강한 조식 제공",
+        "오소소 카페 둘렛길 걷기 명상 (아침 산책)",
+        "느슨한 네트워킹 · 별보기 · 자연 속 힐링",
+        "최소 10명 ~ 최대 15명",
+      ],
+      extras: [],
+      description: "바쁘고 지친 일상에서 잠시 벗어나, 자연과 함께 몸과 마음을 돌보는 1박 2일 힐링캠프입니다. 필라테스(엉덩이와 호흡), 바하바나 & 만트라 명상, 자기탐색 글쓰기(불타는 나의 욕망), 싱잉볼 테라피 등 알찬 프로그램으로 구성됩니다. 소양 맛집에서의 식사와 오성제 둘렛길 걷기 명상까지, 자연 속에서 나를 돌아보는 특별한 시간을 선물하세요.",
+      highlight: false,
+      isHealing: true,
+    },
   ], [pricing]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProgram, setSelectedProgram] = useState<number | null>(null);
@@ -252,6 +278,18 @@ export default function Programs() {
                           회당 최대 6명 / 1회 20분
                         </p>
                       </>
+                    ) : prog.isHealing ? (
+                      <>
+                        <div className="flex items-end gap-2 mb-4">
+                          <span className="text-2xl font-bold text-text-dark">
+                            {prog.price.toLocaleString()}
+                          </span>
+                          <span className="text-sm text-text-light mb-0.5">원/인</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          최소 10명 ~ 최대 15명 / 1박 2일
+                        </p>
+                      </>
                     ) : (
                       <>
                         <div className="flex items-end gap-2 mb-4">
@@ -323,6 +361,33 @@ export default function Programs() {
                     <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">초기 이벤트</span>
                   </div>
                   <p className="text-xs text-text-light mt-2">정가 현금 5,000원 / 카드 5,500원 · 회당 최대 6명 · 1회 20분</p>
+                </div>
+              ) : popupProgram.isHealing ? (
+                <div className="mb-6">
+                  <div className="flex flex-wrap items-end gap-1 sm:gap-2">
+                    <span className="text-2xl sm:text-3xl font-bold text-text-dark">
+                      {popupProgram.price.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-text-light mb-0.5 sm:mb-1">원/인</span>
+                  </div>
+                  <p className="text-xs text-text-light mt-2">최소 10명 ~ 최대 15명 · 1박 2일 (15:00 입실 ~ 익일 11:00 퇴실)</p>
+                  <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <p className="text-xs font-semibold text-emerald-700 mb-1">1박 2일 타임테이블</p>
+                    <div className="text-xs text-emerald-600 space-y-0.5">
+                      <p><span className="font-semibold">DAY 1</span></p>
+                      <p>15:00 입실 · 웰컴티/다과 · 자기소개</p>
+                      <p>15:30 프로그램① 필라테스 (엉덩이와 호흡)</p>
+                      <p>16:30 프로그램② 바하바나 & 만트라 명상</p>
+                      <p>18:00 석식 (소양 맛집 화심두부마을)</p>
+                      <p>20:00 프로그램③ 자기탐색 글쓰기 + 불멍</p>
+                      <p>21:00 프로그램④ 싱잉볼 테라피 체험</p>
+                      <p>22:00~ 자유 네트워킹 · 별보기</p>
+                      <p className="mt-1"><span className="font-semibold">DAY 2</span></p>
+                      <p>08:00 건강한 조식</p>
+                      <p>09:00 프로그램⑤ 걷기 명상 (오소소 둘렛길)</p>
+                      <p>11:00 퇴실</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-wrap items-end gap-1 sm:gap-2 mb-6">
