@@ -118,26 +118,27 @@ export default function Programs() {
     {
       icon: Boxes,
       title: "조립공간 CNC 체험",
-      duration: "2시간",
+      duration: "1회 20분",
       price: 0,
       priceLabel: "무료",
-      originalPrice: 50000,
+      originalPrice: 5000,
       perPerson: 0,
-      maxPeople: "제한없음",
+      maxPeople: "회당 6명",
       categories: ["membership"],
       tags: ["멤버십전용", "CNC조립", "이벤트"],
       tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-red-100 text-red-600"],
       gradient: "from-teal-500 to-cyan-500",
       image: "/img/exterior-front.jpg",
       features: [
-        "CNC 정밀 커팅 모듈러 피스 조립 체험",
-        "탭앤슬롯 방식 — 도구 없이 안전하게 조립",
-        "집, 상자, 자동차 등 다양한 형태 제작",
-        "최소 3인 이상 예약 시 이용 가능",
-        "어린이도 안전하게 참여 가능 (보호자 동반)",
+        "CNC 정밀 커팅 나무 조각 조립 체험",
+        "탭앤슬롯(끼워맞춤) 방식 — 도구/접착제 불필요",
+        "상자, 집, 자동차 등 다양한 모듈러 형태 제작",
+        "회당 최대 6명 · 1회 20분 소요",
+        "어린이 안전 설계 (보호자 동반)",
+        "체험 후 50,000원 상당 무료 체험 바우처 증정",
       ],
       extras: [],
-      description: "CNC 공방의 기술력으로 정밀 커팅된 모듈러 피스를 직접 조립하는 체험 프로그램입니다. 접착제나 도구 없이 끼워 맞추는 탭앤슬롯 방식으로 어린이도 안전하게 참여할 수 있습니다. 공간 인지, 조립 능력, 창의력 향상에 도움이 됩니다. 현재 초기 이벤트로 무료 체험 가능!",
+      description: "120평 CNC 공방에서 직접 설계·제작한 나무 조각을 끼워 맞춰 상자, 집, 자동차 등을 만들어보는 창작 체험입니다. CNC 장비의 정밀 커팅으로 오차 없는 탭앤슬롯 결합부를 구현하여, 도구 없이도 단단하게 조립됩니다. 어린이도 안전하게 참여 가능하며, 체험 후 50,000원 상당 무료 체험 바우처를 드립니다! 현재 초기 이벤트로 무료 체험 가능!",
       highlight: false,
       isEvent: true,
     },
@@ -248,7 +249,7 @@ export default function Programs() {
                           <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">초기 이벤트</span>
                         </div>
                         <p className="text-xs text-text-light mb-5">
-                          최소 3인 이상 / 1인당 2시간 체험
+                          회당 최대 6명 / 1회 20분
                         </p>
                       </>
                     ) : (
@@ -321,7 +322,7 @@ export default function Programs() {
                     <span className="text-2xl sm:text-3xl font-bold text-red-500">무료</span>
                     <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">초기 이벤트</span>
                   </div>
-                  <p className="text-xs text-text-light mt-2">정가 1인 50,000원 · 최소 3인 이상 예약 시 이용 가능</p>
+                  <p className="text-xs text-text-light mt-2">정가 현금 5,000원 / 카드 5,500원 · 회당 최대 6명 · 1회 20분</p>
                 </div>
               ) : (
                 <div className="flex flex-wrap items-end gap-1 sm:gap-2 mb-6">

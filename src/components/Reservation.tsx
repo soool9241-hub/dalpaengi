@@ -700,8 +700,9 @@ export default function Reservation() {
                 <div className="mt-5">
                   <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl">
                     <p className="text-sm font-semibold text-teal-700 mb-1">조립공간 CNC 체험</p>
-                    <p className="text-xs text-teal-600">2시간 체험 · 최소 3인 이상 · 초기 이벤트 <span className="font-bold text-red-500">무료</span></p>
-                    <p className="text-xs text-teal-600 mt-1">(정가: 1인 50,000원)</p>
+                    <p className="text-xs text-teal-600">1회 20분 · 회당 최대 6명 · 초기 이벤트 <span className="font-bold text-red-500">무료</span></p>
+                    <p className="text-xs text-teal-600 mt-1">(정가: 현금 5,000원 / 카드 5,500원)</p>
+                    <p className="text-xs text-teal-600 mt-1">체험 후 50,000원 상당 무료 체험 바우처 증정!</p>
                   </div>
                 </div>
               )}
@@ -743,30 +744,31 @@ export default function Reservation() {
                     <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mb-4">
                       <p className="text-sm font-semibold text-teal-700 mb-2">조립공간 CNC 체험 안내</p>
                       <ul className="text-xs text-teal-600 space-y-1">
-                        <li>• 2시간 체험 / 최소 3인 이상</li>
-                        <li>• 정가: 1인 50,000원</li>
+                        <li>• 1회 20분 / 회당 최대 6명</li>
+                        <li>• 정가: 현금 5,000원 / 카드 5,500원</li>
+                        <li>• 체험 후 50,000원 상당 바우처 증정</li>
                         <li>• <span className="font-bold text-red-500">초기 이벤트 무료!</span></li>
                       </ul>
                     </div>
                     <label className="text-sm font-medium text-text-dark mb-2 block">체험 인원</label>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setExtraGuests((v) => Math.max(3, (v || 3) - 1))}
+                      <button onClick={() => setExtraGuests((v) => Math.max(1, (v || 1) - 1))}
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Minus className="w-3.5 h-3.5 text-text-mid" />
                       </button>
-                      <input type="number" min={3} value={Math.max(3, extraGuests || 3)}
+                      <input type="number" min={1} max={6} value={Math.min(6, Math.max(1, extraGuests || 1))}
                         onFocus={(e) => e.target.select()}
-                        onChange={(e) => setExtraGuests(Math.max(3, parseInt(e.target.value) || 3))}
+                        onChange={(e) => setExtraGuests(Math.min(6, Math.max(1, parseInt(e.target.value) || 1)))}
                         className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary" />
-                      <button onClick={() => setExtraGuests((v) => (v || 3) + 1)}
+                      <button onClick={() => setExtraGuests((v) => Math.min(6, (v || 1) + 1))}
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Plus className="w-3.5 h-3.5 text-text-mid" />
                       </button>
                       <span className="text-sm text-text-mid">명</span>
                     </div>
-                    {(extraGuests || 0) < 3 && <p className="text-xs text-red-500 mt-2">* 최소 3인 이상 예약 가능합니다</p>}
+                    {(extraGuests || 0) < 1 && <p className="text-xs text-red-500 mt-2">* 인원을 입력해주세요</p>}
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-                      <p className="text-lg font-bold text-red-500">무료 <span className="text-xs font-normal text-text-light line-through ml-1">{((extraGuests || 3) * 50000).toLocaleString()}원</span></p>
+                      <p className="text-lg font-bold text-red-500">무료 <span className="text-xs font-normal text-text-light line-through ml-1">{((extraGuests || 1) * 5000).toLocaleString()}원</span></p>
                       <p className="text-xs text-text-light">초기 이벤트 진행 중</p>
                     </div>
                   </div>
@@ -1005,8 +1007,8 @@ export default function Reservation() {
             {programType === "jolib" ? (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">예약 요약</h3></div>
-              <p className="text-sm text-text-mid mb-1">조립공간 CNC 체험 · {Math.max(3, extraGuests || 3)}명</p>
-              <p className="text-sm text-text-light line-through">{((Math.max(3, extraGuests || 3)) * 50000).toLocaleString()}원</p>
+              <p className="text-sm text-text-mid mb-1">조립공간 CNC 체험 · {Math.max(1, extraGuests || 1)}명 · 1회 20분</p>
+              <p className="text-sm text-text-light line-through">{((Math.max(1, extraGuests || 1)) * 5000).toLocaleString()}원</p>
               <p className="text-3xl font-bold text-red-500">무료</p>
               <p className="text-xs text-text-light mt-1">초기 이벤트 진행 중</p>
             </div>
