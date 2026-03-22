@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", monthStart).lte("reservation_date", monthEnd).in("status", activeStatuses),
       supabaseAdmin.from("reservations").select("id", { count: "exact" }).gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).in("status", activeStatuses),
       supabaseAdmin.from("reservations").select("*").gte("created_at", recentFrom).order("created_at", { ascending: false }),
-      supabaseAdmin.from("reservations").select("*").gte("reservation_date", today).in("status", activeStatuses).order("reservation_date", { ascending: true }).limit(5),
+      supabaseAdmin.from("reservations").select("*").gte("reservation_date", today).in("status", activeStatuses).order("reservation_date", { ascending: true }).limit(10),
       supabaseAdmin.from("reservations").select("*").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),
       supabaseAdmin.from("reservations").select("*").gte("reservation_date", prevMonthStart).lte("reservation_date", prevMonthEnd).neq("status", "cancelled"),
       supabaseAdmin.from("reservations").select("program_type").gte("reservation_date", monthStart).lte("reservation_date", monthEnd).neq("status", "cancelled"),

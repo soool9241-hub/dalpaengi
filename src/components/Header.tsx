@@ -99,18 +99,29 @@ export default function Header() {
             </a>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden p-2 rounded-lg"
-            onClick={() => setOpen(!open)}
-            aria-label="메뉴"
-          >
-            {open ? (
-              <X size={24} className={scrolled ? "text-text-dark" : "text-white"} />
-            ) : (
-              <Menu size={24} className={scrolled ? "text-text-dark" : "text-white"} />
-            )}
-          </button>
+          {/* Mobile Actions */}
+          <div className="lg:hidden flex items-center gap-1">
+            <a
+              href="/admin-login"
+              className={`p-2 rounded-lg transition-all ${
+                scrolled ? "text-text-light hover:bg-gray-100" : "text-white/60 hover:bg-white/10"
+              }`}
+              title="관리자"
+            >
+              <Settings size={20} />
+            </a>
+            <button
+              className="p-2 rounded-lg"
+              onClick={() => setOpen(!open)}
+              aria-label="메뉴"
+            >
+              {open ? (
+                <X size={24} className={scrolled ? "text-text-dark" : "text-white"} />
+              ) : (
+                <Menu size={24} className={scrolled ? "text-text-dark" : "text-white"} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

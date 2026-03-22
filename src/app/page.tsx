@@ -11,11 +11,13 @@ import Reservation from "@/components/Reservation";
 import FAQ from "@/components/FAQ";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import EventPopup from "@/components/EventPopup";
 import { ReservationProvider } from "@/context/ReservationContext";
 
 export default function Home() {
   return (
     <ReservationProvider>
+      <EventPopup />
       <main className="min-h-screen">
         <Header />
         <Hero />

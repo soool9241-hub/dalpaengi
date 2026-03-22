@@ -1,16 +1,33 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CalendarCheck, Users, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { CalendarCheck, Users, DollarSign, ArrowUpRight, ArrowDownRight, Pencil, Save, X, Phone, Bus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { DashboardData, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue } from "@/types/admin";
 import type { ReservationRow } from "@/types/admin";
 
 const COLORS = ["#2d5016", "#4a7c28", "#8B6914", "#c49a2a"];
 
+const BUS_ROUTES: Record<string, number> = {
+  "전북대": 500000, "전주대": 450000, "원광대": 550000, "우석대": 500000,
+};
+const TIME_OPTIONS_PICKUP = Array.from({ length: 25 }, (_, i) => {
+  const h = Math.floor(i / 2) + 6;
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${String(h).padStart(2, "0")}:${m}`;
+});
+const TIME_OPTIONS_DROPOFF = ["06:00","06:30","07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30"];
+
 function formatPrice(n: number) {
   if (n >= 10000) return (n / 10000).toFixed(0) + "만원";
   return n.toLocaleString() + "원";
+}
+
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/[^0-9]/g, "");
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return phone;
 }
 
 function ChangeIndicator({ current, previous }: { current: number; previous: number }) {
@@ -31,14 +48,38 @@ const RECENT_OPTIONS = [
   { value: 28, label: "4주" },
 ];
 
-function formatCheckinOptions(r: ReservationRow): string {
-  const opts: string[] = [];
-  if (r.bbq_count > 0) opts.push(`BBQ${r.bbq_count}`);
-  if (r.dinner_count > 0) opts.push(`석식${r.dinner_count}`);
-  if (r.woodcraft_count > 0) opts.push(`목공${r.woodcraft_count}`);
-  if (r.pot_bbq_count > 0) opts.push(`항아리${r.pot_bbq_count}`);
-  if (r.bus_requested) opts.push("버스");
-  return opts.length > 0 ? opts.join(" · ") : "";
+function formatCheckinOptions(r: ReservationRow): { label: string; value: string; color: string }[] {
+  const opts: { label: string; value: string; color: string }[] = [];
+  if (r.bbq_count > 0) opts.push({ label: "BBQ 그릴", value: `${r.bbq_count}개`, color: "bg-red-50 text-red-700" });
+  if (r.dinner_count > 0) opts.push({ label: "저녁식사", value: `${r.dinner_count}인분`, color: "bg-orange-50 text-orange-700" });
+  if (r.woodcraft_count > 0) opts.push({ label: "목공체험", value: `${r.woodcraft_count}명`, color: "bg-amber-50 text-amber-700" });
+  if (r.pot_bbq_count > 0) opts.push({ label: "항아리BBQ", value: `${r.pot_bbq_count}개`, color: "bg-rose-50 text-rose-700" });
+  if (r.burner_count > 0) opts.push({ label: "가스렌지", value: `${r.burner_count}개`, color: "bg-blue-50 text-blue-700" });
+  if (r.bus_requested) opts.push({ label: "버스", value: "요청", color: "bg-purple-50 text-purple-700" });
+  return opts;
+}
+
+function getDday(dateStr: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (diff === 0) return "D-DAY";
+  if (diff > 0) return `D-${diff}`;
+  return `D+${Math.abs(diff)}`;
+}
+
+function getDdayColor(dateStr: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (diff === 0) return "bg-red-500 text-white";
+  if (diff <= 2) return "bg-orange-500 text-white";
+  if (diff <= 7) return "bg-amber-500 text-white";
+  return "bg-primary/10 text-primary";
 }
 
 export default function AdminDashboard() {
@@ -48,6 +89,11 @@ export default function AdminDashboard() {
   const [recentDays, setRecentDays] = useState(7);
   const [recentReservations, setRecentReservations] = useState<ReservationRow[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Partial<ReservationRow>>({});
+  const [saving, setSaving] = useState(false);
+  const [busMode, setBusMode] = useState<"none" | "oneway" | "roundtrip">("none");
+  const [busForm, setBusForm] = useState({ pickupPlace: "", customPickup: "", pickupPeople: "", pickupTime: "", dropoffPlace: "", customDropoff: "", dropoffPeople: "", dropoffTime: "", managerName: "", managerPhone: "" });
 
   useEffect(() => {
     fetch("/api/admin/dashboard?recentDays=7")
@@ -68,6 +114,103 @@ export default function AdminDashboard() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const startEdit = (r: ReservationRow) => {
+    setEditingId(r.id);
+    setEditForm({
+      guest_name: r.guest_name,
+      guest_phone: r.guest_phone,
+      guest_count: r.guest_count,
+      extra_guests: r.extra_guests,
+      stay_nights: r.stay_nights,
+      bbq_count: r.bbq_count,
+      dinner_count: r.dinner_count,
+      woodcraft_count: r.woodcraft_count,
+      pot_bbq_count: r.pot_bbq_count,
+      burner_count: r.burner_count,
+      bus_requested: r.bus_requested,
+      notes: r.notes,
+    });
+    setBusMode(r.bus_requested ? "roundtrip" : "none");
+    setBusForm({ pickupPlace: "", customPickup: "", pickupPeople: "", pickupTime: "", dropoffPlace: "", customDropoff: "", dropoffPeople: "", dropoffTime: "", managerName: "", managerPhone: "" });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !data) return;
+    setSaving(true);
+    const original = data.upcomingCheckins.find((r) => r.id === editingId);
+    try {
+      const res = await fetch("/api/admin/reservations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingId, ...editForm }),
+      });
+      if (res.ok) {
+        // 변경 내역 계산
+        const changes: string[] = [];
+        if (original) {
+          if (editForm.guest_count !== original.guest_count) changes.push(`인원: ${original.guest_count}명 → ${editForm.guest_count}명`);
+          if (editForm.extra_guests !== original.extra_guests) changes.push(`추가인원: ${original.extra_guests}명 → ${editForm.extra_guests}명`);
+          if (editForm.bbq_count !== original.bbq_count) changes.push(`BBQ 그릴: ${original.bbq_count}개 → ${editForm.bbq_count}개`);
+          if (editForm.dinner_count !== original.dinner_count) changes.push(`저녁식사: ${original.dinner_count}인분 → ${editForm.dinner_count}인분`);
+          if (editForm.woodcraft_count !== original.woodcraft_count) changes.push(`목공체험: ${original.woodcraft_count}개 → ${editForm.woodcraft_count}개`);
+          if (editForm.pot_bbq_count !== original.pot_bbq_count) changes.push(`항아리BBQ: ${original.pot_bbq_count}개 → ${editForm.pot_bbq_count}개`);
+          if (editForm.burner_count !== original.burner_count) changes.push(`가스렌지: ${original.burner_count}개 → ${editForm.burner_count}개`);
+          if (editForm.bus_requested !== original.bus_requested) changes.push(`버스: ${original.bus_requested ? "요청" : "미요청"} → ${editForm.bus_requested ? "요청" : "미요청"}`);
+        }
+
+        // 문자 발송 (변경 사항이 있을 때만)
+        if (original && changes.length > 0) {
+          // 변경 전/후 금액 계산
+          const originalAmount = calculateRevenue(original);
+          const updatedRow = { ...original, ...editForm } as ReservationRow;
+          const newAmount = calculateRevenue(updatedRow);
+          const diff = newAmount - originalAmount;
+          if (diff !== 0) {
+            changes.push(diff < 0
+              ? `💰 환불 금액: ${Math.abs(diff).toLocaleString()}원`
+              : `💰 추가 결제: ${diff.toLocaleString()}원`);
+          }
+          try {
+            await fetch("/api/admin/reservations/notify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                guestName: editForm.guest_name || original.guest_name,
+                guestPhone: editForm.guest_phone || original.guest_phone,
+                reservationDate: original.reservation_date,
+                stayNights: original.stay_nights,
+                guestCount: editForm.guest_count ?? original.guest_count,
+                extraGuests: editForm.extra_guests ?? original.extra_guests,
+                programType: original.program_type,
+                bbqCount: editForm.bbq_count ?? original.bbq_count,
+                burnerCount: editForm.burner_count ?? original.burner_count,
+                dinnerCount: editForm.dinner_count ?? original.dinner_count,
+                woodcraftCount: editForm.woodcraft_count ?? original.woodcraft_count,
+                potBbqCount: editForm.pot_bbq_count ?? original.pot_bbq_count,
+                busRequested: editForm.bus_requested ?? original.bus_requested,
+                timeSlot: original.time_slot,
+                notes: editForm.notes ?? original.notes,
+                changes,
+                originalAmount,
+                newAmount,
+              }),
+            });
+          } catch { /* SMS 실패해도 저장은 완료 */ }
+        }
+
+        // 로컬 상태 업데이트
+        setData({
+          ...data,
+          upcomingCheckins: data.upcomingCheckins.map((r) =>
+            r.id === editingId ? { ...r, ...editForm } as ReservationRow : r
+          ),
+        });
+        setEditingId(null);
+      }
+    } catch { /* ignore */ }
+    setSaving(false);
+  };
 
   const fetchRecent = useCallback(async (days: number) => {
     setRecentDays(days);
@@ -134,6 +277,241 @@ export default function AdminDashboard() {
         })}
       </div>
 
+      {/* Upcoming Checkins - 최상단 풀 width */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-gray-900">다가오는 체크인</h3>
+              {data.upcomingCheckins.length > 0 && (
+                <span className="bg-red-500 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full">{data.upcomingCheckins.length}건</span>
+              )}
+            </div>
+            <a href="/admin/reservations/calendar" className="text-xs sm:text-sm text-primary font-medium hover:underline">달력 →</a>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 max-h-[600px] overflow-y-auto">
+            {data.upcomingCheckins.length === 0 ? (
+              <p className="text-sm text-gray-400 py-8 text-center lg:col-span-2">예정된 체크인이 없습니다</p>
+            ) : (
+              data.upcomingCheckins.map((r: ReservationRow) => {
+                const opts = formatCheckinOptions(r);
+                const isEditing = editingId === r.id;
+                const dday = getDday(r.reservation_date);
+                const ddayColor = getDdayColor(r.reservation_date);
+
+                if (isEditing) {
+                  return (
+                    <div key={r.id} className="border-2 border-primary rounded-xl p-3 sm:p-4 bg-primary/5 space-y-3 lg:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-primary">수정 모드 - {r.guest_name}</p>
+                        <div className="flex gap-1.5">
+                          <button onClick={saveEdit} disabled={saving}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-light disabled:opacity-50">
+                            {saving ? <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full" /> : <Save size={12} />}
+                            저장 + 변경 알림
+                          </button>
+                          <button onClick={() => setEditingId(null)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">
+                            <X size={12} /> 취소
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">예약자명</label>
+                          <input value={editForm.guest_name || ""} onChange={e => setEditForm({ ...editForm, guest_name: e.target.value })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">연락처</label>
+                          <input value={editForm.guest_phone || ""} onChange={e => setEditForm({ ...editForm, guest_phone: e.target.value })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">총 인원</label>
+                          <input type="number" value={(editForm.guest_count || 0) + (editForm.extra_guests || 0)}
+                            onChange={e => {
+                              const total = Math.max(1, parseInt(e.target.value) || 1);
+                              const base = Math.min(total, 15);
+                              const extra = Math.max(0, total - 15);
+                              setEditForm({ ...editForm, guest_count: base, extra_guests: extra });
+                            }}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                          <p className="text-[9px] text-gray-400 mt-0.5">기본{Math.min((editForm.guest_count || 0) + (editForm.extra_guests || 0), 15)} {((editForm.guest_count || 0) + (editForm.extra_guests || 0)) > 15 && `+ 추가${(editForm.guest_count || 0) + (editForm.extra_guests || 0) - 15}`}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">BBQ 그릴</label>
+                          <input type="number" value={editForm.bbq_count || 0} onChange={e => setEditForm({ ...editForm, bbq_count: parseInt(e.target.value) || 0 })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">저녁식사</label>
+                          <input type="number" value={editForm.dinner_count || 0} onChange={e => setEditForm({ ...editForm, dinner_count: parseInt(e.target.value) || 0 })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">목공체험</label>
+                          <input type="number" value={editForm.woodcraft_count || 0} onChange={e => setEditForm({ ...editForm, woodcraft_count: parseInt(e.target.value) || 0 })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">항아리BBQ</label>
+                          <input type="number" value={editForm.pot_bbq_count || 0} onChange={e => setEditForm({ ...editForm, pot_bbq_count: parseInt(e.target.value) || 0 })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">가스렌지</label>
+                          <input type="number" value={editForm.burner_count || 0} onChange={e => setEditForm({ ...editForm, burner_count: parseInt(e.target.value) || 0 })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                        </div>
+                      </div>
+
+                      {/* 버스 렌트 */}
+                      <div className="border border-gray-200 rounded-xl p-3 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] text-gray-500 font-bold flex items-center gap-1">
+                            <Bus size={12} className="text-primary" /> 버스 렌트
+                          </label>
+                          <div className="flex bg-gray-100 rounded-full p-0.5">
+                            {(["none", "oneway", "roundtrip"] as const).map((mode) => (
+                              <button key={mode} type="button"
+                                onClick={() => { setBusMode(mode); setEditForm({ ...editForm, bus_requested: mode !== "none" }); }}
+                                className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold transition-all ${busMode === mode ? "bg-primary text-white shadow-sm" : "text-gray-400"}`}>
+                                {mode === "none" ? "없음" : mode === "oneway" ? "편도" : "왕복"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {busMode !== "none" && (
+                          <div className="bg-gray-50 rounded-lg p-2.5 space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <input placeholder="담당자 이름" value={busForm.managerName}
+                                onChange={e => setBusForm({ ...busForm, managerName: e.target.value })}
+                                className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                              <input placeholder="담당자 연락처" value={busForm.managerPhone}
+                                onChange={e => setBusForm({ ...busForm, managerPhone: e.target.value })}
+                                className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                            </div>
+
+                            <p className="text-[10px] font-bold text-gray-600">승차 정보</p>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              <select value={busForm.pickupPlace}
+                                onChange={e => setBusForm({ ...busForm, pickupPlace: e.target.value, dropoffPlace: e.target.value })}
+                                className="px-1.5 py-1.5 rounded-lg border border-gray-200 text-xs bg-white">
+                                <option value="">출발지</option>
+                                {Object.entries(BUS_ROUTES).map(([name, price]) => (
+                                  <option key={name} value={name}>{name} ({(price/10000).toFixed(0)}만)</option>
+                                ))}
+                                <option value="기타">기타</option>
+                              </select>
+                              <input placeholder="인원" value={busForm.pickupPeople}
+                                onChange={e => setBusForm({ ...busForm, pickupPeople: e.target.value })}
+                                className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                              <select value={busForm.pickupTime}
+                                onChange={e => setBusForm({ ...busForm, pickupTime: e.target.value })}
+                                className="px-1.5 py-1.5 rounded-lg border border-gray-200 text-xs bg-white">
+                                <option value="">시간</option>
+                                {TIME_OPTIONS_PICKUP.map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </div>
+                            {busForm.pickupPlace === "기타" && (
+                              <input placeholder="승차지 직접 입력" value={busForm.customPickup}
+                                onChange={e => setBusForm({ ...busForm, customPickup: e.target.value })}
+                                className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                            )}
+
+                            {busMode === "roundtrip" && (
+                              <>
+                                <p className="text-[10px] font-bold text-gray-600">하차 정보 <span className="font-normal text-gray-400">(퇴실 11시 기준)</span></p>
+                                {busForm.pickupPlace && busForm.pickupPlace !== "기타" && (
+                                  <p className="text-[10px] text-primary">하차지: {busForm.pickupPlace} (승차지와 동일)</p>
+                                )}
+                                {busForm.pickupPlace === "기타" && (
+                                  <input placeholder="하차지 직접 입력" value={busForm.customDropoff}
+                                    onChange={e => setBusForm({ ...busForm, customDropoff: e.target.value })}
+                                    className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                                )}
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <input placeholder="인원" value={busForm.dropoffPeople}
+                                    onChange={e => setBusForm({ ...busForm, dropoffPeople: e.target.value })}
+                                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
+                                  <select value={busForm.dropoffTime}
+                                    onChange={e => setBusForm({ ...busForm, dropoffTime: e.target.value })}
+                                    className="px-1.5 py-1.5 rounded-lg border border-gray-200 text-xs bg-white">
+                                    <option value="">하차 출발시간</option>
+                                    {TIME_OPTIONS_DROPOFF.map(t => <option key={t} value={t}>{t}</option>)}
+                                  </select>
+                                </div>
+                              </>
+                            )}
+
+                            {busForm.pickupPlace && busForm.pickupPlace !== "기타" && BUS_ROUTES[busForm.pickupPlace] && (
+                              <div className="p-1.5 bg-primary/5 border border-primary/20 rounded-lg">
+                                <p className="text-[10px] text-gray-600">{busMode === "roundtrip" ? "왕복" : "편도"} 견적: <span className="font-bold text-primary">{(busMode === "roundtrip" ? BUS_ROUTES[busForm.pickupPlace] : Math.round(BUS_ROUTES[busForm.pickupPlace] * 0.6)).toLocaleString()}원</span></p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-bold">메모</label>
+                        <textarea value={editForm.notes || ""} onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm h-16 resize-none" placeholder="관리자 메모..." />
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={r.id}
+                    onClick={() => startEdit(r)}
+                    className="border border-gray-200 rounded-xl p-3 sm:p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full ${ddayColor}`}>{dday}</span>
+                        <p className="text-sm sm:text-base font-bold text-gray-900">{r.guest_name}</p>
+                        <Pencil size={12} className="text-gray-300 group-hover:text-primary transition-colors" />
+                      </div>
+                      <p className="text-sm sm:text-base font-black text-primary whitespace-nowrap">{formatPrice(calculateRevenue(r))}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 mb-2">
+                      <span className="flex items-center gap-1">
+                        <CalendarCheck size={13} className="text-gray-400" />
+                        {r.reservation_date} ~ {r.checkout_date || ""}
+                      </span>
+                      <span className="font-semibold">{r.stay_nights}박</span>
+                      <span className="flex items-center gap-1">
+                        <Users size={13} className="text-gray-400" />
+                        {(() => { const total = r.guest_count + (r.extra_guests || 0); return total > 15 ? (<>기본15 <span className="text-amber-600">+추가{total - 15}</span> = <span className="font-black">{total}명</span></>) : (<span className="font-black">{total}명</span>); })()}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] sm:text-xs font-bold">{PROGRAM_LABELS[r.program_type]}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                      <Phone size={11} className="text-gray-400" />
+                      <a href={`tel:${r.guest_phone}`} className="hover:text-primary hover:underline">{formatPhone(r.guest_phone)}</a>
+                    </div>
+                    {opts.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {opts.map((opt, i) => (
+                          <span key={i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold ${opt.color}`}>
+                            {opt.label} <span className="font-black">{opt.value}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {r.notes && (
+                      <p className="text-xs text-gray-400 mt-1.5 bg-gray-50 rounded-lg px-2 py-1 italic">📝 {r.notes}</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weekly Revenue */}
@@ -169,88 +547,56 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Recent Reservations */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 sm:mb-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <h3 className="text-sm sm:text-base font-bold text-gray-900">최근 예약</h3>
-              <div className="flex gap-1">
-                {RECENT_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => fetchRecent(opt.value)}
-                    className={`px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                      recentDays === opt.value
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <a href="/admin/reservations" className="text-xs sm:text-sm text-primary font-medium hover:underline">전체 보기 →</a>
-          </div>
-          {recentLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : recentReservations.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center">해당 기간 접수된 예약이 없습니다</p>
-          ) : (
-            <div className="space-y-0 max-h-[400px] overflow-y-auto">
-              {recentReservations.map((r: ReservationRow) => (
-                <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-                  <div className="min-w-0 flex-1 mr-2">
-                    <p className="text-sm font-semibold text-gray-900">{r.guest_name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500 truncate">{r.reservation_date} · {r.guest_count}명 · {PROGRAM_LABELS[r.program_type]}</p>
-                  </div>
-                  <span className={`text-xs px-2 sm:px-3 py-1 rounded-full font-semibold whitespace-nowrap flex-shrink-0 ${
-                    r.status === "confirmed" ? "bg-green-100 text-green-800" :
-                    r.status === "visited" ? "bg-blue-100 text-blue-800" :
-                    r.status === "reviewed" ? "bg-purple-100 text-purple-800" :
-                    r.status === "upcoming" ? "bg-cyan-100 text-cyan-800" :
-                    "bg-red-100 text-red-700"
-                  }`}>
-                    {STATUS_LABELS[r.status]}
-                  </span>
-                </div>
+      {/* Recent Reservations */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h3 className="text-sm sm:text-base font-bold text-gray-900">최근 예약</h3>
+            <div className="flex gap-1">
+              {RECENT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => fetchRecent(opt.value)}
+                  className={`px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    recentDays === opt.value
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }`}
+                >
+                  {opt.label}
+                </button>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Upcoming Checkins */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-sm sm:text-base font-bold text-gray-900">다가오는 체크인</h3>
-            <a href="/admin/reservations/calendar" className="text-xs sm:text-sm text-primary font-medium hover:underline">달력 →</a>
           </div>
-          <div className="space-y-0">
-            {data.upcomingCheckins.length === 0 ? (
-              <p className="text-sm text-gray-400 py-8 text-center">예정된 체크인이 없습니다</p>
-            ) : (
-              data.upcomingCheckins.map((r: ReservationRow) => {
-                const optStr = formatCheckinOptions(r);
-                return (
-                  <div key={r.id} className="py-2.5 border-b border-gray-100 last:border-0">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1 mr-2">
-                        <p className="text-sm font-semibold text-gray-900">{r.guest_name}</p>
-                        <p className="text-xs sm:text-sm text-gray-500">{r.reservation_date} · {r.stay_nights}박 · {r.guest_count}명</p>
-                        {optStr && <p className="text-xs text-gray-400 mt-0.5">{optStr}</p>}
-                      </div>
-                      <p className="text-sm font-bold text-primary whitespace-nowrap">{formatPrice(calculateRevenue(r))}</p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <a href="/admin/reservations" className="text-xs sm:text-sm text-primary font-medium hover:underline">전체 보기 →</a>
         </div>
+        {recentLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        ) : recentReservations.length === 0 ? (
+          <p className="text-sm text-gray-400 py-8 text-center">해당 기간 접수된 예약이 없습니다</p>
+        ) : (
+          <div className="space-y-0 max-h-[400px] overflow-y-auto">
+            {recentReservations.map((r: ReservationRow) => (
+              <div key={r.id} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+                <div className="min-w-0 flex-1 mr-2">
+                  <p className="text-sm font-semibold text-gray-900">{r.guest_name}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">{r.reservation_date} · {r.guest_count}명 · {PROGRAM_LABELS[r.program_type]}</p>
+                </div>
+                <span className={`text-xs px-2 sm:px-3 py-1 rounded-full font-semibold whitespace-nowrap flex-shrink-0 ${
+                  r.status === "confirmed" ? "bg-green-100 text-green-800" :
+                  r.status === "visited" ? "bg-blue-100 text-blue-800" :
+                  r.status === "reviewed" ? "bg-purple-100 text-purple-800" :
+                  r.status === "upcoming" ? "bg-cyan-100 text-cyan-800" :
+                  "bg-red-100 text-red-700"
+                }`}>
+                  {STATUS_LABELS[r.status]}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

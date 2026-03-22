@@ -99,7 +99,7 @@ export default function ReservationsPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("upcoming");
   const [program, setProgram] = useState("all");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -117,7 +117,8 @@ export default function ReservationsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ status, program, page: page.toString(), sort: "reservation_date", order: "desc" });
+    const sortOrder = (status === "upcoming" || status === "confirmed") ? "asc" : "desc";
+    const params = new URLSearchParams({ status, program, page: page.toString(), sort: "reservation_date", order: sortOrder });
     if (search) params.set("search", search);
     try {
       const res = await fetch(`/api/admin/reservations?${params}`);
@@ -405,7 +406,7 @@ export default function ReservationsPage() {
                     <td className="px-4 py-3 text-sm text-gray-700">{r.reservation_date}<span className="text-gray-400 ml-1">({r.stay_nights}박)</span></td>
                     <td className="px-4 py-3 text-sm text-gray-700">{r.checkout_date || "-"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{PROGRAM_LABELS[r.program_type]}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.guest_count}명{r.extra_guests > 0 && <span className="text-gray-400 text-xs ml-0.5">(+{r.extra_guests})</span>}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-700">{r.guest_count + (r.extra_guests || 0)}명{(r.guest_count + (r.extra_guests || 0)) > 15 && <span className="text-amber-600 text-xs ml-0.5">(기본15+추가{r.guest_count + (r.extra_guests || 0) - 15})</span>}</td>
                     <td className="px-4 py-3 text-center text-sm text-gray-700">{r.bbq_count > 0 ? `${r.bbq_count}개` : "-"}{r.burner_count > 0 && <span className="text-gray-400 text-xs block">렌지{r.burner_count}</span>}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{formatOptions(r)}</td>
                     <td className="px-4 py-3 text-center">
@@ -463,7 +464,7 @@ export default function ReservationsPage() {
                 <div className="flex justify-between"><span className="text-gray-500">체크인</span><span className="text-gray-900 font-medium">{r.reservation_date}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">체크아웃</span><span className="text-gray-900 font-medium">{r.checkout_date || "-"}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">프로그램</span><span className="text-gray-900 font-medium">{PROGRAM_LABELS[r.program_type]}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">인원</span><span className="text-gray-900 font-medium">{r.guest_count}명{r.extra_guests > 0 ? ` (+${r.extra_guests})` : ""}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">인원</span><span className="text-gray-900 font-medium">{r.guest_count + (r.extra_guests || 0)}명{(r.guest_count + (r.extra_guests || 0)) > 15 ? ` (기본15+추가${r.guest_count + (r.extra_guests || 0) - 15})` : ""}</span></div>
                 {r.bbq_count > 0 && <div className="flex justify-between"><span className="text-gray-500">BBQ</span><span className="text-gray-900 font-medium">{r.bbq_count}개</span></div>}
                 {formatOptions(r) !== "-" && <div className="flex justify-between"><span className="text-gray-500">부가</span><span className="text-gray-900 font-medium">{formatOptions(r)}</span></div>}
               </div>
@@ -721,7 +722,7 @@ export default function ReservationsPage() {
                   <Row label="체크인" value={`${detail.reservation_date} (${detail.stay_nights}박)`} />
                   <Row label="체크아웃" value={detail.checkout_date || "-"} />
                   <Row label="프로그램" value={PROGRAM_LABELS[detail.program_type]} />
-                  <Row label="인원" value={`${detail.guest_count}명 (추가 ${detail.extra_guests}명)`} />
+                  <Row label="인원" value={`총 ${detail.guest_count + (detail.extra_guests || 0)}명${(detail.guest_count + (detail.extra_guests || 0)) > 15 ? ` (기본15 + 추가${detail.guest_count + (detail.extra_guests || 0) - 15})` : ""}`} />
                   <Row label="목적" value={detail.purpose || detail.purpose_raw || "-"} />
                   {detail.time_slot && <Row label="시간대" value={detail.time_slot} />}
                   <Row label="BBQ 그릴" value={`${detail.bbq_count}개`} />

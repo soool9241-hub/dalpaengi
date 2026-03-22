@@ -10,16 +10,27 @@ const POT_BBQ_MIN = 10;
 type ProgramType = "stay" | "half" | "daynight" | "jolib" | "healing";
 
 const HALF_TIME_SLOTS = [
-  { id: "09-12", label: "오전", time: "09:00 ~ 12:00" },
-  { id: "12-15", label: "낮", time: "12:00 ~ 15:00" },
-  { id: "15-18", label: "오후", time: "15:00 ~ 18:00" },
-  { id: "18-21", label: "저녁", time: "18:00 ~ 21:00" },
+  { id: "09-12", label: "오전", time: "09:00 ~ 12:00", startH: 9, endH: 12 },
+  { id: "12-15", label: "낮", time: "12:00 ~ 15:00", startH: 12, endH: 15 },
+  { id: "15-18", label: "오후", time: "15:00 ~ 18:00", startH: 15, endH: 18 },
+  { id: "18-21", label: "저녁", time: "18:00 ~ 21:00", startH: 18, endH: 21 },
 ];
 
 const DAYNIGHT_TIME_SLOTS = [
-  { id: "day", label: "주간", time: "10:00 ~ 15:00", emoji: "☀️" },
-  { id: "night", label: "야간", time: "17:00 ~ 22:00", emoji: "🌙" },
+  { id: "day", label: "주간", time: "10:00 ~ 15:00", emoji: "☀️", startH: 10, endH: 15 },
+  { id: "night", label: "야간", time: "17:00 ~ 22:00", emoji: "🌙", startH: 17, endH: 22 },
 ];
+
+const JOLIB_TIME_SLOTS = [
+  { id: "14-16", label: "1타임", time: "14:00 ~ 16:00", soldOut: true, startH: 14, endH: 16 },
+  { id: "16-18", label: "2타임", time: "16:00 ~ 18:00", soldOut: true, startH: 16, endH: 18 },
+
+];
+
+// 퇴실 11시 + 청소 3시간 = 14시 이후 사용 가능
+const CLEANUP_READY_HOUR = 14;
+// 입실 15시, 청소 3시간 필요 = 12시 이전에 끝나야 함
+const MUST_END_BY_HOUR = 12;
 
 const BASE_PEOPLE = 15;
 
@@ -41,15 +52,15 @@ function dateToStr(d: Date): string {
 }
 
 export default function Reservation() {
-  const { selectedProgramId, selectedCheckInDate, setSelectedCheckInDate, isMTPackage } = useReservation();
+  const { selectedProgramId, selectedCheckInDate, setSelectedCheckInDate, isMTPackage, isEventPromo, setIsEventPromo } = useReservation();
   const { pricing, busRoutes } = usePricing();
 
   const PROGRAMS: Record<ProgramType, { label: string; icon: typeof Moon; basePrice: number; unit: string; rangeMode: boolean }> = useMemo(() => ({
     stay: { label: "숙박", icon: Moon, basePrice: pricing.stay, unit: "박", rangeMode: true },
     half: { label: "3시간 대여(평일만 가능)", icon: Clock, basePrice: pricing.half, unit: "회", rangeMode: false },
     daynight: { label: "주/야간 패키지(평일만 가능)", icon: Sun, basePrice: pricing.daynight, unit: "회", rangeMode: false },
-    jolib: { label: "조립공간 CNC 체험", icon: Boxes, basePrice: 0, unit: "회", rangeMode: false },
-    healing: { label: "힐링캠프 1박2일", icon: Moon, basePrice: 290000, unit: "인", rangeMode: false },
+    jolib: { label: "나만의 아지트 만들기(목공체험)", icon: Boxes, basePrice: 30000, unit: "인", rangeMode: false },
+    healing: { label: "힐링캠프 1박2일", icon: Moon, basePrice: 290000, unit: "인", rangeMode: true },
   }), [pricing]);
 
   const today = new Date();
@@ -72,6 +83,8 @@ export default function Reservation() {
 
   // Supabase 예약 데이터
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [checkinDates, setCheckinDates] = useState<Set<string>>(new Set());
+  const [checkoutDates, setCheckoutDates] = useState<Set<string>>(new Set());
   const [loadingReservations, setLoadingReservations] = useState(false);
 
   // 예약 확정 상태
@@ -92,13 +105,21 @@ export default function Reservation() {
     }
   }, [selectedProgramId, isMTPackage]);
 
+  // 이벤트 팝업에서 넘어온 경우: 그릴 6개 + 저녁식사 10명분 자동 세팅 (0원 적용)
+  useEffect(() => {
+    if (isEventPromo) {
+      setBbqGrills(6);
+      setDinnerCount(10);
+    }
+  }, [isEventPromo]);
+
   // Hero에서 날짜 선택 시 → 달력에 체크인 + 체크아웃(1박) 자동 반영
   useEffect(() => {
     if (selectedCheckInDate) {
       const { year, month, day } = selectedCheckInDate;
       setCurrentYear(year);
       setCurrentMonth(month);
-      if (programType === "stay") {
+      if (PROGRAMS[programType].rangeMode) {
         setCheckIn({ year, month, day });
         // 1박 기준 체크아웃 자동 설정
         const nextDay = new Date(year, month, day + 1);
@@ -108,7 +129,7 @@ export default function Reservation() {
       }
       setSelectedCheckInDate(null);
     }
-  }, [selectedCheckInDate, programType, setSelectedCheckInDate]);
+  }, [selectedCheckInDate, programType, setSelectedCheckInDate, PROGRAMS]);
 
   const program = PROGRAMS[programType];
 
@@ -142,7 +163,9 @@ export default function Reservation() {
   });
   const [busRequested, setBusRequested] = useState(false);
 
-  const totalGuests = BASE_PEOPLE + extraGuests;
+  const BASE_HEALING = 10;
+  const MAX_HEALING = 15;
+  const totalGuests = programType === "healing" ? Math.min(MAX_HEALING, BASE_HEALING + extraGuests) : BASE_PEOPLE + extraGuests;
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
 
@@ -154,6 +177,7 @@ export default function Reservation() {
 
   // 서버 API에서 예약 데이터 조회 - 체크인~체크아웃 전날까지 차단 (에어비앤비 방식)
   // 체크인 오후 3시 ~ 체크아웃 오전 11시 → 체크아웃 날짜는 새 체크인 가능
+  // + 체크인/체크아웃 날짜 추적 (시간제 프로그램 3시간 청소 버퍼 적용)
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
@@ -162,17 +186,25 @@ export default function Reservation() {
       const data = json.dates || [];
 
       const dates = new Set<string>();
+      const ciDates = new Set<string>();
+      const coDates = new Set<string>();
       data.forEach((r: { reservation_date: string; checkout_date: string | null }) => {
         if (!r.reservation_date) return;
         const start = new Date(r.reservation_date);
         const end = r.checkout_date ? new Date(r.checkout_date) : new Date(r.reservation_date);
         if (!r.checkout_date) end.setDate(end.getDate() + 1);
+
+        ciDates.add(dateToStr(start));
+        coDates.add(dateToStr(end));
+
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           dates.add(dateToStr(d));
         }
       });
 
       setBookedDates(dates);
+      setCheckinDates(ciDates);
+      setCheckoutDates(coDates);
     } catch (err) {
       console.error("예약 데이터 조회 중 오류:", err);
     } finally {
@@ -221,6 +253,12 @@ export default function Reservation() {
       setSelectedDate(clicked);
       return;
     }
+    if (programType === "healing") {
+      setCheckIn(clicked);
+      const nextDay = new Date(currentYear, currentMonth, day + 1);
+      setCheckOut({ year: nextDay.getFullYear(), month: nextDay.getMonth(), day: nextDay.getDate() });
+      return;
+    }
     if (!checkIn || (checkIn && checkOut)) { setCheckIn(clicked); setCheckOut(null); }
     else {
       const d1 = new Date(checkIn.year, checkIn.month, checkIn.day);
@@ -250,7 +288,11 @@ export default function Reservation() {
   const handleProgramChange = (type: ProgramType) => {
     setProgramType(type);
     setCheckIn(null); setCheckOut(null); setSelectedDate(null); setSelectedTimeSlots([]);
-    setShowBusForm(type !== "stay");
+    setShowBusForm(type !== "stay" && type !== "healing");
+    setIsEventPromo(false); // 프로그램 변경 시 이벤트 해제
+    if (type === "healing") {
+      setExtraGuests(0); // 기본 10명 (BASE_HEALING)
+    }
   };
 
   // 예약 확정 → Supabase INSERT (customers + reservations)
@@ -418,6 +460,34 @@ export default function Reservation() {
     return dow === 0 || dow === 6;
   };
   const isWeekdayOnly = programType === "half" || programType === "daynight" || programType === "jolib";
+  const isTimeBased = programType === "half" || programType === "daynight" || programType === "jolib";
+
+  // 시간제 프로그램: 숙박 체크인/체크아웃일에 슬롯 충돌 확인
+  // 퇴실 11시 + 청소 3시간 = 14시 이후 사용 가능
+  // 입실 15시, 청소 3시간 필요 = 12시 이전에 끝나야 함
+  const isSlotBlockedByStay = (dateStr: string, startH: number, endH: number): boolean => {
+    const isCI = checkinDates.has(dateStr);
+    const isCO = checkoutDates.has(dateStr);
+    // 체크아웃일: 14시 이전에 시작하는 슬롯 차단
+    if (isCO && startH < CLEANUP_READY_HOUR) return true;
+    // 체크인일: 12시 이후에 끝나는 슬롯 차단
+    if (isCI && endH > MUST_END_BY_HOUR) return true;
+    return false;
+  };
+
+  // 시간제 프로그램에서 특정 날짜에 이용 가능한 슬롯이 있는지 확인
+  const hasAvailableSlots = (dateStr: string): boolean => {
+    if (programType === "half") {
+      return HALF_TIME_SLOTS.some(s => !isSlotBlockedByStay(dateStr, s.startH, s.endH));
+    }
+    if (programType === "daynight") {
+      return DAYNIGHT_TIME_SLOTS.some(s => !isSlotBlockedByStay(dateStr, s.startH, s.endH));
+    }
+    if (programType === "jolib") {
+      return JOLIB_TIME_SLOTS.some(s => !isSlotBlockedByStay(dateStr, s.startH, s.endH));
+    }
+    return true;
+  };
 
   const busPrice = showBusForm && busForm.pickupPlace && busForm.pickupPlace !== "기타" ? (busRoutes[busForm.pickupPlace] || 0) : 0;
 
@@ -431,22 +501,36 @@ export default function Reservation() {
       const count = Math.max(1, selectedTimeSlots.length);
       return pricing.daynight * count;
     }
-    if (programType === "jolib") return 0;
-    if (programType === "healing") return 290000 * Math.max(10, totalGuests);
+    if (programType === "jolib") return 30000 * Math.max(1, extraGuests || 1);
+    if (programType === "healing") return 290000 * totalGuests;
     return program.basePrice * nights;
   }, [programType, selectedTimeSlots.length, pricing.half, pricing.halfExtra, pricing.daynight, program.basePrice, nights]);
+
+  // 이벤트 프로모: 그릴 6개 + 저녁식사 10인분 무료
+  const EVENT_FREE_GRILLS = 6;
+  const EVENT_FREE_DINNER = 10;
 
   const totalPrice = useMemo(() => {
     let total = programPrice;
     total += extraGuests * pricing.extraGuest;
-    total += bbqGrills * pricing.bbqGrill;
+
+    if (isEventPromo) {
+      // 무료 제공분 초과 시에만 과금
+      const chargedGrills = Math.max(0, bbqGrills - EVENT_FREE_GRILLS);
+      const chargedDinner = Math.max(0, dinnerCount - EVENT_FREE_DINNER);
+      total += chargedGrills * pricing.bbqGrill;
+      total += chargedDinner * pricing.dinner;
+    } else {
+      total += bbqGrills * pricing.bbqGrill;
+      total += dinnerCount * pricing.dinner;
+    }
+
     total += gasRanges * pricing.gasRange;
-    total += dinnerCount * pricing.dinner;
     total += woodcraftCount * pricing.woodcraft;
     total += potBbqCount * pricing.potBbq;
     total += busPrice;
     return total;
-  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice, pricing]);
+  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice, pricing, isEventPromo]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -516,6 +600,22 @@ export default function Reservation() {
             <h2 className="text-3xl md:text-4xl font-bold text-text-dark mb-4">프로그램 예약</h2>
             <p className="text-text-light">원하시는 날짜와 프로그램을 선택하여 예약해주세요</p>
           </div>
+
+          {/* 이벤트 프로모 안내 */}
+          {isEventPromo && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🎉</span>
+                  <div>
+                    <p className="text-sm font-bold text-red-600">오픈 이벤트 혜택 적용 중!</p>
+                    <p className="text-xs text-gray-500">그릴 6개 (180,000원) + 숯불용 고기 10인분 (100,000원) 무료</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsEventPromo(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">해제</button>
+              </div>
+            </div>
+          )}
 
           {/* Program Tabs */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
@@ -615,14 +715,30 @@ export default function Reservation() {
                     }
 
                     const weekendBlocked = isWeekdayOnly && isWeekend(day);
+
+                    // 시간제 프로그램: 체크인일(오전 가능) / 체크아웃일(오후 가능) 부분 허용
+                    const isStayCheckin = checkinDates.has(dateStr);
+                    const isStayCheckout = checkoutDates.has(dateStr);
+                    const timePartial = isTimeBased && (
+                      (booked && isStayCheckin && hasAvailableSlots(dateStr)) ||
+                      (!booked && isStayCheckout && hasAvailableSlots(dateStr))
+                    );
+                    // 시간제에서 체크인일+체크아웃일 동시 → 이용 가능 슬롯 없으면 차단
+                    const timeFullyBlocked = isTimeBased && !booked && isStayCheckout && !hasAvailableSlots(dateStr);
+
                     const disabled = !!(past
                       || weekendBlocked
-                      || (booked && !isSelectingCheckout)
+                      || (booked && !isSelectingCheckout && !timePartial)
+                      || timeFullyBlocked
                       || (isSelectingCheckout && disabledInCheckoutMode));
                     const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
                     const isCI = isCheckIn(day); const isCO = isCheckOut(day);
                     const inRange = isInRange(day); const isSingle = isSingleSelected(day);
                     const isSelected = isCI || isCO || isSingle;
+
+                    // 시간제 프로그램에서 부분 이용 가능 표시
+                    const showPartialLabel = isTimeBased && !past && !weekendBlocked && !disabled && (isStayCheckin || isStayCheckout);
+
                     return (
                       <button key={day} onClick={() => handleDateClick(day)} disabled={disabled}
                         className={`py-2.5 rounded-xl text-sm font-medium transition-all relative
@@ -633,14 +749,16 @@ export default function Reservation() {
                           : isCheckoutAllowed ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
                           : isSelected ? "bg-primary text-white shadow-md"
                           : inRange ? "bg-primary/15 text-primary"
+                          : showPartialLabel ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                           : dayOfWeek === 0 ? "text-red-400 hover:bg-sage"
                           : dayOfWeek === 6 ? "text-blue-400 hover:bg-sage"
                           : "text-text-dark hover:bg-sage"}`}>
                         {day}
                         {isCI && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">IN</span>}
                         {isCO && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-white/80">OUT</span>}
-                        {booked && !past && !isSelectingCheckout && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
+                        {booked && !past && !isSelectingCheckout && !timePartial && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-red-400 font-bold">마감</span>}
                         {isCheckoutAllowed && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-orange-500 font-bold">퇴실</span>}
+                        {showPartialLabel && !isSelected && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[6px] text-amber-600 font-bold">{isStayCheckout ? "오후" : "오전"}</span>}
                       </button>
                     );
                   });
@@ -648,9 +766,10 @@ export default function Reservation() {
               </div>
 
               {/* 범례 */}
-              <div className="mt-3 flex items-center gap-4 text-xs text-text-light">
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-text-light">
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-100 inline-block"></span> 예약마감</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary inline-block"></span> 선택됨</span>
+                {isTimeBased && <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-50 border border-amber-200 inline-block"></span> 일부 시간만 가능</span>}
               </div>
 
               {/* Date summary */}
@@ -681,12 +800,14 @@ export default function Reservation() {
                   <div className="grid grid-cols-2 gap-2">
                     {HALF_TIME_SLOTS.map((slot) => {
                       const selected = selectedTimeSlots.includes(slot.id);
+                      const blocked = selectedDate && isSlotBlockedByStay(toDateStr(selectedDate.year, selectedDate.month, selectedDate.day), slot.startH, slot.endH);
                       return (
-                        <button key={slot.id} onClick={() => toggleTimeSlot(slot.id)}
-                          className={`p-3 rounded-xl border-2 text-center transition-all ${selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
-                          <p className={`text-sm font-semibold ${selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
+                        <button key={slot.id} onClick={() => !blocked && toggleTimeSlot(slot.id)} disabled={!!blocked}
+                          className={`p-3 rounded-xl border-2 text-center transition-all relative ${blocked ? "border-border bg-gray-50 opacity-50 cursor-not-allowed" : selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
+                          <p className={`text-sm font-semibold ${blocked ? "text-text-light" : selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
                           <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
-                          {selected && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
+                          {blocked && <p className="text-[10px] text-red-400 font-bold mt-1">청소 시간</p>}
+                          {selected && !blocked && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
                         </button>
                       );
                     })}
@@ -698,23 +819,23 @@ export default function Reservation() {
                   )}
                 </div>
               )}
-              {programType === "healing" && selectedDate && (
-                <div className="mt-5">
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <p className="text-sm font-semibold text-emerald-700 mb-1">힐링캠프 1박2일</p>
-                    <p className="text-xs text-emerald-600">15:00 입실 ~ 익일 11:00 퇴실</p>
-                    <p className="text-xs text-emerald-600 mt-1">1인 290,000원 · 최소 10명 ~ 최대 15명</p>
-                    <p className="text-xs text-emerald-600 mt-1">석식 + 조식 + 프로그램 4종 포함</p>
-                  </div>
-                </div>
-              )}
               {programType === "jolib" && selectedDate && (
                 <div className="mt-5">
-                  <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl">
-                    <p className="text-sm font-semibold text-teal-700 mb-1">조립공간 CNC 체험</p>
-                    <p className="text-xs text-teal-600">1회 20분 · 회당 최대 6명 · 초기 이벤트 <span className="font-bold text-red-500">무료</span></p>
-                    <p className="text-xs text-teal-600 mt-1">(정가: 현금 5,000원 / 카드 5,500원)</p>
-                    <p className="text-xs text-teal-600 mt-1">체험 후 50,000원 상당 무료 체험 바우처 증정!</p>
+                  <div className="flex items-center gap-2 mb-1"><Clock size={16} className="text-teal-600" /><h4 className="text-sm font-semibold text-text-dark">시간대 선택</h4></div>
+                  <p className="text-xs text-teal-600 mb-3">1인 30,000원 · 2시간 체험</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {JOLIB_TIME_SLOTS.map((slot) => (
+                      <div key={slot.id}
+                        className="p-4 rounded-xl border-2 border-border bg-gray-50 text-center opacity-60 cursor-not-allowed relative">
+                        <p className="text-sm font-semibold text-text-dark">{slot.label}</p>
+                        <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
+                        <span className="absolute top-2 right-2 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">SOLD OUT</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
+                    <p className="text-sm font-semibold text-red-500">현재 모든 타임이 마감되었습니다</p>
+                    <p className="text-xs text-text-light mt-1">다음 일정이 오픈되면 안내드리겠습니다</p>
                   </div>
                 </div>
               )}
@@ -725,13 +846,15 @@ export default function Reservation() {
                   <div className="grid grid-cols-2 gap-3">
                     {DAYNIGHT_TIME_SLOTS.map((slot) => {
                       const selected = selectedTimeSlots.includes(slot.id);
+                      const blocked = selectedDate && isSlotBlockedByStay(toDateStr(selectedDate.year, selectedDate.month, selectedDate.day), slot.startH, slot.endH);
                       return (
-                        <button key={slot.id} onClick={() => toggleTimeSlot(slot.id)}
-                          className={`p-4 rounded-xl border-2 text-center transition-all ${selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
+                        <button key={slot.id} onClick={() => !blocked && toggleTimeSlot(slot.id)} disabled={!!blocked}
+                          className={`p-4 rounded-xl border-2 text-center transition-all ${blocked ? "border-border bg-gray-50 opacity-50 cursor-not-allowed" : selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white hover:border-primary/30"}`}>
                           <span className="text-2xl block mb-1">{slot.emoji}</span>
-                          <p className={`text-sm font-semibold ${selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
+                          <p className={`text-sm font-semibold ${blocked ? "text-text-light" : selected ? "text-primary" : "text-text-dark"}`}>{slot.label}</p>
                           <p className="text-xs text-text-light mt-0.5">{slot.time}</p>
-                          {selected && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
+                          {blocked && <p className="text-[10px] text-red-400 font-bold mt-1">청소 시간</p>}
+                          {selected && !blocked && <p className="text-[10px] text-primary font-bold mt-1">선택됨</p>}
                         </button>
                       );
                     })}
@@ -763,36 +886,44 @@ export default function Reservation() {
                         <li>• 1인 <span className="font-bold">290,000원</span></li>
                       </ul>
                     </div>
-                    <label className="text-sm font-medium text-text-dark mb-2 block">참가 인원 (최소 10명 ~ 최대 15명)</label>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => setExtraGuests((v) => Math.max(10, (v < 10 ? 10 : v) - 1))}
-                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
-                        <Minus className="w-3.5 h-3.5 text-text-mid" />
-                      </button>
-                      <input type="number" min={10} max={15} value={Math.min(15, Math.max(10, extraGuests < 10 ? 10 : extraGuests))}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => setExtraGuests(Math.min(15, Math.max(10, parseInt(e.target.value) || 10)))}
-                        className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary" />
-                      <button onClick={() => setExtraGuests((v) => Math.min(15, (v < 10 ? 10 : v) + 1))}
-                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
-                        <Plus className="w-3.5 h-3.5 text-text-mid" />
-                      </button>
-                      <span className="text-sm text-text-mid">명</span>
+                    <label className="text-sm font-medium text-text-dark mb-2 block">참가 인원</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 bg-sage/50 rounded-xl px-4 py-2.5">
+                        <span className="text-sm text-text-mid">기본</span>
+                        <span className="text-lg font-bold text-text-dark">{BASE_HEALING}</span>
+                        <span className="text-sm text-text-mid">인</span>
+                      </div>
+                      <span className="text-lg text-text-light">+</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm text-text-mid">추가</span>
+                        <input type="number" min={0} max={MAX_HEALING - BASE_HEALING}
+                          value={extraGuests}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => setExtraGuests(Math.min(MAX_HEALING - BASE_HEALING, Math.max(0, parseInt(e.target.value) || 0)))}
+                          className="w-14 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary" />
+                        <span className="text-sm text-text-mid">인</span>
+                      </div>
+                      <span className="text-lg text-text-light">=</span>
+                      <div className="flex items-center gap-1 bg-primary/10 rounded-xl px-4 py-2.5">
+                        <span className="text-lg font-bold text-primary">{totalGuests}</span>
+                        <span className="text-sm text-primary">명</span>
+                      </div>
                     </div>
-                    <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl text-center">
-                      <p className="text-sm text-text-mid">{Math.max(10, extraGuests < 10 ? 10 : extraGuests)}명 × 290,000원</p>
-                      <p className="text-2xl font-bold text-primary mt-1">{(290000 * Math.max(10, extraGuests < 10 ? 10 : extraGuests)).toLocaleString()}원</p>
+                    <p className="text-xs text-text-light mb-3">최소 {BASE_HEALING}명 ~ 최대 {MAX_HEALING}명</p>
+                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
+                      <span className="text-sm text-text-mid">{totalGuests}명 × 290,000원</span>
+                      <span className="text-lg font-bold text-primary">{(290000 * totalGuests).toLocaleString()}원</span>
                     </div>
                   </div>
                 ) : programType === "jolib" ? (
                   <div>
                     <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mb-4">
-                      <p className="text-sm font-semibold text-teal-700 mb-2">조립공간 CNC 체험 안내</p>
+                      <p className="text-sm font-semibold text-teal-700 mb-2">나만의 아지트 만들기(목공체험) 안내</p>
                       <ul className="text-xs text-teal-600 space-y-1">
-                        <li>• 1회 20분 / 회당 최대 6명</li>
-                        <li>• 정가: 현금 5,000원 / 카드 5,500원</li>
+                        <li>• 2시간 체험 / 회당 최대 6명</li>
+                        <li>• <span className="font-bold">1인 30,000원</span></li>
+                        <li>• 운영: 14:00~16:00 / 16:00~18:00 (2타임)</li>
                         <li>• 체험 후 50,000원 상당 바우처 증정</li>
-                        <li>• <span className="font-bold text-red-500">초기 이벤트 무료!</span></li>
                       </ul>
                     </div>
                     <label className="text-sm font-medium text-text-dark mb-2 block">체험 인원</label>
@@ -812,9 +943,9 @@ export default function Reservation() {
                       <span className="text-sm text-text-mid">명</span>
                     </div>
                     {(extraGuests || 0) < 1 && <p className="text-xs text-red-500 mt-2">* 인원을 입력해주세요</p>}
-                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-                      <p className="text-lg font-bold text-red-500">무료 <span className="text-xs font-normal text-text-light line-through ml-1">{((extraGuests || 1) * 5000).toLocaleString()}원</span></p>
-                      <p className="text-xs text-text-light">초기 이벤트 진행 중</p>
+                    <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
+                      <span className="text-sm text-text-mid">{Math.max(1, extraGuests || 1)}명 × 30,000원</span>
+                      <span className="text-lg font-bold text-primary">{(30000 * Math.max(1, extraGuests || 1)).toLocaleString()}원</span>
                     </div>
                   </div>
                 ) : (
@@ -889,7 +1020,13 @@ export default function Reservation() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(pricing.bbqGrill)} (최대 6개)`} value={bbqGrills} unitPrice={pricing.bbqGrill}
+                  {isEventPromo && bbqGrills > 0 && bbqGrills <= EVENT_FREE_GRILLS && (
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">EVENT 무료</span>
+                      <span className="text-[10px] text-text-light">그릴 {Math.min(bbqGrills, EVENT_FREE_GRILLS)}개 ({formatPrice(Math.min(bbqGrills, EVENT_FREE_GRILLS) * pricing.bbqGrill)} 상당)</span>
+                    </div>
+                  )}
+                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(pricing.bbqGrill)} (최대 6개)`} value={bbqGrills} unitPrice={isEventPromo ? 0 : pricing.bbqGrill}
                     onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} onChange={(v) => setBbqGrills(Math.min(6, v))} />
 
                   <hr className="border-border" />
@@ -900,7 +1037,13 @@ export default function Reservation() {
                   <hr className="border-border" />
 
                   {/* 저녁 식사 */}
-                  <Counter label="저녁 식사" desc={`1인 ${formatPrice(pricing.dinner)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={pricing.dinner}
+                  {isEventPromo && dinnerCount > 0 && (
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">EVENT 무료</span>
+                      <span className="text-[10px] text-text-light">숯불용 고기 {Math.min(dinnerCount, EVENT_FREE_DINNER)}인분 ({formatPrice(Math.min(dinnerCount, EVENT_FREE_DINNER) * pricing.dinner)} 상당)</span>
+                    </div>
+                  )}
+                  <Counter label="저녁 식사" desc={`1인 ${formatPrice(pricing.dinner)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? 0 : pricing.dinner}
                     onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => g + 1)} onChange={(v) => setDinnerCount(v)} />
 
                   <hr className="border-border" />
@@ -1052,17 +1195,16 @@ export default function Reservation() {
             {programType === "healing" ? (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">예약 요약</h3></div>
-              <p className="text-sm text-text-mid mb-1">힐링캠프 1박2일 · {Math.max(10, extraGuests < 10 ? 10 : extraGuests)}명</p>
-              <p className="text-3xl font-bold text-primary">{(290000 * Math.max(10, extraGuests < 10 ? 10 : extraGuests)).toLocaleString()}원</p>
-              <p className="text-xs text-text-light mt-1">1인 290,000원 × {Math.max(10, extraGuests < 10 ? 10 : extraGuests)}명</p>
+              <p className="text-sm text-text-mid mb-1">힐링캠프 1박2일 · {totalGuests}명</p>
+              <p className="text-3xl font-bold text-primary">{programPrice.toLocaleString()}원</p>
+              <p className="text-xs text-text-light mt-1">1인 290,000원 × {totalGuests}명</p>
             </div>
             ) : programType === "jolib" ? (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2"><ShoppingCart className="w-5 h-5 text-primary" /><h3 className="text-lg font-semibold text-text-dark">예약 요약</h3></div>
-              <p className="text-sm text-text-mid mb-1">조립공간 CNC 체험 · {Math.max(1, extraGuests || 1)}명 · 1회 20분</p>
-              <p className="text-sm text-text-light line-through">{((Math.max(1, extraGuests || 1)) * 5000).toLocaleString()}원</p>
-              <p className="text-3xl font-bold text-red-500">무료</p>
-              <p className="text-xs text-text-light mt-1">초기 이벤트 진행 중</p>
+              <p className="text-sm text-text-mid mb-1">나만의 아지트 만들기(목공체험) · {Math.max(1, extraGuests || 1)}명 · 2시간</p>
+              <p className="text-3xl font-bold text-primary">{programPrice.toLocaleString()}원</p>
+              <p className="text-xs text-text-light mt-1">1인 30,000원 × {Math.max(1, extraGuests || 1)}명</p>
             </div>
             ) : (
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1072,9 +1214,9 @@ export default function Reservation() {
                   <p>{program.label} {programType === "half" && selectedTimeSlots.length > 1 ? `(${selectedTimeSlots.length}타임)` : programType === "daynight" && selectedTimeSlots.length > 1 ? `(${selectedTimeSlots.length}타임)` : `(${formatPrice(program.basePrice)}/${program.unit}${program.rangeMode && nights > 1 ? ` × ${nights}박` : ""})`}: {formatPrice(programPrice)}</p>
                   {getTimeSlotLabel() && <p>시간대: {getTimeSlotLabel()}</p>}
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * pricing.extraGuest)}</p>}
-                  {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {formatPrice(bbqGrills * pricing.bbqGrill)}</p>}
+                  {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light">{formatPrice(bbqGrills * pricing.bbqGrill)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, bbqGrills - (isEventPromo ? EVENT_FREE_GRILLS : 0)) * pricing.bbqGrill)}</p>}
                   {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * pricing.gasRange)}</p>}
-                  {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {formatPrice(dinnerCount * pricing.dinner)}</p>}
+                  {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, dinnerCount - (isEventPromo ? EVENT_FREE_DINNER : 0)) * pricing.dinner)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * pricing.woodcraft)}</p>}
                   {potBbqCount > 0 && <p>항아리 바베큐 ({potBbqCount}인분): {formatPrice(potBbqCount * pricing.potBbq)}</p>}
                   {showBusForm && busPrice > 0 && <p>버스 렌트 ({busForm.pickupPlace} 왕복): {formatPrice(busPrice)}</p>}
@@ -1146,9 +1288,9 @@ export default function Reservation() {
               <hr className="border-border" />
               <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}{(programType === "half" || programType === "daynight") && selectedTimeSlots.length > 1 ? ` (${selectedTimeSlots.length}타임)` : ""}</span><span className="font-medium text-text-dark">{formatPrice(programPrice)}</span></div>
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * pricing.extraGuest)}</span></div>}
-              {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여</span><span className="font-medium text-text-dark">{formatPrice(bbqGrills * pricing.bbqGrill)}</span></div>}
+              {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여{isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light mr-1">{formatPrice(bbqGrills * pricing.bbqGrill)}</span><span className="text-red-500">무료</span></> : formatPrice(bbqGrills * pricing.bbqGrill)}</span></div>}
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
-              {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사</span><span className="font-medium text-text-dark">{formatPrice(dinnerCount * pricing.dinner)}</span></div>}
+              {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사{isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-red-500">무료</span></> : formatPrice(dinnerCount * pricing.dinner)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * pricing.woodcraft)}</span></div>}
               {potBbqCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">항아리 바베큐 ({potBbqCount}인분)</span><span className="font-medium text-text-dark">{formatPrice(potBbqCount * pricing.potBbq)}</span></div>}
               {showBusForm && busPrice > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트 ({busForm.pickupPlace} 왕복)</span><span className="font-medium text-text-dark">{formatPrice(busPrice)}</span></div>}
