@@ -112,6 +112,26 @@ export async function GET(req: NextRequest) {
     });
     const programDistribution = Object.entries(programCounts).map(([type, count]) => ({ type, count }));
 
+    // 다가오는 체크인에 버스 정보 합치기
+    const upcomingData = (upcomingRes.data || []) as ReservationRow[];
+    const busReservationIds = upcomingData.filter(r => r.bus_requested).map(r => r.id);
+    let busMap: Record<number, { pickup_place: string; dropoff_place: string; pickup_time: string; dropoff_time: string; pickup_people: string; dropoff_people: string; manager_name: string; manager_phone: string }> = {};
+    if (busReservationIds.length > 0) {
+      const { data: busRows } = await supabaseAdmin
+        .from("bus_requests")
+        .select("*")
+        .in("reservation_id", busReservationIds);
+      if (busRows) {
+        for (const b of busRows) {
+          busMap[b.reservation_id] = b;
+        }
+      }
+    }
+    const upcomingWithBus = upcomingData.map(r => ({
+      ...r,
+      bus_detail: busMap[r.id] || null,
+    }));
+
     return NextResponse.json({
       todayCheckins: {
         count: todayData.length,
@@ -121,7 +141,7 @@ export async function GET(req: NextRequest) {
       monthReservations: { count: monthRes.count || 0, prevMonthCount: prevMonthRes.count || 0 },
       monthRevenue: { amount: monthRevenue, prevMonthAmount: prevMonthRevenue },
       recentReservations: recentRes.data || [],
-      upcomingCheckins: upcomingRes.data || [],
+      upcomingCheckins: upcomingWithBus,
       weeklyRevenue,
       programDistribution,
       totalCumulativeGuests: (allGuestsRes.data || []).reduce((sum: number, r: { guest_count: number }) => sum + (r.guest_count || 0), 0),

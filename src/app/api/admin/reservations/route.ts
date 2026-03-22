@@ -10,13 +10,21 @@ export async function GET(req: NextRequest) {
   // 버스 요청 단건 조회
   const busReservationId = req.nextUrl.searchParams.get("bus_reservation_id");
   if (busReservationId) {
-    const { data: busRequest } = await supabaseAdmin
-      .from("bus_requests")
-      .select("*")
-      .eq("reservation_id", parseInt(busReservationId))
-      .limit(1)
-      .single();
-    return NextResponse.json({ bus_request: busRequest || null });
+    try {
+      const { data: busData, error: busErr } = await supabaseAdmin
+        .from("bus_requests")
+        .select("*")
+        .eq("reservation_id", parseInt(busReservationId));
+
+      if (busErr) {
+        console.error("bus_requests 조회 에러:", busErr);
+        return NextResponse.json({ bus_request: null, error: busErr.message });
+      }
+      return NextResponse.json({ bus_request: busData && busData.length > 0 ? busData[0] : null });
+    } catch (e) {
+      console.error("bus_requests 조회 예외:", e);
+      return NextResponse.json({ bus_request: null, error: String(e) });
+    }
   }
 
   // 자동 상태 업데이트
@@ -76,9 +84,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, bus_form, ...updates } = await req.json();
+  const body = await req.json();
+  const { id, bus_form } = body;
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
+  // reservation 업데이트
   const allowed = [
     "status", "notes", "guest_count", "extra_guests",
     "bbq_count", "burner_count", "dinner_count", "woodcraft_count",
@@ -87,46 +97,74 @@ export async function PATCH(req: NextRequest) {
   ];
   const filtered: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (key in updates) filtered[key] = updates[key];
+    if (key in body) filtered[key] = body[key];
   }
   filtered.updated_at = new Date().toISOString();
 
   const { error } = await supabaseAdmin.from("reservations").update(filtered).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 버스 렌트 요청 upsert
-  if (bus_form && updates.bus_requested) {
+  const busErrors: string[] = [];
+
+  // 버스 렌트 저장
+  if (bus_form && body.bus_requested === true) {
     const busData = {
       reservation_id: id,
       manager_name: bus_form.managerName || "",
       manager_phone: bus_form.managerPhone || "",
-      pickup_place: bus_form.pickupPlace === "기타" ? bus_form.customPickup : bus_form.pickupPlace,
+      pickup_place: bus_form.pickupPlace === "기타" ? (bus_form.customPickup || "") : (bus_form.pickupPlace || ""),
       pickup_people: bus_form.pickupPeople || "",
       pickup_time: bus_form.pickupTime || "",
-      dropoff_place: bus_form.pickupPlace === "기타" ? bus_form.customDropoff : bus_form.pickupPlace,
+      dropoff_place: bus_form.dropoffPlace === "기타" ? (bus_form.customDropoff || "") : (bus_form.dropoffPlace || bus_form.pickupPlace || ""),
       dropoff_people: bus_form.dropoffPeople || "",
       dropoff_time: bus_form.dropoffTime || "",
     };
 
-    // 기존 bus_request 확인
-    const { data: existing } = await supabaseAdmin
+    console.log("버스 데이터 저장 시도:", JSON.stringify(busData));
+
+    // 먼저 기존 데이터 확인
+    const { data: existingRows, error: findErr } = await supabaseAdmin
       .from("bus_requests")
       .select("id")
-      .eq("reservation_id", id)
-      .limit(1)
-      .single();
+      .eq("reservation_id", id);
 
-    if (existing) {
-      await supabaseAdmin.from("bus_requests").update(busData).eq("id", existing.id);
-    } else {
-      await supabaseAdmin.from("bus_requests").insert(busData);
+    if (findErr) {
+      console.error("bus_requests 조회 실패:", findErr);
+      busErrors.push("bus 조회 실패: " + findErr.message);
     }
-  } else if (updates.bus_requested === false) {
-    // 버스 요청 해제 시 bus_requests 삭제
+
+    if (existingRows && existingRows.length > 0) {
+      // UPDATE
+      const { error: upErr } = await supabaseAdmin
+        .from("bus_requests")
+        .update(busData)
+        .eq("reservation_id", id);
+      if (upErr) {
+        console.error("bus_requests UPDATE 실패:", upErr);
+        busErrors.push("bus UPDATE 실패: " + upErr.message);
+      } else {
+        console.log("bus_requests UPDATE 성공, reservation_id:", id);
+      }
+    } else {
+      // INSERT
+      const { error: insErr } = await supabaseAdmin
+        .from("bus_requests")
+        .insert(busData);
+      if (insErr) {
+        console.error("bus_requests INSERT 실패:", insErr);
+        busErrors.push("bus INSERT 실패: " + insErr.message);
+      } else {
+        console.log("bus_requests INSERT 성공, reservation_id:", id);
+      }
+    }
+  } else if (body.bus_requested === false) {
     await supabaseAdmin.from("bus_requests").delete().eq("reservation_id", id);
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    busErrors: busErrors.length > 0 ? busErrors : undefined,
+  });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -137,7 +175,6 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  // 연결된 bus_requests 먼저 삭제
   await supabaseAdmin.from("bus_requests").delete().eq("reservation_id", id);
   const { error } = await supabaseAdmin.from("reservations").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

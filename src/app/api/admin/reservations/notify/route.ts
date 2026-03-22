@@ -15,6 +15,19 @@ const PROGRAM_LABELS: Record<string, string> = {
   stay: "숙박", half: "3시간 대여", daynight: "주/야간 패키지",
 };
 
+interface BusDetail {
+  mode: "oneway" | "roundtrip";
+  pickupPlace: string;
+  pickupPeople: string;
+  pickupTime: string;
+  dropoffPlace: string;
+  dropoffPeople: string;
+  dropoffTime: string;
+  managerName: string;
+  managerPhone: string;
+  cost: number;
+}
+
 interface NotifyBody {
   guestName: string;
   guestPhone: string;
@@ -29,6 +42,7 @@ interface NotifyBody {
   woodcraftCount: number;
   potBbqCount: number;
   busRequested: boolean;
+  busDetail?: BusDetail;
   timeSlot: string | null;
   notes: string | null;
   changes: string[];
@@ -39,6 +53,20 @@ interface NotifyBody {
 function buildChangeMessage(d: NotifyBody): string {
   const programLabel = PROGRAM_LABELS[d.programType] || d.programType;
   const changesStr = d.changes.length > 0 ? d.changes.join("\n") : "옵션 변경";
+
+  let busSection = "";
+  if (d.busRequested && d.busDetail) {
+    const b = d.busDetail;
+    const modeLabel = b.mode === "roundtrip" ? "왕복" : "편도";
+    busSection = `\n━━ 버스 렌트 (${modeLabel}) ━━
+• 노선: ${b.pickupPlace}${b.cost > 0 ? ` (${fmt(b.cost)})` : ""}
+• 담당자: ${b.managerName} ${b.managerPhone}
+• 승차: ${b.pickupPlace} ${b.pickupTime} (${b.pickupPeople}명)${b.mode === "roundtrip" ? `\n• 하차: ${b.dropoffPlace} ${b.dropoffTime} (${b.dropoffPeople}명)` : ""}
+※ 탑승 시간을 다시 한번 확인 부탁드립니다.
+`;
+  } else if (d.busRequested) {
+    busSection = "\n• 버스 렌트: 요청 (상세 미정)\n";
+  }
 
   return `[달팽이아지트] 예약 변경 안내
 
@@ -53,10 +81,10 @@ ${d.originalAmount != null && d.newAmount != null ? `
 ━━ 금액 안내 ━━
 • 변경 전: ${fmt(d.originalAmount)}
 • 변경 후: ${fmt(d.newAmount)}
-${d.newAmount < d.originalAmount ? `• 환불 금액: ${fmt(d.originalAmount - d.newAmount)}\n※ 환불금은 입실 1일 전 입금 처리됩니다.` : d.newAmount > d.originalAmount ? `• 추가 결제: ${fmt(d.newAmount - d.originalAmount)}` : "• 금액 변동 없음"}
+${d.newAmount < d.originalAmount ? `• 환불 금액: ${fmt(d.originalAmount - d.newAmount)}\n※ 차액분은 입실 1일 전 입금 처리 예정입니다.` : d.newAmount > d.originalAmount ? `• 추가 결제: ${fmt(d.newAmount - d.originalAmount)}\n※ 추가 결제금을 아래 계좌로 입금 부탁드립니다.\n카카오뱅크 3333-06-4749542 임솔` : "• 금액 변동 없음"}
 ` : ""}
 ━━ 현재 옵션 ━━
-${d.bbqCount > 0 ? `• BBQ 그릴: ${d.bbqCount}개\n` : ""}${d.burnerCount > 0 ? `• 가스렌지: ${d.burnerCount}개\n` : ""}${d.dinnerCount > 0 ? `• 저녁식사: ${d.dinnerCount}명\n` : ""}${d.woodcraftCount > 0 ? `• 목공키트: ${d.woodcraftCount}개\n` : ""}${d.potBbqCount > 0 ? `• 항아리BBQ: ${d.potBbqCount}인분\n` : ""}${d.busRequested ? "• 버스 렌트: 요청\n" : ""}${d.notes ? `\n메모: ${d.notes}` : ""}
+${d.bbqCount > 0 ? `• BBQ 그릴: ${d.bbqCount}개\n` : ""}${d.burnerCount > 0 ? `• 가스렌지: ${d.burnerCount}개\n` : ""}${d.dinnerCount > 0 ? `• 저녁식사: ${d.dinnerCount}명\n` : ""}${d.woodcraftCount > 0 ? `• 목공키트: ${d.woodcraftCount}개\n` : ""}${d.potBbqCount > 0 ? `• 항아리BBQ: ${d.potBbqCount}인분\n` : ""}${busSection}${d.notes ? `\n메모: ${d.notes}` : ""}
 문의: 010-8531-9531`;
 }
 
