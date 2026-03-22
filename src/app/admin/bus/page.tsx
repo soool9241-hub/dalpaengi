@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Bus, Phone, MapPin, Clock, Users, Search, Trash2, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { Bus, Phone, MapPin, Clock, Users, Search, Trash2, Save, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 
 const BUS_ROUTES: Record<string, number> = {
   "전북대": 500000, "전주대": 450000, "원광대": 550000, "우석대": 500000,
@@ -44,6 +44,8 @@ interface BusRow {
   dropoff_place: string;
   dropoff_people: string;
   dropoff_time: string;
+  pickup_detail: string;
+  dropoff_detail: string;
   driver_name: string;
   driver_phone: string;
   bus_number: string;
@@ -75,6 +77,17 @@ export default function BusManagementPage() {
   const [editForm, setEditForm] = useState<Partial<BusRow>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newForm, setNewForm] = useState({
+    guestName: "", guestPhone: "", reservationDate: "", stayNights: "1",
+    guestCount: "", extraGuests: "0",
+    managerName: "", managerPhone: "",
+    pickupPlace: "", pickupPeople: "", pickupTime: "", pickupDetail: "",
+    dropoffPlace: "", dropoffPeople: "", dropoffTime: "", dropoffDetail: "",
+    driverName: "", driverPhone: "", busNumber: "",
+    busMode: "roundtrip" as "oneway" | "roundtrip",
+  });
+  const [newSaving, setNewSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -114,6 +127,8 @@ export default function BusManagementPage() {
       dropoff_place: bus.dropoff_place,
       dropoff_people: bus.dropoff_people,
       dropoff_time: bus.dropoff_time,
+      pickup_detail: bus.pickup_detail,
+      dropoff_detail: bus.dropoff_detail,
       driver_name: bus.driver_name,
       driver_phone: bus.driver_phone,
       bus_number: bus.bus_number,
@@ -122,9 +137,10 @@ export default function BusManagementPage() {
     setExpandedId(bus.id);
   };
 
-  const saveEdit = async () => {
+  const saveEdit = async (sendSms = false) => {
     if (!editingId) return;
     setSaving(true);
+    const currentBus = busList.find(b => b.id === editingId);
     try {
       const res = await fetch("/api/admin/bus", {
         method: "PATCH",
@@ -134,11 +150,61 @@ export default function BusManagementPage() {
       if (!res.ok) {
         const json = await res.json();
         setToast({ type: "error", msg: json.error || "저장 실패" });
+        setSaving(false);
+        return;
+      }
+
+      // SMS 발송
+      if (sendSms && currentBus) {
+        const r = currentBus.reservations;
+        const isRt = !!(editForm.dropoff_time || editForm.dropoff_people);
+        const place = editForm.pickup_place || currentBus.pickup_place;
+        const cost = place && place !== "기타" && BUS_ROUTES[place]
+          ? (isRt ? BUS_ROUTES[place] : Math.round(BUS_ROUTES[place] * 0.6))
+          : 0;
+
+        try {
+          const smsRes = await fetch("/api/admin/bus/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              guestName: r.guest_name,
+              guestPhone: r.guest_phone,
+              reservationDate: r.reservation_date,
+              stayNights: r.stay_nights,
+              guestCount: r.guest_count,
+              extraGuests: r.extra_guests,
+              busMode: isRt ? "roundtrip" : "oneway",
+              pickupPlace: place,
+              pickupPeople: editForm.pickup_people || currentBus.pickup_people,
+              pickupTime: editForm.pickup_time || currentBus.pickup_time,
+              pickupDetail: editForm.pickup_detail || currentBus.pickup_detail,
+              dropoffPlace: editForm.dropoff_place || currentBus.dropoff_place,
+              dropoffPeople: editForm.dropoff_people || currentBus.dropoff_people,
+              dropoffTime: editForm.dropoff_time || currentBus.dropoff_time,
+              dropoffDetail: editForm.dropoff_detail || currentBus.dropoff_detail,
+              driverName: editForm.driver_name || currentBus.driver_name,
+              driverPhone: editForm.driver_phone || currentBus.driver_phone,
+              busNumber: editForm.bus_number || currentBus.bus_number,
+              managerName: editForm.manager_name || currentBus.manager_name,
+              managerPhone: editForm.manager_phone || currentBus.manager_phone,
+              cost,
+            }),
+          });
+          if (smsRes.ok) {
+            setToast({ type: "success", msg: "저장 완료 + 확인 문자가 발송되었습니다." });
+          } else {
+            setToast({ type: "error", msg: "저장은 완료했지만 문자 발송에 실패했습니다." });
+          }
+        } catch {
+          setToast({ type: "error", msg: "저장은 완료했지만 문자 발송 중 오류가 발생했습니다." });
+        }
       } else {
         setToast({ type: "success", msg: "버스 정보가 저장되었습니다." });
-        setEditingId(null);
-        fetchData();
       }
+
+      setEditingId(null);
+      fetchData();
     } catch {
       setToast({ type: "error", msg: "저장 중 오류 발생" });
     } finally {
@@ -160,6 +226,42 @@ export default function BusManagementPage() {
       }
     } catch {
       setToast({ type: "error", msg: "삭제 중 오류 발생" });
+    }
+  };
+
+  const saveNewBus = async () => {
+    if (!newForm.guestName || !newForm.guestPhone || !newForm.reservationDate || !newForm.pickupPlace) {
+      setToast({ type: "error", msg: "예약자, 연락처, 예약일, 출발지는 필수입니다." });
+      return;
+    }
+    setNewSaving(true);
+    try {
+      const res = await fetch("/api/admin/bus/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newForm),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setToast({ type: "error", msg: json.error || "생성 실패" });
+      } else {
+        setToast({ type: "success", msg: `${newForm.guestName}님 버스 예약이 등록되었습니다.` });
+        setShowNewForm(false);
+        setNewForm({
+          guestName: "", guestPhone: "", reservationDate: "", stayNights: "1",
+          guestCount: "", extraGuests: "0",
+          managerName: "", managerPhone: "",
+          pickupPlace: "", pickupPeople: "", pickupTime: "", pickupDetail: "",
+          dropoffPlace: "", dropoffPeople: "", dropoffTime: "", dropoffDetail: "",
+          driverName: "", driverPhone: "", busNumber: "",
+          busMode: "roundtrip",
+        });
+        fetchData();
+      }
+    } catch {
+      setToast({ type: "error", msg: "생성 중 오류 발생" });
+    } finally {
+      setNewSaving(false);
     }
   };
 
@@ -212,6 +314,10 @@ export default function BusManagementPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">총 {stats.total}건 · 대기 {stats.pending} · 확정 {stats.confirmed} · 완료 {stats.completed} · 예상 매출 {formatPrice(stats.totalCost)}</p>
         </div>
+        <button onClick={() => setShowNewForm(true)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-light transition-all shadow-sm">
+          <Plus size={16} /> 신규 버스 예약
+        </button>
       </div>
 
       {/* 필터 + 검색 */}
@@ -236,6 +342,176 @@ export default function BusManagementPage() {
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
         </div>
       </div>
+
+      {/* 신규 버스 예약 폼 */}
+      {showNewForm && (
+        <div className="bg-white border-2 border-primary rounded-xl p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm sm:text-base font-black text-primary flex items-center gap-2">
+              <Plus size={16} /> 신규 버스 예약 등록
+            </h2>
+            <button onClick={() => setShowNewForm(false)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          </div>
+
+          {/* 예약자 정보 */}
+          <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+            <p className="text-[10px] font-bold text-gray-600">📋 예약자 정보</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <label className="text-[10px] text-gray-500">예약자명 *</label>
+                <input value={newForm.guestName} onChange={e => setNewForm({ ...newForm, guestName: e.target.value })}
+                  placeholder="홍길동" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">연락처 *</label>
+                <input value={newForm.guestPhone} onChange={e => setNewForm({ ...newForm, guestPhone: e.target.value })}
+                  placeholder="01012345678" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">예약일 *</label>
+                <input type="date" value={newForm.reservationDate} onChange={e => setNewForm({ ...newForm, reservationDate: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">숙박일수</label>
+                <input type="number" min="1" value={newForm.stayNights} onChange={e => setNewForm({ ...newForm, stayNights: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <label className="text-[10px] text-gray-500">인원</label>
+                <input type="number" value={newForm.guestCount} onChange={e => setNewForm({ ...newForm, guestCount: e.target.value })}
+                  placeholder="15" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">추가인원</label>
+                <input type="number" value={newForm.extraGuests} onChange={e => setNewForm({ ...newForm, extraGuests: e.target.value })}
+                  placeholder="0" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">담당자 이름</label>
+                <input value={newForm.managerName} onChange={e => setNewForm({ ...newForm, managerName: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">담당자 연락처</label>
+                <input value={newForm.managerPhone} onChange={e => setNewForm({ ...newForm, managerPhone: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* 버스 모드 토글 */}
+          <div className="flex items-center gap-3">
+            <p className="text-[10px] font-bold text-gray-600">버스 유형</p>
+            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+              {(["oneway", "roundtrip"] as const).map(m => (
+                <button key={m} onClick={() => setNewForm({ ...newForm, busMode: m })}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${newForm.busMode === m ? "bg-primary text-white shadow-sm" : "text-gray-400"}`}>
+                  {m === "oneway" ? "편도" : "왕복"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 승차 정보 */}
+          <div className="bg-white rounded-lg p-3 border border-gray-200 space-y-2">
+            <p className="text-[10px] font-bold text-purple-600">🚌 승차 정보</p>
+            <div className="grid grid-cols-3 gap-2">
+              <select value={newForm.pickupPlace}
+                onChange={e => setNewForm({ ...newForm, pickupPlace: e.target.value, dropoffPlace: e.target.value })}
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="">출발지 *</option>
+                {Object.entries(BUS_ROUTES).map(([name, price]) => (
+                  <option key={name} value={name}>{name} ({(price / 10000).toFixed(0)}만)</option>
+                ))}
+                <option value="기타">기타</option>
+              </select>
+              <input placeholder="인원" value={newForm.pickupPeople}
+                onChange={e => setNewForm({ ...newForm, pickupPeople: e.target.value })}
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+              <select value={newForm.pickupTime}
+                onChange={e => setNewForm({ ...newForm, pickupTime: e.target.value })}
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="">시간</option>
+                {TIME_OPTIONS_PICKUP.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <input placeholder="승차 세부정보 (예: 정문 앞 집합, 건물명 등)" value={newForm.pickupDetail}
+              onChange={e => setNewForm({ ...newForm, pickupDetail: e.target.value })}
+              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+          </div>
+
+          {/* 하차 정보 (왕복만) */}
+          {newForm.busMode === "roundtrip" && (
+            <div className="bg-white rounded-lg p-3 border border-gray-200 space-y-2">
+              <p className="text-[10px] font-bold text-blue-600">🚌 하차 정보</p>
+              <div className="grid grid-cols-3 gap-2">
+                <input value={newForm.dropoffPlace || newForm.pickupPlace} readOnly
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-gray-50 text-gray-500" />
+                <input placeholder="인원" value={newForm.dropoffPeople}
+                  onChange={e => setNewForm({ ...newForm, dropoffPeople: e.target.value })}
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+                <select value={newForm.dropoffTime}
+                  onChange={e => setNewForm({ ...newForm, dropoffTime: e.target.value })}
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                  <option value="">시간</option>
+                  {TIME_OPTIONS_DROPOFF.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <input placeholder="하차 세부정보 (예: 후문 하차, 기숙사 앞 등)" value={newForm.dropoffDetail}
+                onChange={e => setNewForm({ ...newForm, dropoffDetail: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+            </div>
+          )}
+
+          {/* 버스 기사 정보 */}
+          <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 space-y-2">
+            <p className="text-[10px] font-bold text-amber-700">🚍 버스 기사 정보</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] text-gray-500">기사명</label>
+                <input value={newForm.driverName} onChange={e => setNewForm({ ...newForm, driverName: e.target.value })}
+                  placeholder="기사 이름" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">기사 연락처</label>
+                <input value={newForm.driverPhone} onChange={e => setNewForm({ ...newForm, driverPhone: e.target.value })}
+                  placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500">차량 번호</label>
+                <input value={newForm.busNumber} onChange={e => setNewForm({ ...newForm, busNumber: e.target.value })}
+                  placeholder="12가 3456" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* 견적 미리보기 */}
+          {newForm.pickupPlace && newForm.pickupPlace !== "기타" && BUS_ROUTES[newForm.pickupPlace] && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5">
+              <p className="text-xs text-gray-600">
+                {newForm.pickupPlace} {newForm.busMode === "roundtrip" ? "왕복" : "편도"} 견적:
+                <span className="font-black text-primary text-sm ml-1">
+                  {(newForm.busMode === "roundtrip" ? BUS_ROUTES[newForm.pickupPlace] : Math.round(BUS_ROUTES[newForm.pickupPlace] * 0.6)).toLocaleString()}원
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* 버튼 */}
+          <div className="flex gap-2 pt-1">
+            <button onClick={saveNewBus} disabled={newSaving}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-light disabled:opacity-50">
+              {newSaving ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save size={14} />}
+              등록
+            </button>
+            <button onClick={() => setShowNewForm(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-200">취소</button>
+          </div>
+        </div>
+      )}
 
       {/* 버스 목록 */}
       {busList.length === 0 ? (
@@ -326,18 +602,16 @@ export default function BusManagementPage() {
                     </div>
 
                     {/* 버스 기사 정보 */}
-                    {(bus.driver_name || bus.driver_phone || bus.bus_number) && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                        <p className="text-[10px] font-bold text-amber-700 mb-1.5">🚍 버스 기사 정보</p>
-                        <div className="grid grid-cols-3 gap-3 text-xs">
-                          <div><span className="text-gray-400">기사명</span><p className="font-semibold text-gray-800">{bus.driver_name || "-"}</p></div>
-                          <div><span className="text-gray-400">기사 연락처</span><p className="font-semibold text-gray-800">
-                            {bus.driver_phone ? <a href={`tel:${bus.driver_phone}`} className="hover:text-primary">{formatPhone(bus.driver_phone)}</a> : "-"}
-                          </p></div>
-                          <div><span className="text-gray-400">차량 번호</span><p className="font-semibold text-gray-800">{bus.bus_number || "-"}</p></div>
-                        </div>
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                      <p className="text-[10px] font-bold text-amber-700 mb-1.5">🚍 버스 기사 정보</p>
+                      <div className="grid grid-cols-3 gap-3 text-xs">
+                        <div><span className="text-gray-400">기사명</span><p className="font-semibold text-gray-800">{bus.driver_name || "-"}</p></div>
+                        <div><span className="text-gray-400">기사 연락처</span><p className="font-semibold text-gray-800">
+                          {bus.driver_phone ? <a href={`tel:${bus.driver_phone}`} className="hover:text-primary">{formatPhone(bus.driver_phone)}</a> : "-"}
+                        </p></div>
+                        <div><span className="text-gray-400">차량 번호</span><p className="font-semibold text-gray-800">{bus.bus_number || "-"}</p></div>
                       </div>
-                    )}
+                    </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="bg-white rounded-lg p-2.5 border border-gray-200">
@@ -347,6 +621,9 @@ export default function BusManagementPage() {
                           <div><span className="text-gray-400">인원</span><p className="font-semibold">{bus.pickup_people}명</p></div>
                           <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.pickup_time || "-"}</p></div>
                         </div>
+                        {bus.pickup_detail && (
+                          <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">📍 {bus.pickup_detail}</p>
+                        )}
                       </div>
                       {roundtrip && (
                         <div className="bg-white rounded-lg p-2.5 border border-gray-200">
@@ -356,6 +633,9 @@ export default function BusManagementPage() {
                             <div><span className="text-gray-400">인원</span><p className="font-semibold">{bus.dropoff_people}명</p></div>
                             <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.dropoff_time || "-"}</p></div>
                           </div>
+                          {bus.dropoff_detail && (
+                            <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">📍 {bus.dropoff_detail}</p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -384,11 +664,16 @@ export default function BusManagementPage() {
                   <div className="border-t border-primary/20 p-3 sm:p-4 bg-primary/5 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-bold text-primary">수정 모드 - {r.guest_name}</p>
-                      <div className="flex gap-1.5">
-                        <button onClick={saveEdit} disabled={saving}
+                      <div className="flex gap-1.5 flex-wrap">
+                        <button onClick={() => saveEdit(false)} disabled={saving}
                           className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-light disabled:opacity-50">
                           {saving ? <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full" /> : <Save size={12} />}
                           저장
+                        </button>
+                        <button onClick={() => saveEdit(true)} disabled={saving}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                          {saving ? <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full" /> : <>📩</>}
+                          저장 + 확인문자
                         </button>
                         <button onClick={() => setEditingId(null)}
                           className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200">취소</button>
@@ -464,6 +749,9 @@ export default function BusManagementPage() {
                           {TIME_OPTIONS_PICKUP.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
+                      <input placeholder="승차 세부정보 (예: 정문 앞 집합, 건물명 등)" value={editForm.pickup_detail || ""}
+                        onChange={e => setEditForm({ ...editForm, pickup_detail: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
                     </div>
 
                     <div className="bg-white rounded-lg p-2.5 border border-gray-200 space-y-2">
@@ -481,6 +769,9 @@ export default function BusManagementPage() {
                           {TIME_OPTIONS_DROPOFF.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
+                      <input placeholder="하차 세부정보 (예: 후문 하차, 기숙사 앞 등)" value={editForm.dropoff_detail || ""}
+                        onChange={e => setEditForm({ ...editForm, dropoff_detail: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
                     </div>
                   </div>
                 )}
