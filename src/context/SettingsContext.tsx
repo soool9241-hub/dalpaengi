@@ -39,10 +39,10 @@ const DEFAULT_PRICING: PricingData = {
 };
 
 const DEFAULT_BUS_ROUTES: BusRoutes = {
-  "전북대": 500000,
-  "전주대": 450000,
-  "원광대": 550000,
-  "우석대": 500000,
+  "전북대": 600000,
+  "전주대": 650000,
+  "원광대": 700000,
+  "우석대": 650000,
 };
 
 const SettingsContext = createContext<SettingsContextType>({

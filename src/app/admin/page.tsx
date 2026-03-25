@@ -9,7 +9,7 @@ import type { ReservationRow } from "@/types/admin";
 const COLORS = ["#2d5016", "#4a7c28", "#8B6914", "#c49a2a"];
 
 const BUS_ROUTES: Record<string, number> = {
-  "전북대": 500000, "전주대": 450000, "원광대": 550000, "우석대": 500000,
+  "전북대": 600000, "전주대": 650000, "원광대": 700000, "우석대": 650000,
 };
 const TIME_OPTIONS_PICKUP = Array.from({ length: 25 }, (_, i) => {
   const h = Math.floor(i / 2) + 6;

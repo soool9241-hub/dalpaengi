@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Bus, Phone, MapPin, Clock, Users, Search, Trash2, Save, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 
 const BUS_ROUTES: Record<string, number> = {
-  "전북대": 500000, "전주대": 450000, "원광대": 550000, "우석대": 500000,
+  "전북대": 600000, "전주대": 650000, "원광대": 700000, "우석대": 650000,
 };
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -380,14 +380,29 @@ export default function BusManagementPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
-                <label className="text-[10px] text-gray-500">인원</label>
-                <input type="number" value={newForm.guestCount} onChange={e => setNewForm({ ...newForm, guestCount: e.target.value })}
-                  placeholder="15" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+                <label className="text-[10px] text-gray-500">총 인원 (최대 45명)</label>
+                <input type="number" min="1" max="45"
+                  value={(() => { const g = parseInt(newForm.guestCount) || 0; const e = parseInt(newForm.extraGuests) || 0; return g + e || ""; })()}
+                  onChange={e => {
+                    const total = Math.min(parseInt(e.target.value) || 0, 45);
+                    const base = Math.min(total, 15);
+                    const extra = Math.max(total - 15, 0);
+                    setNewForm({ ...newForm, guestCount: String(base), extraGuests: String(extra) });
+                  }}
+                  placeholder="30" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
               </div>
-              <div>
-                <label className="text-[10px] text-gray-500">추가인원</label>
-                <input type="number" value={newForm.extraGuests} onChange={e => setNewForm({ ...newForm, extraGuests: e.target.value })}
-                  placeholder="0" className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400">기본</label>
+                  <input type="number" value={newForm.guestCount} readOnly
+                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
+                </div>
+                <span className="text-gray-400 text-xs pb-2">+</span>
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400">추가</label>
+                  <input type="number" value={newForm.extraGuests} readOnly
+                    className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
+                </div>
               </div>
               <div>
                 <label className="text-[10px] text-gray-500">담당자 이름</label>
