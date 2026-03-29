@@ -176,11 +176,15 @@ export default function AdminDashboard() {
     // 모든 state를 한번에 세팅
     setBusMode(loadedBusMode);
     setBusForm(loadedBusForm);
+    // 총인원 기준으로 기본/추가 재계산
+    const totalPeople = (r.guest_count || 0) + (r.extra_guests || 0);
+    const baseCount = Math.min(totalPeople, 15);
+    const extraCount = Math.max(0, totalPeople - 15);
     setEditForm({
       guest_name: r.guest_name,
       guest_phone: r.guest_phone,
-      guest_count: r.guest_count,
-      extra_guests: r.extra_guests,
+      guest_count: baseCount,
+      extra_guests: extraCount,
       stay_nights: r.stay_nights,
       bbq_count: r.bbq_count,
       dinner_count: r.dinner_count,

@@ -136,9 +136,13 @@ export default function ReservationsPage() {
 
   const openDetail = async (r: ReservationRow) => {
     setDetail(r);
+    // 총인원 기준으로 기본/추가 재계산 (DB 값 정규화)
+    const totalPeople = (r.guest_count || 0) + (r.extra_guests || 0);
+    const baseCount = Math.min(totalPeople, 15);
+    const extraCount = Math.max(0, totalPeople - 15);
     setEditData({
-      guest_count: r.guest_count,
-      extra_guests: r.extra_guests,
+      guest_count: baseCount,
+      extra_guests: extraCount,
       bbq_count: r.bbq_count,
       burner_count: r.burner_count,
       dinner_count: r.dinner_count,
