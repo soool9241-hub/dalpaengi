@@ -522,23 +522,34 @@ export default function ReservationsPage() {
                 </div>
 
                 {/* 인원 */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">총 인원</label>
-                    <input type="number" min={1} value={ed("guest_count")} onChange={(e) => setEd("guest_count", Math.max(1, parseInt(e.target.value) || 1))}
+                    <input type="number" value={(() => { const t = (ed("guest_count") || 0) + (ed("extra_guests") || 0); return t || ""; })()}
+                      onChange={(e) => {
+                        const total = Math.min(parseInt(e.target.value) || 0, 45);
+                        const base = Math.min(total, 15);
+                        const extra = Math.max(0, total - 15);
+                        setEditData((prev) => ({ ...prev, guest_count: base, extra_guests: extra }));
+                      }}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">추가 인원</label>
-                    <input type="number" min={0} value={ed("extra_guests")} onChange={(e) => setEd("extra_guests", Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <label className="text-xs font-semibold text-gray-400 mb-1 block">기본</label>
+                    <input type="number" value={ed("guest_count") || 0} readOnly
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 mb-1 block">추가</label>
+                    <input type="number" value={ed("extra_guests") || 0} readOnly
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
                   </div>
                 </div>
 
                 {/* 숙박 */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">숙박 (박)</label>
-                  <input type="number" min={1} value={ed("stay_nights")} onChange={(e) => setEd("stay_nights", Math.max(1, parseInt(e.target.value) || 1))}
+                  <input type="number" value={ed("stay_nights") || ""} onChange={(e) => setEd("stay_nights", parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
 
@@ -546,12 +557,12 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">BBQ 그릴</label>
-                    <input type="number" min={0} max={6} value={ed("bbq_count")} onChange={(e) => setEd("bbq_count", Math.min(6, Math.max(0, parseInt(e.target.value) || 0)))}
+                    <input type="number" value={ed("bbq_count") || ""} onChange={(e) => setEd("bbq_count", Math.min(6, Math.max(0, parseInt(e.target.value) || 0)))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">가스렌지</label>
-                    <input type="number" min={0} max={5} value={ed("burner_count")} onChange={(e) => setEd("burner_count", Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))}
+                    <input type="number" value={ed("burner_count") || ""} onChange={(e) => setEd("burner_count", Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>
@@ -560,17 +571,17 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">저녁식사</label>
-                    <input type="number" min={0} value={ed("dinner_count")} onChange={(e) => setEd("dinner_count", Math.max(0, parseInt(e.target.value) || 0))}
+                    <input type="number" value={ed("dinner_count") || ""} onChange={(e) => setEd("dinner_count", Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">목공키트</label>
-                    <input type="number" min={0} value={ed("woodcraft_count")} onChange={(e) => setEd("woodcraft_count", Math.max(0, parseInt(e.target.value) || 0))}
+                    <input type="number" value={ed("woodcraft_count") || ""} onChange={(e) => setEd("woodcraft_count", Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">항아리BBQ</label>
-                    <input type="number" min={0} value={ed("pot_bbq_count")} onChange={(e) => setEd("pot_bbq_count", Math.max(0, parseInt(e.target.value) || 0))}
+                    <input type="number" value={ed("pot_bbq_count") || ""} onChange={(e) => setEd("pot_bbq_count", Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </div>

@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "필수 항목이 누락되었습니다." }, { status: 400 });
     }
 
+    // 인원 계산 (최대 45명)
+    const totalPeople = Math.min((parseInt(guestCount) || 15) + (parseInt(extraGuests) || 0), 45);
+    const baseCount = Math.min(totalPeople, 15);
+    const extraCount = Math.max(totalPeople - 15, 0);
+
     // 1) 해당 고객의 기존 예약이 있는지 확인 (같은 날짜 + 이름 + 전화번호)
     const phone = guestPhone.replace(/[^0-9]/g, "");
     const { data: existingRes } = await supabaseAdmin
@@ -35,11 +40,12 @@ export async function POST(req: NextRequest) {
     let reservationId: number;
 
     if (existingRes && existingRes.length > 0) {
-      // 기존 예약에 연결
+      // 기존 예약에 연결 + 인원 업데이트
       reservationId = existingRes[0].id;
-      // bus_requested 업데이트
       await supabaseAdmin.from("reservations").update({
         bus_requested: true,
+        guest_count: baseCount,
+        extra_guests: extraCount,
         updated_at: new Date().toISOString(),
       }).eq("id", reservationId);
     } else {
@@ -57,8 +63,8 @@ export async function POST(req: NextRequest) {
           reservation_date: reservationDate,
           checkout_date: checkoutStr,
           stay_nights: nights,
-          guest_count: parseInt(guestCount) || 15,
-          extra_guests: parseInt(extraGuests) || 0,
+          guest_count: baseCount,
+          extra_guests: extraCount,
           program_type: "stay",
           bus_requested: true,
           status: "confirmed",

@@ -374,14 +374,14 @@ export default function BusManagementPage() {
               </div>
               <div>
                 <label className="text-[10px] text-gray-500">숙박일수</label>
-                <input type="number" min="1" value={newForm.stayNights} onChange={e => setNewForm({ ...newForm, stayNights: e.target.value })}
+                <input type="number" value={newForm.stayNights} onChange={e => setNewForm({ ...newForm, stayNights: e.target.value })}
                   className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white" />
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <label className="text-[10px] text-gray-500">총 인원 (최대 45명)</label>
-                <input type="number" min="1" max="45"
+                <input type="number" max="45"
                   value={(() => { const g = parseInt(newForm.guestCount) || 0; const e = parseInt(newForm.extraGuests) || 0; return g + e || ""; })()}
                   onChange={e => {
                     const total = Math.min(parseInt(e.target.value) || 0, 45);

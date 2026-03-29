@@ -482,47 +482,58 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">총 인원</label>
-                          <input type="number" min={1} value={(editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0)}
+                          <input type="number" value={(() => { const t = (editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0); return t || ""; })()}
                             onChange={e => {
-                              const total = Math.max(1, parseInt(e.target.value) || 1);
+                              const total = Math.min(parseInt(e.target.value) || 0, 45);
                               const base = Math.min(total, 15);
                               const extra = Math.max(0, total - 15);
                               setEditForm({ ...editForm, guest_count: base, extra_guests: extra });
                             }}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
-                          <p className="text-[9px] text-gray-400 mt-0.5">기본{Math.min((editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0), 15)} {((editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0)) > 15 && `+ 추가${(editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0) - 15}`}</p>
+                        </div>
+                        <div className="flex items-end gap-1">
+                          <div className="flex-1">
+                            <label className="text-[10px] text-gray-400">기본</label>
+                            <input type="number" value={editForm.guest_count ?? 0} readOnly
+                              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] text-gray-400">추가</label>
+                            <input type="number" value={editForm.extra_guests ?? 0} readOnly
+                              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-gray-100 text-gray-500 cursor-not-allowed" />
+                          </div>
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">숙박일수</label>
-                          <input type="number" min={1} value={editForm.stay_nights ?? 1}
-                            onChange={e => setEditForm({ ...editForm, stay_nights: Math.max(1, parseInt(e.target.value) || 1) })}
+                          <input type="number" value={editForm.stay_nights || ""}
+                            onChange={e => setEditForm({ ...editForm, stay_nights: parseInt(e.target.value) || 0 })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                       </div>
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">BBQ 그릴</label>
-                          <input type="number" min={0} value={editForm.bbq_count ?? 0} onChange={e => setEditForm({ ...editForm, bbq_count: Math.max(0, parseInt(e.target.value) || 0) })}
+                          <input type="number" value={editForm.bbq_count || ""} onChange={e => setEditForm({ ...editForm, bbq_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">저녁식사</label>
-                          <input type="number" min={0} value={editForm.dinner_count ?? 0} onChange={e => setEditForm({ ...editForm, dinner_count: Math.max(0, parseInt(e.target.value) || 0) })}
+                          <input type="number" value={editForm.dinner_count || ""} onChange={e => setEditForm({ ...editForm, dinner_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">목공체험</label>
-                          <input type="number" min={0} value={editForm.woodcraft_count ?? 0} onChange={e => setEditForm({ ...editForm, woodcraft_count: Math.max(0, parseInt(e.target.value) || 0) })}
+                          <input type="number" value={editForm.woodcraft_count || ""} onChange={e => setEditForm({ ...editForm, woodcraft_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">항아리BBQ</label>
-                          <input type="number" min={0} value={editForm.pot_bbq_count ?? 0} onChange={e => setEditForm({ ...editForm, pot_bbq_count: Math.max(0, parseInt(e.target.value) || 0) })}
+                          <input type="number" value={editForm.pot_bbq_count || ""} onChange={e => setEditForm({ ...editForm, pot_bbq_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">가스렌지</label>
-                          <input type="number" min={0} value={editForm.burner_count ?? 0} onChange={e => setEditForm({ ...editForm, burner_count: Math.max(0, parseInt(e.target.value) || 0) })}
+                          <input type="number" value={editForm.burner_count || ""} onChange={e => setEditForm({ ...editForm, burner_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                       </div>
