@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf } from "lucide-react";
+import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
 
@@ -14,7 +15,7 @@ const categories = [
   { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib", "healing"] as const;
+const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib", "healing", "stay"] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
@@ -168,6 +169,32 @@ export default function Programs() {
       highlight: false,
       isHealing: true,
     },
+    {
+      icon: Leaf,
+      title: "완주하다 봄 리트릿",
+      duration: "1박 2일 (4.18~19)",
+      price: 90000,
+      priceLabel: "얼리버드 9만원",
+      originalPrice: 200000,
+      perPerson: 90000,
+      maxPeople: "20명 한정",
+      categories: ["healing"],
+      tags: ["리트릿", "봄", "얼리버드"],
+      tagColors: ["bg-green-100 text-green-600", "bg-emerald-100 text-emerald-600", "bg-red-100 text-red-600"],
+      gradient: "from-green-500 to-emerald-500",
+      image: "/img/nature-yard.jpg",
+      features: [
+        "1박 2일 숙박 (달팽이아지트)",
+        "3끼 식사 & 간식 제공",
+        "프로그램 4~5타임 (운동/명상/저널링/대화)",
+        "웰컴키트 증정",
+        "20명 한정 · 선착순 마감",
+      ],
+      extras: [],
+      description: "겨울 동안 움츠렸던 몸, 멈춰 있던 마음, 흐려졌던 의식을 봄의 리듬에 맞춰 다시 깨우는 1박 2일 리셋 캠프. 프리랜서, 1인 사업자, 창작자 등 자기 삶을 완주하고 싶은 사람들을 위한 프로그램입니다.",
+      highlight: false,
+      isRetreat: true,
+    },
   ], [pricing]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProgram, setSelectedProgram] = useState<number | null>(null);
@@ -265,7 +292,21 @@ export default function Programs() {
                     <p className="text-sm text-text-light mb-4">{prog.duration}</p>
 
                     {/* Price */}
-                    {prog.isEvent ? (
+                    {prog.isRetreat ? (
+                      <>
+                        <div className="flex items-end gap-2 mb-1">
+                          <span className="text-sm text-text-light line-through">{(prog.originalPrice ?? 0).toLocaleString()}원/인</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-2xl font-bold text-primary">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light mb-0.5">원/인</span>
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">얼리버드</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          20명 한정 · 2026.4.18(토)~19(일)
+                        </p>
+                      </>
+                    ) : prog.isEvent ? (
                       <>
                         <div className="flex items-end gap-2 mb-1">
                           <span className="text-sm text-text-light line-through">{(prog.originalPrice ?? 0).toLocaleString()}원/인</span>
@@ -304,12 +345,21 @@ export default function Programs() {
                       </>
                     )}
 
-                    <button
-                      onClick={() => setSelectedProgram(originalIndex)}
-                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                    >
-                      자세히 보기
-                    </button>
+                    {prog.isRetreat ? (
+                      <Link
+                        href="/programs/spring-retreat"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white text-center"
+                      >
+                        자세히 보기
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedProgram(originalIndex)}
+                        className="w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
+                      >
+                        자세히 보기
+                      </button>
+                    )}
                   </div>
                 </div>
               );
