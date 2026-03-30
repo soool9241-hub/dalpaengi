@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { SolapiMessageService } from "solapi";
+
+const messageService = new SolapiMessageService(
+  (process.env.SOLAPI_API_KEY || "").trim(),
+  (process.env.SOLAPI_API_SECRET || "").trim()
+);
+
+const SENDER = (process.env.SOLAPI_SENDER || "").trim();
+
+// 관리자 번호
+const ADMIN_SOL = "01085319531";     // 홈페이지 관리자 임솔
+const ADMIN_SEJIN = "01053140146";   // 리트릿 운영자 임세진
 
 // GET: 현재 신청 수 조회
 export async function GET() {
@@ -57,5 +69,47 @@ export async function POST(req: NextRequest) {
   }
 
   const newCount = (count || 0) + 1;
+  const applicantPhone = phone.replace(/[^0-9]/g, "");
+
+  // SMS 발송 (실패해도 신청은 성공 처리)
+  try {
+    // 1. 신청자에게 확인 문자
+    const applicantMsg = `[달팽이아지트] 봄 리트릿 신청 완료!
+
+안녕하세요, ${name}님!
+완주하다 봄 리트릿 신청이 접수되었습니다.
+
+■ 프로그램: 완주하다 봄 리트릿
+■ 일시: 2026.4.18(토) ~ 19(일) 1박2일
+■ 장소: 달팽이아지트 (전북 완주)
+■ 참가비: 90,000원 (얼리버드)
+
+입금계좌: 카카오뱅크 3333-06-4749542 임솔
+※ 입금 순 확정 (현재 ${newCount}/20명)
+
+문의: 010-8531-9531
+감사합니다 :)`;
+
+    // 2. 관리자에게 알림 문자
+    const adminMsg = `[봄 리트릿 새 신청]
+
+■ 이름: ${name}
+■ 연락처: ${phone}
+■ 나이: ${age || "-"}
+■ 성별: ${gender || "-"}
+■ 하시는 일: ${occupation || "-"}
+■ 신청 이유: ${reason || "-"}
+
+현재 ${newCount}/20명`;
+
+    await Promise.allSettled([
+      messageService.sendOne({ to: applicantPhone, from: SENDER, text: applicantMsg, type: "LMS", subject: "봄 리트릿 신청 확인" }),
+      messageService.sendOne({ to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: "봄 리트릿 새 신청" }),
+      messageService.sendOne({ to: ADMIN_SEJIN, from: SENDER, text: adminMsg, type: "LMS", subject: "봄 리트릿 새 신청" }),
+    ]);
+  } catch (smsErr) {
+    console.error("리트릿 SMS 발송 실패:", smsErr);
+  }
+
   return NextResponse.json({ success: true, count: newCount, max: 20 });
 }
