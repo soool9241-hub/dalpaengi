@@ -473,15 +473,15 @@ export default function SpringRetreatPage() {
             ))}
           </div>
           {/* 가치 합산 */}
-          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-5 text-center border border-primary/20">
+          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 text-center border border-primary/20">
             <p className="text-sm text-gray-600">혜택을 환산하면</p>
             <p className="text-2xl font-black text-gray-900 mt-1">
               총 <span className="text-primary">48만원</span> 이상의 가치 <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
             </p>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-lg line-through text-gray-400">290,000원</span>
-              <ArrowRight size={16} className="text-gray-400" />
-              <span className="text-2xl font-black text-red-500">90,000원</span>
+            <div className="mt-4 space-y-1">
+              <p className="text-base text-gray-500">정가 <span className="line-through font-semibold">29만원</span></p>
+              <p className="text-sm text-gray-500">하지만 할인폭 적용 시</p>
+              <p className="text-4xl font-black text-red-500 mt-1">9만원 !!</p>
             </div>
             <a href="#apply" className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
               지금 바로 신청하기 <ArrowRight size={14} />
