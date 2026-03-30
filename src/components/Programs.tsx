@@ -15,12 +15,38 @@ const categories = [
   { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "half", "daynight", "jolib", "healing", "stay"] as const;
+const PROGRAM_IDS = ["stay", "stay", "stay", "half", "daynight", "jolib", "healing"] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
 
   const programs = useMemo(() => [
+    {
+      icon: Leaf,
+      title: "완주하다 봄 리트릿",
+      duration: "1박 2일 (4.18~19)",
+      price: 90000,
+      priceLabel: "얼리버드 9만원",
+      originalPrice: 200000,
+      perPerson: 90000,
+      maxPeople: "20명 한정",
+      categories: ["healing", "pension"],
+      tags: ["추천", "리트릿", "얼리버드"],
+      tagColors: ["bg-red-100 text-red-600", "bg-green-100 text-green-600", "bg-amber-100 text-amber-600"],
+      gradient: "from-green-500 to-emerald-500",
+      image: "/img/nature-yard.jpg",
+      features: [
+        "1박 2일 숙박 (달팽이아지트)",
+        "3끼 식사 & 간식 제공",
+        "프로그램 4~5타임 (운동/명상/저널링/대화)",
+        "웰컴키트 증정",
+        "20명 한정 · 선착순 마감",
+      ],
+      extras: [],
+      description: "겨울 동안 움츠렸던 몸, 멈춰 있던 마음, 흐려졌던 의식을 봄의 리듬에 맞춰 다시 깨우는 1박 2일 리셋 캠프. 프리랜서, 1인 사업자, 창작자 등 자기 삶을 완주하고 싶은 사람들을 위한 프로그램입니다.",
+      highlight: true,
+      isRetreat: true,
+    },
     {
       icon: GraduationCap,
       title: "대학생 MT 패키지 (60명 수용가능)",
@@ -168,32 +194,6 @@ export default function Programs() {
       description: "바쁘고 지친 일상에서 잠시 벗어나, 자연과 함께 몸과 마음을 돌보는 1박 2일 힐링캠프입니다. 필라테스(엉덩이와 호흡), 바하바나 & 만트라 명상, 자기탐색 글쓰기(불타는 나의 욕망), 싱잉볼 테라피 등 알찬 프로그램으로 구성됩니다. 소양 맛집에서의 식사와 오성제 둘렛길 걷기 명상까지, 자연 속에서 나를 돌아보는 특별한 시간을 선물하세요.",
       highlight: false,
       isHealing: true,
-    },
-    {
-      icon: Leaf,
-      title: "완주하다 봄 리트릿",
-      duration: "1박 2일 (4.18~19)",
-      price: 90000,
-      priceLabel: "얼리버드 9만원",
-      originalPrice: 200000,
-      perPerson: 90000,
-      maxPeople: "20명 한정",
-      categories: ["healing"],
-      tags: ["리트릿", "봄", "얼리버드"],
-      tagColors: ["bg-green-100 text-green-600", "bg-emerald-100 text-emerald-600", "bg-red-100 text-red-600"],
-      gradient: "from-green-500 to-emerald-500",
-      image: "/img/nature-yard.jpg",
-      features: [
-        "1박 2일 숙박 (달팽이아지트)",
-        "3끼 식사 & 간식 제공",
-        "프로그램 4~5타임 (운동/명상/저널링/대화)",
-        "웰컴키트 증정",
-        "20명 한정 · 선착순 마감",
-      ],
-      extras: [],
-      description: "겨울 동안 움츠렸던 몸, 멈춰 있던 마음, 흐려졌던 의식을 봄의 리듬에 맞춰 다시 깨우는 1박 2일 리셋 캠프. 프리랜서, 1인 사업자, 창작자 등 자기 삶을 완주하고 싶은 사람들을 위한 프로그램입니다.",
-      highlight: false,
-      isRetreat: true,
     },
   ], [pricing]);
   const [activeCategory, setActiveCategory] = useState("all");
