@@ -489,48 +489,88 @@ export default function SpringRetreatPage() {
           </div>
         </section>
 
-        {/* 3가지 키워드 */}
+        {/* 3가지 키워드 - 도식화 */}
         <section className="pb-12 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">
             몸 · 마음 · 의식을 깨우는 시간
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[
               {
-                icon: <Leaf size={24} className="text-green-600" />,
+                icon: <Leaf size={28} className="text-green-600" />,
+                emoji: "🌿",
                 label: "몸",
+                labelEng: "Body",
                 color: "bg-green-50 border-green-200",
+                inputColor: "bg-green-100 text-green-800",
+                outputColor: "bg-green-600 text-white",
+                arrowColor: "text-green-500",
                 input: "건강한 식사",
-                output: "감각을 깨우는 움직임, 안 쓰던 근육 깨우기",
+                outputs: ["감각을 깨우는 움직임", "안 쓰던 근육 깨우기"],
               },
               {
-                icon: <Heart size={24} className="text-rose-500" />,
+                icon: <Heart size={28} className="text-rose-500" />,
+                emoji: "💗",
                 label: "마음",
+                labelEng: "Mind",
                 color: "bg-rose-50 border-rose-200",
+                inputColor: "bg-rose-100 text-rose-800",
+                outputColor: "bg-rose-500 text-white",
+                arrowColor: "text-rose-400",
                 input: "몽글몽글해지는 자애명상",
-                output: "낯선 사람과 나누는 솔직한 대화, 감사일기",
+                outputs: ["낯선 사람과 솔직한 대화", "감사일기"],
               },
               {
-                icon: <Lightbulb size={24} className="text-amber-500" />,
+                icon: <Lightbulb size={28} className="text-amber-500" />,
+                emoji: "💡",
                 label: "의식",
+                labelEng: "Consciousness",
                 color: "bg-amber-50 border-amber-200",
+                inputColor: "bg-amber-100 text-amber-800",
+                outputColor: "bg-amber-500 text-white",
+                arrowColor: "text-amber-400",
                 input: "참가자들과 솔직한 나눔",
-                output: "나의 방향 점검, 올해의 씨앗 심기",
+                outputs: ["나의 방향 점검", "올해의 씨앗 심기"],
               },
             ].map((k, i) => (
-              <div key={i} className={`rounded-2xl border p-5 ${k.color}`}>
-                <div className="flex items-center gap-3 mb-3">
-                  {k.icon}
-                  <span className="text-lg font-black text-gray-900">{k.label}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div key={i} className={`rounded-2xl border p-6 ${k.color}`}>
+                {/* 헤더 */}
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="text-3xl">{k.emoji}</span>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">인풋</p>
-                    <p className="text-gray-700">{k.input}</p>
+                    <span className="text-xl font-black text-gray-900">{k.label}</span>
+                    <span className="text-xs text-gray-400 ml-2 font-medium">{k.labelEng}</span>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">아웃풋</p>
-                    <p className="text-gray-700">{k.output}</p>
+                </div>
+                {/* 플로우 다이어그램 */}
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  {/* INPUT */}
+                  <div className={`w-full sm:w-auto px-5 py-3 rounded-xl text-center font-semibold text-sm ${k.inputColor}`}>
+                    <p className="text-[10px] font-bold opacity-60 uppercase mb-1">INPUT</p>
+                    {k.input}
+                  </div>
+                  {/* 화살표 */}
+                  <div className={`flex-shrink-0 ${k.arrowColor}`}>
+                    <ArrowRight size={24} className="hidden sm:block" />
+                    <ChevronDown size={24} className="block sm:hidden" />
+                  </div>
+                  {/* 리트릿 프로세스 */}
+                  <div className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white border border-dashed border-gray-300 text-center">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">RETREAT</p>
+                    <p className="text-sm font-semibold text-gray-700">1박 2일 프로그램</p>
+                  </div>
+                  {/* 화살표 */}
+                  <div className={`flex-shrink-0 ${k.arrowColor}`}>
+                    <ArrowRight size={24} className="hidden sm:block" />
+                    <ChevronDown size={24} className="block sm:hidden" />
+                  </div>
+                  {/* OUTPUTS */}
+                  <div className="flex flex-col gap-2 w-full sm:w-auto">
+                    {k.outputs.map((out, oi) => (
+                      <div key={oi} className={`px-5 py-2.5 rounded-xl text-center font-bold text-sm ${k.outputColor}`}>
+                        {out}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
