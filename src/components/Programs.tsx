@@ -27,7 +27,7 @@ export default function Programs() {
       duration: "1박 2일 (4.18~19)",
       price: 90000,
       priceLabel: "얼리버드 9만원",
-      originalPrice: 200000,
+      originalPrice: 290000,
       perPerson: 90000,
       maxPeople: "20명 한정",
       categories: ["healing", "pension"],
@@ -310,16 +310,16 @@ export default function Programs() {
                     {/* Price */}
                     {prog.isRetreat ? (
                       <>
-                        <div className="flex items-end gap-2 mb-1">
-                          <span className="text-sm text-text-light line-through">{(prog.originalPrice ?? 0).toLocaleString()}원/인</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
+                          <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">69% OFF</span>
                         </div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl font-bold text-primary">{prog.price.toLocaleString()}</span>
-                          <span className="text-sm text-text-light mb-0.5">원/인</span>
-                          <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">얼리버드</span>
+                        <div className="flex items-baseline gap-1.5 mb-2">
+                          <span className="text-3xl font-black text-primary">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원/인</span>
                         </div>
-                        <p className="text-xs text-text-light mb-5">
-                          20명 한정 · 2026.4.18(토)~19(일)
+                        <p className="text-xs font-bold text-red-500 mb-5">
+                          🔥 얼리버드 특가 · 20명 한정!
                         </p>
                       </>
                     ) : prog.isEvent ? (
@@ -366,7 +366,7 @@ export default function Programs() {
                         href="/programs/spring-retreat"
                         className="block w-full py-3.5 rounded-xl font-bold text-sm transition-all bg-primary text-white hover:bg-primary-light text-center shadow-md"
                       >
-                        🌱 자세히 보기 & 신청하기
+                        추가혜택 확인 →
                       </Link>
                     ) : (
                       <button
