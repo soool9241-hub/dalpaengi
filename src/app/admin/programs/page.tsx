@@ -466,12 +466,13 @@ export default function AdminProgramsPage() {
 
                         <div className="w-px h-6 bg-gray-200 mx-1" />
 
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteApp(app.id); }}
-                        className="px-3 py-2 rounded-lg border border-red-200 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-1"
-                      >
-                        <Trash2 size={12} /> 삭제
-                      </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteApp(app.id); }}
+                          className="px-3 py-2 rounded-lg border border-red-200 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-1"
+                        >
+                          <Trash2 size={12} /> 삭제
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
