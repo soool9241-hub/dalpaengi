@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, CalendarDays, Users, BarChart3, Settings, ExternalLink, LogOut, X, Menu, Bus } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, BarChart3, Settings, ExternalLink, LogOut, X, Menu, Bus, ClipboardList } from "lucide-react";
 import { useState } from "react";
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: "예약 관리", href: "/admin/reservations", icon: CalendarDays },
   { label: "버스 관리", href: "/admin/bus", icon: Bus },
   { label: "고객 관리", href: "/admin/customers", icon: Users },
+  { label: "프로그램 신청", href: "/admin/programs", icon: ClipboardList },
   { label: "매출/지표", href: "/admin/analytics", icon: BarChart3 },
   { label: "설정", href: "/admin/settings", icon: Settings },
 ];
