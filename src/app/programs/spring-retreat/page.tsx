@@ -756,28 +756,6 @@ export default function SpringRetreatPage() {
           </div>
         </section>
 
-        {/* 비교 테이블: 일반 여행 vs 리트릿 */}
-        <section className="pb-12 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">
-            일반 여행 vs <span className="text-primary">완주하다 리트릿</span>
-          </h2>
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            {[
-              { label: "목적", normal: "쉬고 온다", retreat: "나를 다시 세팅한다" },
-              { label: "돌아온 후", normal: "월요병 시작", retreat: "방향이 선명해진 나" },
-              { label: "대화", normal: "어디 갔다왔어?", retreat: "나 이렇게 바뀌었어" },
-              { label: "비용", normal: "20~30만원", retreat: "9만원 (얼리버드)" },
-              { label: "남는 것", normal: "사진과 피로", retreat: "저널, 동료, 인사이트" },
-            ].map((row, i) => (
-              <div key={i} className={`grid grid-cols-3 text-sm ${i > 0 ? "border-t border-gray-100" : ""}`}>
-                <div className="px-4 py-3 bg-gray-50 font-bold text-gray-700 flex items-center">{row.label}</div>
-                <div className="px-4 py-3 text-gray-500 flex items-center">{row.normal}</div>
-                <div className="px-4 py-3 text-primary font-semibold bg-primary/5 flex items-center">{row.retreat}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* 참가자 기대 후기 / 사회적 증거 */}
         <section className="pb-12 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">
@@ -795,29 +773,6 @@ export default function SpringRetreatPage() {
                 <p className="text-xs text-primary font-semibold mt-3">— {r.from}</p>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* 안심 보장 */}
-        <section className="pb-12 sm:pb-16">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
-            <div className="flex items-center gap-3 mb-4">
-              <ShieldCheck size={28} className="text-green-600" />
-              <h3 className="text-lg font-black text-gray-900">안심 참가 보장</h3>
-            </div>
-            <div className="space-y-3">
-              {[
-                "7일 전까지 100% 환불 가능",
-                "우천 시에도 실내 프로그램 정상 진행",
-                "1인 참가도 환영 — 절반 이상이 혼자 옵니다",
-                "개인 공간 보장 (최소 2인실 배정)",
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <Check size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-gray-700">{item}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -861,28 +816,6 @@ export default function SpringRetreatPage() {
               </a>
               <p className="text-xs text-white/40 mt-3">신청 후 안내 문자가 발송됩니다</p>
             </div>
-          </div>
-        </section>
-
-        {/* FAQ 간단 */}
-        <section className="pb-12 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">
-            자주 묻는 질문
-          </h2>
-          <div className="space-y-3">
-            {[
-              { q: "혼자 가도 괜찮을까요?", a: "네! 참가자 절반 이상이 혼자 오십니다. 프로그램 자체가 자연스럽게 어울리도록 설계되어 있어요." },
-              { q: "운동을 못해도 되나요?", a: "전혀 문제없습니다. 격한 운동이 아니라 내 몸의 감각을 느끼는 부드러운 움직임입니다." },
-              { q: "숙박은 어떻게 되나요?", a: "달팽이아지트 내 펜션에서 2인실 이상으로 배정됩니다. 개인 공간이 보장됩니다." },
-              { q: "환불이 가능한가요?", a: "행사 7일 전까지 100% 환불 가능합니다. 부담 없이 신청하세요." },
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
-                <p className="font-bold text-gray-900 text-sm flex items-start gap-2">
-                  <span className="text-primary font-black">Q.</span> {item.q}
-                </p>
-                <p className="text-sm text-gray-600 mt-2 ml-6">{item.a}</p>
-              </div>
-            ))}
           </div>
         </section>
 
