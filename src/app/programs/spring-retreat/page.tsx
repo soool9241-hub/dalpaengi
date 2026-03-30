@@ -116,31 +116,71 @@ const PROGRAMS = [
   },
 ];
 
+/* ───── 퍼실리테이터 데이터 ───── */
+const LEADERS = [
+  {
+    name: "마루",
+    role: "감각깨우기 · 아침운동 담당",
+    emoji: "💪",
+    color: "bg-green-50 border-green-200",
+    tagColor: "bg-green-100 text-green-800",
+    desc: "몸의 감각을 깨우고, 움직임을 통해 나를 느끼게 해주는 무브먼트 퍼실리테이터",
+    programs: ["감각깨우기", "아침 산책 & 운동"],
+  },
+  {
+    name: "세경",
+    role: "저널링 & 나눔 담당",
+    emoji: "📝",
+    color: "bg-blue-50 border-blue-200",
+    tagColor: "bg-blue-100 text-blue-800",
+    desc: "글쓰기와 대화를 통해 방향을 점검하고, 나의 이야기를 꺼내게 도와주는 저널링 가이드",
+    programs: ["저널링 & 나눔"],
+  },
+  {
+    name: "예진",
+    role: "대화 & 명상 담당",
+    emoji: "🧘",
+    color: "bg-purple-50 border-purple-200",
+    tagColor: "bg-purple-100 text-purple-800",
+    desc: "걷기명상과 1대1 대화를 이끌며, 자애명상으로 마음을 열어주는 명상 퍼실리테이터",
+    programs: ["대화 & 명상"],
+  },
+  {
+    name: "잎새",
+    role: "저널링 & 감사일기 담당",
+    emoji: "🌱",
+    color: "bg-amber-50 border-amber-200",
+    tagColor: "bg-amber-100 text-amber-800",
+    desc: "감사일기와 올해의 씨앗 심기를 통해 삶의 방향을 다시 세워주는 저널링 퍼실리테이터",
+    programs: ["저널링 & 감사일기"],
+  },
+];
+
 /* ───── 컴포넌트 ───── */
 function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
-      <button onClick={() => setOpen(!open)} className="w-full text-left px-5 py-4 flex items-center gap-4">
-        <span className="flex-shrink-0 w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+      <button onClick={() => setOpen(!open)} className="w-full text-left px-5 sm:px-6 py-5 flex items-center gap-4">
+        <span className="flex-shrink-0 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base">
           {p.num}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900">{p.title}</p>
-          <p className="text-sm text-gray-500 truncate">{p.sub}</p>
+          <p className="font-bold text-gray-900 text-lg">{p.title}</p>
+          <p className="text-sm sm:text-base text-gray-500 truncate">{p.sub}</p>
         </div>
-        <span className="text-xs text-primary font-semibold whitespace-nowrap hidden sm:block">{p.leader}</span>
-        {open ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+        <span className="text-sm text-primary font-semibold whitespace-nowrap hidden sm:block">{p.leader}</span>
+        {open ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
       </button>
       {open && (
-        <div className="px-5 pb-5 border-t border-gray-100 pt-4 animate-fade-in">
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <Clock size={12} /> {p.time} <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">{p.leader}</span>
+        <div className="px-5 sm:px-6 pb-6 border-t border-gray-100 pt-5 animate-fade-in">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+            <Clock size={14} /> {p.time} <span className="ml-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold text-sm">{p.leader}</span>
           </div>
-          <p className="text-sm text-gray-700 mb-3">{p.desc}</p>
-          <ul className="space-y-1.5">
+          <p className="text-base text-gray-700 mb-4 leading-relaxed">{p.desc}</p>
+          <ul className="space-y-2.5">
             {p.details.map((d, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+              <li key={i} className="flex items-start gap-2.5 text-base text-gray-600">
                 <span className="text-primary mt-0.5">&#x2022;</span> {d}
               </li>
             ))}
@@ -554,9 +594,36 @@ export default function SpringRetreatPage() {
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">
             프로그램 상세
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {PROGRAMS.map((p) => (
               <ProgramAccordion key={p.num} p={p} />
+            ))}
+          </div>
+        </section>
+
+        {/* 담당 선생님 소개 */}
+        <section className="pb-12 sm:pb-16">
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">
+            함께하는 퍼실리테이터
+          </h2>
+          <p className="text-sm text-gray-500 text-center mb-8">각 분야 전문 선생님이 프로그램을 이끕니다</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {LEADERS.map((l, i) => (
+              <div key={i} className={`rounded-2xl border p-5 ${l.color}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">{l.emoji}</span>
+                  <div>
+                    <p className="text-lg font-black text-gray-900">{l.name} <span className="text-sm font-medium text-gray-500">선생님</span></p>
+                    <p className="text-xs font-semibold text-gray-500">{l.role}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed mb-3">{l.desc}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {l.programs.map((prog) => (
+                    <span key={prog} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${l.tagColor}`}>{prog}</span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </section>
