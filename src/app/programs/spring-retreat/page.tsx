@@ -144,6 +144,120 @@ function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
   );
 }
 
+/* ───── 신청 폼 ───── */
+function ApplyForm() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [count, setCount] = useState(0);
+  const MAX = 20;
+
+  // 현재 신청 수 조회
+  useState(() => {
+    fetch("/api/programs/retreat").then(r => r.json()).then(d => setCount(d.count || 0)).catch(() => {});
+  });
+
+  const submit = async () => {
+    if (!name.trim() || !phone.trim()) { setResult({ ok: false, msg: "이름과 연락처를 입력해주세요." }); return; }
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/programs/retreat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, email, message }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult({ ok: true, msg: `신청 완료! (${data.count}/${data.max}명)` });
+        setCount(data.count);
+        setName(""); setPhone(""); setEmail(""); setMessage("");
+      } else {
+        setResult({ ok: false, msg: data.error || "신청 실패" });
+      }
+    } catch {
+      setResult({ ok: false, msg: "네트워크 오류" });
+    }
+    setLoading(false);
+  };
+
+  const remaining = MAX - count;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="p-6 space-y-4">
+        {/* 잔여석 */}
+        <div className="text-center">
+          <p className="text-sm text-gray-500">현재 신청 현황</p>
+          <div className="flex items-center justify-center gap-1 mt-2">
+            {Array.from({ length: MAX }, (_, i) => (
+              <div key={i} className={`w-2.5 h-8 rounded-sm transition-colors ${i < count ? "bg-primary" : "bg-gray-200"}`} />
+            ))}
+          </div>
+          <p className="text-sm font-bold mt-2">
+            <span className="text-primary text-lg">{count}</span>
+            <span className="text-gray-400">/{MAX}명</span>
+            {remaining > 0 ? (
+              <span className="text-red-500 ml-2 text-xs font-semibold">{remaining}자리 남음</span>
+            ) : (
+              <span className="text-red-500 ml-2 text-xs font-semibold">마감</span>
+            )}
+          </p>
+        </div>
+
+        {remaining > 0 ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">이름 *</label>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="홍길동"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">연락처 *</label>
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-1234-5678"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">이메일 (선택)</label>
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="example@email.com"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">한마디 (선택)</label>
+              <textarea value={message} onChange={e => setMessage(e.target.value)} rows={2} placeholder="참가 동기, 기대하는 점 등"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            </div>
+
+            <button onClick={submit} disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-base hover:bg-primary-light transition-colors disabled:opacity-50">
+              {loading ? "신청 중..." : "봄 리트릿 신청하기"}
+            </button>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-lg font-bold text-red-500">마감되었습니다</p>
+            <p className="text-sm text-gray-500 mt-1">대기 신청은 전화로 문의해주세요</p>
+            <a href="tel:010-8531-9531" className="inline-flex items-center gap-1 mt-3 text-primary text-sm font-semibold">
+              <Phone size={14} /> 010-8531-9531
+            </a>
+          </div>
+        )}
+
+        {result && (
+          <p className={`text-center text-sm font-semibold ${result.ok ? "text-green-600" : "text-red-500"}`}>
+            {result.msg}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ───── 메인 페이지 ───── */
 export default function SpringRetreatPage() {
   return (
@@ -430,19 +544,11 @@ export default function SpringRetreatPage() {
               </div>
             </div>
 
-            {/* CTA */}
-            <div className="bg-primary p-6">
-              <a
-                href="tel:010-8531-9531"
-                className="flex items-center justify-center gap-2 w-full py-3.5 bg-white text-primary rounded-xl font-bold text-base hover:bg-gray-50 transition-colors"
-              >
-                <Phone size={18} />
-                전화 문의 · 신청하기
-              </a>
-              <p className="text-center text-white/60 text-xs mt-3">
-                010-8531-9531 · 선착순 20명 마감
-              </p>
-            </div>
+          </div>
+
+          {/* 신청 폼 */}
+          <div className="mt-6">
+            <ApplyForm />
           </div>
         </section>
 
@@ -476,7 +582,7 @@ export default function SpringRetreatPage() {
             <h3 className="text-xl font-black mt-4">봄, 다시 깨어나는 시간</h3>
             <p className="text-white/70 text-sm mt-2">2026.4.18(토)~19(일) · 달팽이아지트</p>
             <a
-              href="tel:010-8531-9531"
+              href="#apply"
               className="inline-flex items-center gap-2 mt-6 px-8 py-3.5 bg-white text-primary rounded-full font-bold hover:bg-gray-50 transition-colors"
             >
               신청하기 <ArrowRight size={16} />
