@@ -13,6 +13,8 @@ import {
   Mail,
   MessageSquare,
   Filter,
+  Plus,
+  X,
 } from "lucide-react";
 
 interface Application {
@@ -63,6 +65,9 @@ export default function AdminProgramsPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [statusMenuId, setStatusMenuId] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", phone: "", email: "", message: "", program: "", status: "confirmed" });
+  const [addLoading, setAddLoading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -100,6 +105,26 @@ export default function AdminProgramsPage() {
     fetchData();
   };
 
+  const handleAdd = async () => {
+    if (!addForm.name.trim() || !addForm.phone.trim()) { alert("이름과 연락처는 필수입니다."); return; }
+    const program = addForm.program || programKeys[0] || "spring-retreat-2026";
+    setAddLoading(true);
+    const res = await fetch("/api/admin/programs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...addForm, program }),
+    });
+    setAddLoading(false);
+    if (res.ok) {
+      setShowAddModal(false);
+      setAddForm({ name: "", phone: "", email: "", message: "", program: "", status: "confirmed" });
+      fetchData();
+    } else {
+      const data = await res.json();
+      alert(data.error || "추가 실패");
+    }
+  };
+
   // 필터링된 목록
   const filtered = filterStatus ? apps.filter((a) => a.status === filterStatus) : apps;
 
@@ -109,10 +134,94 @@ export default function AdminProgramsPage() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       {/* 헤더 */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">프로그램 신청 관리</h1>
-        <p className="text-sm text-gray-500 mt-1">프로그램별 신청자 현황을 관리합니다</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900">프로그램 신청 관리</h1>
+          <p className="text-sm text-gray-500 mt-1">프로그램별 신청자 현황을 관리합니다</p>
+        </div>
+        <button
+          onClick={() => { setAddForm({ name: "", phone: "", email: "", message: "", program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-light transition-colors"
+        >
+          <Plus size={16} /> 수동 추가
+        </button>
       </div>
+
+      {/* 수동 추가 모달 */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAddModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-gray-900">신청자 수동 추가</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-1 text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">프로그램</label>
+              <select
+                value={addForm.program || programKeys[0] || ""}
+                onChange={(e) => setAddForm({ ...addForm, program: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {programKeys.map((key) => (
+                  <option key={key} value={key}>{programs[key]?.label || key}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">이름 *</label>
+                <input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="홍길동"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">연락처 *</label>
+                <input value={addForm.phone} onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })} placeholder="010-1234-5678"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">이메일 (선택)</label>
+              <input value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} placeholder="example@email.com"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">메모 (선택)</label>
+              <textarea value={addForm.message} onChange={(e) => setAddForm({ ...addForm, message: e.target.value })} rows={2} placeholder="참가 동기, 특이사항 등"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">상태</label>
+              <div className="flex gap-2">
+                {STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setAddForm({ ...addForm, status: opt.value })}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold text-center transition-all ${
+                      addForm.status === opt.value ? opt.color + " ring-2 ring-offset-1 ring-current" : "bg-gray-50 text-gray-400"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleAdd}
+              disabled={addLoading}
+              className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-light transition-colors disabled:opacity-50"
+            >
+              {addLoading ? "추가 중..." : "신청자 추가"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 프로그램별 요약 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">

@@ -46,6 +46,33 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ data, stats, programs: PROGRAMS });
 }
 
+// POST: 수동 신청자 추가
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { name, phone, email, message, program, status } = body;
+
+  if (!name || !phone) {
+    return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from("retreat_applications")
+    .insert({
+      name,
+      phone,
+      email: email || null,
+      message: message || null,
+      program: program || "spring-retreat-2026",
+      status: status || "confirmed",
+    });
+
+  if (error) {
+    return NextResponse.json({ error: "추가 실패: " + error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 // PATCH: 신청자 상태 변경
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
