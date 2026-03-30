@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. 신청자에게 확인 문자
     const applicantMsg = `안녕하세요, ${name}님!
-완주하다 봄 리트릿 신청을 해주셔서 감사합니다.
+완주하다 봄 리트릿에 신청해주셔서 감사합니다.
 
 ■ 프로그램: 완주하다 봄 리트릿
 ■ 일시: 2026.4.18(토) ~ 19(일) 1박2일
