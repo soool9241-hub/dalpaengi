@@ -98,7 +98,6 @@ export default function AdminProgramsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: newStatus }),
     });
-    setStatusMenuId(null);
     fetchData();
   };
 
