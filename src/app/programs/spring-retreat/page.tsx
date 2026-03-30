@@ -195,8 +195,10 @@ function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
 function ApplyForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [count, setCount] = useState(0);
@@ -215,13 +217,13 @@ function ApplyForm() {
       const res = await fetch("/api/programs/retreat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, email, message }),
+        body: JSON.stringify({ name, phone, age, gender, occupation, reason }),
       });
       const data = await res.json();
       if (res.ok) {
         setResult({ ok: true, msg: `신청 완료! (${data.count}/${data.max}명)` });
         setCount(data.count);
-        setName(""); setPhone(""); setEmail(""); setMessage("");
+        setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason("");
       } else {
         setResult({ ok: false, msg: data.error || "신청 실패" });
       }
@@ -232,6 +234,7 @@ function ApplyForm() {
   };
 
   const remaining = MAX - count;
+  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -257,27 +260,50 @@ function ApplyForm() {
 
         {remaining > 0 ? (
           <>
+            {/* 이름 & 연락처 */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">이름 *</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="홍길동"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="홍길동" className={inputClass} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">연락처 *</label>
-                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-1234-5678"
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-1234-5678" className={inputClass} />
               </div>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">이메일 (선택)</label>
-              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="example@email.com"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+
+            {/* 나이 & 성별 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">나이</label>
+                <input value={age} onChange={e => setAge(e.target.value)} placeholder="예: 28" className={inputClass} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">성별</label>
+                <div className="flex gap-2">
+                  {["남성", "여성"].map((g) => (
+                    <button key={g} type="button" onClick={() => setGender(g)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                        gender === g ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400 hover:bg-gray-50"
+                      }`}>{g}</button>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* 현재 하시는 일 */}
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">한마디 (선택)</label>
-              <textarea value={message} onChange={e => setMessage(e.target.value)} rows={2} placeholder="참가 동기, 기대하는 점 등"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              <label className="text-xs font-semibold text-gray-600 block mb-1">현재 하시는 일</label>
+              <p className="text-[11px] text-gray-400 mb-1.5">직무와 업종을 자유롭게 소개해 주세요. (예: 프리랜서, 직장인, 크리에이터, 강사, 기획자 등)</p>
+              <input value={occupation} onChange={e => setOccupation(e.target.value)} placeholder="예: 프리랜서 디자이너" className={inputClass} />
+            </div>
+
+            {/* 신청 이유 / 기대하는 점 */}
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">신청 이유 / 기대하는 점</label>
+              <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
+                placeholder="리트릿에 참가하고 싶은 이유나 기대하는 점을 자유롭게 적어주세요."
+                className={`${inputClass} resize-none`} />
             </div>
 
             <button onClick={submit} disabled={loading}

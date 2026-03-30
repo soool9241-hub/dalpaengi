@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 // POST: 수동 신청자 추가
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, phone, email, message, program, status } = body;
+  const { name, phone, age, gender, occupation, reason, program, status } = body;
 
   if (!name || !phone) {
     return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
@@ -60,8 +60,10 @@ export async function POST(req: NextRequest) {
     .insert({
       name,
       phone,
-      email: email || null,
-      message: message || null,
+      age: age || null,
+      gender: gender || null,
+      occupation: occupation || null,
+      reason: reason || null,
       program: program || "spring-retreat-2026",
       status: status || "confirmed",
     });

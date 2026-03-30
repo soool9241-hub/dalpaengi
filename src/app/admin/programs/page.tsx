@@ -23,6 +23,10 @@ interface Application {
   phone: string;
   email: string | null;
   message: string | null;
+  age: string | null;
+  gender: string | null;
+  occupation: string | null;
+  reason: string | null;
   program: string;
   status: string;
   created_at: string;
@@ -66,7 +70,7 @@ export default function AdminProgramsPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [statusMenuId, setStatusMenuId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", phone: "", email: "", message: "", program: "", status: "confirmed" });
+  const [addForm, setAddForm] = useState({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: "", status: "confirmed" });
   const [addLoading, setAddLoading] = useState(false);
 
   const fetchData = async () => {
@@ -117,7 +121,7 @@ export default function AdminProgramsPage() {
     setAddLoading(false);
     if (res.ok) {
       setShowAddModal(false);
-      setAddForm({ name: "", phone: "", email: "", message: "", program: "", status: "confirmed" });
+      setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: "", status: "confirmed" });
       fetchData();
     } else {
       const data = await res.json();
@@ -140,7 +144,7 @@ export default function AdminProgramsPage() {
           <p className="text-sm text-gray-500 mt-1">프로그램별 신청자 현황을 관리합니다</p>
         </div>
         <button
-          onClick={() => { setAddForm({ name: "", phone: "", email: "", message: "", program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
+          onClick={() => { setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
           className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-light transition-colors"
         >
           <Plus size={16} /> 수동 추가
@@ -183,15 +187,34 @@ export default function AdminProgramsPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">나이</label>
+                <input value={addForm.age} onChange={(e) => setAddForm({ ...addForm, age: e.target.value })} placeholder="예: 28"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">성별</label>
+                <div className="flex gap-2">
+                  {["남성", "여성"].map((g) => (
+                    <button key={g} type="button" onClick={() => setAddForm({ ...addForm, gender: g })}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                        addForm.gender === g ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400"
+                      }`}>{g}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">이메일 (선택)</label>
-              <input value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} placeholder="example@email.com"
+              <label className="text-xs font-semibold text-gray-600 block mb-1">현재 하시는 일</label>
+              <input value={addForm.occupation} onChange={(e) => setAddForm({ ...addForm, occupation: e.target.value })} placeholder="예: 프리랜서 디자이너"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">메모 (선택)</label>
-              <textarea value={addForm.message} onChange={(e) => setAddForm({ ...addForm, message: e.target.value })} rows={2} placeholder="참가 동기, 특이사항 등"
+              <label className="text-xs font-semibold text-gray-600 block mb-1">신청 이유 / 기대하는 점</label>
+              <textarea value={addForm.reason} onChange={(e) => setAddForm({ ...addForm, reason: e.target.value })} rows={2} placeholder="참가 동기, 기대하는 점 등"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
             </div>
 
@@ -350,8 +373,12 @@ export default function AdminProgramsPage() {
 
                   {/* 이름 & 연락처 */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm">{app.name}</p>
-                    <p className="text-xs text-gray-500">{app.phone}</p>
+                    <p className="font-bold text-gray-900 text-sm">
+                      {app.name}
+                      {app.age && <span className="text-xs text-gray-400 font-normal ml-1.5">({app.age}세)</span>}
+                      {app.gender && <span className="text-xs text-gray-400 font-normal ml-1">· {app.gender}</span>}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{app.occupation || app.phone}</p>
                   </div>
 
                   {/* 프로그램 */}
@@ -371,26 +398,44 @@ export default function AdminProgramsPage() {
                 {/* 확장 상세 */}
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Phone size={14} className="text-gray-400" />
+                        <Phone size={14} className="text-gray-400 flex-shrink-0" />
                         <a href={`tel:${app.phone}`} className="hover:text-primary">{app.phone}</a>
                       </div>
-                      {app.email && (
+                      {app.age && (
                         <div className="flex items-center gap-2 text-gray-600">
-                          <Mail size={14} className="text-gray-400" />
-                          <a href={`mailto:${app.email}`} className="hover:text-primary">{app.email}</a>
+                          <span className="text-xs text-gray-400 font-semibold">나이</span> {app.age}
+                        </div>
+                      )}
+                      {app.gender && (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <span className="text-xs text-gray-400 font-semibold">성별</span> {app.gender}
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Filter size={14} className="text-gray-400" />
+                        <Filter size={14} className="text-gray-400 flex-shrink-0" />
                         {progLabel}
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Clock size={14} className="text-gray-400" />
+                        <Clock size={14} className="text-gray-400 flex-shrink-0" />
                         {formatDate(app.created_at)}
                       </div>
                     </div>
+
+                    {app.occupation && (
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">현재 하시는 일</p>
+                        <p className="text-sm text-gray-700">{app.occupation}</p>
+                      </div>
+                    )}
+
+                    {app.reason && (
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">신청 이유 / 기대하는 점</p>
+                        <p className="text-sm text-gray-700">{app.reason}</p>
+                      </div>
+                    )}
 
                     {app.message && (
                       <div className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
