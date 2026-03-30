@@ -239,25 +239,6 @@ function ApplyForm() {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       <div className="p-6 space-y-4">
-        {/* 잔여석 */}
-        <div className="text-center">
-          <p className="text-sm text-gray-500">현재 신청 현황</p>
-          <div className="flex items-center justify-center gap-1 mt-2">
-            {Array.from({ length: MAX }, (_, i) => (
-              <div key={i} className={`w-2.5 h-8 rounded-sm transition-colors ${i < count ? "bg-primary" : "bg-gray-200"}`} />
-            ))}
-          </div>
-          <p className="text-sm font-bold mt-2">
-            <span className="text-primary text-lg">{count}</span>
-            <span className="text-gray-400">/{MAX}명</span>
-            {remaining > 0 ? (
-              <span className="text-red-500 ml-2 text-xs font-semibold">{remaining}자리 남음</span>
-            ) : (
-              <span className="text-red-500 ml-2 text-xs font-semibold">마감</span>
-            )}
-          </p>
-        </div>
-
         {remaining > 0 ? (
           <>
             {/* 이름 & 연락처 */}
