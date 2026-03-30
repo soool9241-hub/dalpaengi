@@ -899,6 +899,18 @@ export default function SpringRetreatPage() {
         </section>
 
       </div>
+
+      {/* 모바일 하단 고정 CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <a
+          href="#apply"
+          className="flex items-center justify-center gap-2 w-full py-3.5 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-light transition-colors"
+        >
+          지금 바로 함께하기! <ArrowRight size={16} />
+        </a>
+      </div>
+      {/* 하단 고정 버튼 영역만큼 패딩 (모바일) */}
+      <div className="h-[72px] sm:hidden" />
     </div>
   );
 }
