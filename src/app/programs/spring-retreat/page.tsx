@@ -409,16 +409,16 @@ export default function SpringRetreatPage() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
             {[
-              { icon: "🏡", title: "1박 숙박", desc: "산속 펜션 1박", value: "8만원 상당" },
-              { icon: "🍽", title: "3끼 식사", desc: "정성스런 건강 밥상", value: "4만원 상당" },
-              { icon: "🍵", title: "간식 & 음료", desc: "차, 과일, 다과 무제한", value: "1만원 상당" },
-              { icon: "💪", title: "감각깨우기", desc: "전문 퍼실리테이터 세션", value: "5만원 상당" },
-              { icon: "📝", title: "저널링 워크숍", desc: "방향 점검 & 씨앗 심기", value: "5만원 상당" },
-              { icon: "🧘", title: "명상 & 대화", desc: "자애명상 · 걷기명상", value: "3만원 상당" },
-              { icon: "🎒", title: "웰컴키트", desc: "저널, 필기구, 굿즈 세트", value: "2만원 상당" },
-              { icon: "🌿", title: "자연 힐링", desc: "완주 산속 자연 치유", value: "Priceless" },
-              { icon: "🤝", title: "네트워킹", desc: "같은 고민 동료 20명", value: "Priceless" },
-              { icon: "🌱", title: "삶의 방향 설계", desc: "올해의 로드맵 완성", value: "Priceless" },
+              { icon: "🏡", title: "1박 숙박", desc: "산속 펜션 1박", value: "9만원 상당" },
+              { icon: "🍽", title: "3끼 식사", desc: "정성스런 건강 밥상", value: "9만원 상당" },
+              { icon: "💪", title: "감각깨우기", desc: "전문 퍼실리테이터 세션", value: "10만원 상당" },
+              { icon: "📝", title: "저널링 워크숍", desc: "방향 점검 & 씨앗 심기", value: "10만원 상당" },
+              { icon: "🧘", title: "명상 프로그램", desc: "자애명상 · 걷기명상 · 대화", value: "10만원 상당" },
+              { icon: "🎁", title: "웰컴키트", desc: "정성어린 선물 세트", value: "정성어린 선물" },
+              { icon: "🍵", title: "간식 & 음료", desc: "차, 과일, 다과 제공", value: "덤!" },
+              { icon: "🌿", title: "자연 힐링", desc: "완주 산속 자연 치유", value: "덤!" },
+              { icon: "🤝", title: "네트워킹", desc: "같은 고민 동료 20명", value: "측정불가 가치!" },
+              { icon: "🌱", title: "삶의 방향 설계", desc: "올해의 로드맵 완성", value: "측정불가!" },
             ].map((b, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all hover:-translate-y-0.5 group">
                 <div className="flex items-start gap-3">
@@ -436,7 +436,7 @@ export default function SpringRetreatPage() {
           <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-5 text-center border border-primary/20">
             <p className="text-sm text-gray-600">혜택을 환산하면</p>
             <p className="text-2xl font-black text-gray-900 mt-1">
-              총 <span className="text-primary">28만원</span> 이상의 가치
+              총 <span className="text-primary">48만원</span> 이상의 가치 <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
             </p>
             <div className="flex items-center justify-center gap-2 mt-2">
               <span className="text-lg line-through text-gray-400">290,000원</span>
