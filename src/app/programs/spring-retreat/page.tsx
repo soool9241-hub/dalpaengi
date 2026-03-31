@@ -336,8 +336,8 @@ export default function SpringRetreatPage() {
       <section className="relative pt-14">
         <div className="relative h-[70vh] min-h-[480px] overflow-hidden">
           <img
-            src="/img/nature-yard.jpg"
-            alt="달팽이아지트 자연 전경"
+            src="/img/retreat-hero.jpg"
+            alt="완주하다 봄 리트릿"
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
