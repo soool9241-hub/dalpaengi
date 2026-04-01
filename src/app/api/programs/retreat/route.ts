@@ -25,7 +25,7 @@ export async function GET() {
 // POST: 신청 접수
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, phone, age, gender, occupation, reason } = body;
+  const { name, phone, age, gender, occupation, reason, photoConsent, transport, region } = body;
 
   if (!name || !phone) {
     return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
@@ -60,6 +60,9 @@ export async function POST(req: NextRequest) {
       gender: gender || null,
       occupation: occupation || null,
       reason: reason || null,
+      ...(photoConsent !== undefined ? { photo_consent: photoConsent } : {}),
+      ...(transport ? { transport } : {}),
+      ...(region ? { region } : {}),
       program: "spring-retreat-2026",
       status: "pending",
     });
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
 
 ■ 프로그램: 완주하다 봄 리트릿
 ■ 일시: 2026.4.18(토) ~ 19(일) 1박2일
-■ 장소: 전북 완주
+■ 장소: 전북 완주군 해월신왕길 92
 ■ 참가비: 90,000원 (얼리버드)
 
 입금계좌: 우리은행 1002-938-937713 임세진
@@ -97,6 +100,9 @@ export async function POST(req: NextRequest) {
 ■ 성별: ${gender || "-"}
 ■ 하시는 일: ${occupation || "-"}
 ■ 신청 이유: ${reason || "-"}
+■ 이동방법: ${transport || "-"}
+■ 지역: ${region || "-"}
+■ 촬영동의: ${photoConsent ? "동의" : "미동의"}
 
 현재 ${newCount}/20명`;
 
