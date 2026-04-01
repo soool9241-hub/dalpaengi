@@ -20,14 +20,14 @@ import Link from "next/link";
 const DAY1 = [
   { time: "14:00", label: "집결 & 체크인", icon: "🏡" },
   { time: "15:00~17:00", label: "움직임으로 감각 깨우기 (스트레칭·바디스캔·뮤직샤워)", icon: "💪", tag: "마루", color: "bg-green-100 text-green-800" },
-  { time: "17:00~19:00", label: "목표 → 실행 계획 설계 워크숍 (만다라트·게이미피케이션)", icon: "🎯", tag: "세경", color: "bg-blue-100 text-blue-800" },
+  { time: "17:00~19:00", label: "실행을 만드는 계획 설계 (게이미피케이션, 만다라트)", icon: "🎯", tag: "세경", color: "bg-blue-100 text-blue-800" },
   { time: "19:00~20:30", label: "저녁식사", icon: "🍽" },
   { time: "21:00~23:00", label: "삶의 방향 점검 & 자애명상 (1대1 대화, 자애명상)", icon: "🧭", tag: "예진", color: "bg-purple-100 text-purple-800" },
 ];
 
 const DAY2 = [
   { time: "07:00", label: "아침식사", icon: "☀️" },
-  { time: "08:00~09:00", label: "모닝페이지 & 감사일기 (아침 자유 글쓰기)", icon: "🌱", tag: "잎새", color: "bg-amber-100 text-amber-800" },
+  { time: "08:00~09:00", label: "모닝페이지, 감사일기 (글쓰기로 비우고 감사로 채우기)", icon: "🌱", tag: "잎새", color: "bg-amber-100 text-amber-800" },
   { time: "09:00~11:00", label: "아침 산책 & 신체놀이 (바디스캔, 젠가, 테니스공 놀이)", icon: "🚶", tag: "마루", color: "bg-green-100 text-green-800" },
   { time: "11:00", label: "체크아웃", icon: "👋" },
   { time: "12:00", label: "점심식사 & 마무리", icon: "🍚" },
@@ -69,24 +69,23 @@ const PROGRAMS = [
   {
     num: 3,
     title: "삶의 방향 점검 & 자애명상",
-    sub: "1대1 대화 · 자애명상으로 내 삶의 나침반을 찾는 시간",
+    sub: "6가지 질문, 1대1대화로 내 삶의 나침반을 찾는 시간",
     leader: "예진",
     time: "첫째날 21:00~23:00",
     img: "/img/program-3.jpg",
-    desc: "Who · What · Where · How · When · Why — 6가지 질문을 통해 내 삶의 방향을 점검하고, 블롭트리와 자애명상으로 마음을 열어가는 시간",
+    desc: "OECD 자기주도적 학습 성찰 질문을 통해 내 삶의 방향을 점검하고, 진솔한 대화로 마음을 열어가는 시간",
     details: [
-      "블롭트리 — 나의 현재 감정 탐색",
-      "OECD 자기주도적 학습 성찰 질문 카드",
-      "걷기 명상 — 각자 생각하는 시간",
-      "1대1 돌아가며 이야기 나누기",
-      "듣기명상 — 공감과 경청",
+      "블롭트리 그림으로 이야기 나누기",
+      "6가지 질문 카드",
+      "생각 정리 시간",
+      "듣기와 대화 명상 — 공감과 경청",
       "자애명상으로 마무리",
     ],
   },
   {
     num: 4,
-    title: "모닝페이지 & 감사일기",
-    sub: "아침 자유 글쓰기 · 감사일기",
+    title: "모닝페이지, 감사일기",
+    sub: "글쓰기로 비우고 감사로 채우기",
     leader: "잎새",
     time: "둘째날 08:00~09:00",
     img: "/img/program-4.jpg",
@@ -99,7 +98,7 @@ const PROGRAMS = [
   {
     num: 5,
     title: "아침 산책 & 신체놀이",
-    sub: "바디스캔 · 젠가 · 테니스공 놀이",
+    sub: "바디스캔, 젠가, 테니스공 놀이로 몸 안의 감각 탐색",
     leader: "마루",
     time: "둘째날 09:00~11:00",
     img: "/img/program-5.jpg",
@@ -128,22 +127,22 @@ const LEADERS = [
   },
   {
     name: "세경",
-    role: "만다라트 · 게이미피케이션 워크숍 담당",
+    role: "커뮤니케이션 전문가 · 워크숍 담당",
     emoji: "🎯",
     color: "bg-blue-50 border-blue-200",
     tagColor: "bg-blue-100 text-blue-800",
     img: "/img/leader-sekyung.jpg",
-    desc: "만다라트와 게이미피케이션 기법으로 목표를 구체적인 실행 계획으로 바꿔주는 워크숍 이끄미",
-    programs: ["목표 → 실행 계획 설계 워크숍"],
+    desc: "13년 방송 경험과 10년 이상의 스피치 코칭을 바탕으로 말과 구조를 통해 '생각을 실행으로 바꾸는' 커뮤니케이션 전문가. 면접, 조직 커뮤니케이션, 리더 스피치까지 현장에서 바로 적용되는 실전형 교육을 진행하고 있습니다.",
+    programs: ["실행을 만드는 계획 설계 워크숍"],
   },
   {
     name: "예진",
-    role: "1대1 대화 · 걷기명상 · 자애명상 담당",
+    role: "상담심리사 · 붓꽃심리상담소 운영",
     emoji: "🧭",
     color: "bg-purple-50 border-purple-200",
     tagColor: "bg-purple-100 text-purple-800",
     img: "/img/leader-yejin.jpg",
-    desc: "6가지 질문 카드 · 1대1 대화 · 걷기명상 · 자애명상을 이끌며 삶의 방향을 되짚어주는 명상 이끄미",
+    desc: "상담심리사로서 붓꽃심리상담소를 운영하며, 1대1 대화와 자애명상을 통해 삶의 방향을 되짚어주는 시간을 이끕니다.",
     programs: ["삶의 방향 점검 & 자애명상"],
   },
   {
@@ -178,10 +177,10 @@ function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
         </span>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 text-lg">{p.title}</p>
-          <p className="text-sm sm:text-base text-gray-500 truncate">{p.sub}</p>
+          <p className={`text-sm sm:text-base text-gray-500 ${open ? "" : "line-clamp-2"}`}>{p.sub}</p>
         </div>
         <span className="text-sm text-primary font-semibold whitespace-nowrap hidden sm:block">{p.leader}</span>
-        {open ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+        {open ? <ChevronUp size={20} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={20} className="text-gray-400 flex-shrink-0" />}
       </button>
       {open && (
         <div className="px-5 sm:px-6 pb-6 border-t border-gray-100 pt-5 animate-fade-in">
@@ -207,62 +206,73 @@ function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
   );
 }
 
-/* ───── 후기 슬라이더 (2개씩, 2초 자동) ───── */
+/* ───── 후기 텍스트 슬라이더 ───── */
+const REVIEWS = [
+  {
+    name: "눈빛 예고 어피치",
+    text: "제가 뒤에 약속이 있어서 인사도 못드린 분들이 계셔서 죄송해요! 각자의 인생에 대해 들을 수 있어서 좋았어요~ 부모로서 제가 가진 불안도 들어다볼 수 있었고, 무엇보다 새벽까지 수다 떤 님 오랜만에 해봐서 좋았어요 ♥ 이런 좋은 프로그램 기획해주신 달팽이님들게 감사해용~^^ 이제 일상으로 돌아가서 명상하며 불안을 잘 다스리며 생활하겠습니다~",
+  },
+  {
+    name: "피스메이커 프로도",
+    text: "불편함 없이 너무 잘 쉬다 돌아갑니다. 애써주신 분들 챙겨주신 분들 전해주신 마음 모두 감사합니다. 일상으로 돌아가서도 나눠주신 에너지로 잘 살아가 볼게요 ♥",
+  },
+  {
+    name: "불나게 일하는 네오",
+    text: "좋은 프로그램 마련해주시고 함께 해주셔서 감사합니다. 명상 요가 산책 맛있는 식사 정말 힐링 그 자체였어요. 일상으로 돌아가서 신선한 마음 간직하며 하루하루 즐겁게 생활하도록 하겠습니다^^",
+  },
+  {
+    name: "머리 빗는 네오",
+    text: "살짜기 금빛 들판에 석양을 바라보며 서울로 올라갑니다. 행사 기획부터 진행까지 수고해주신 기획자 분들께 깊이 감사드립니다. 좋은 강의해주신 분들께도 감사드립니다. 참여하기를 잘 했다는 저만의 생각입니다. 젊은 어른분들에게 작은 것을 배우고 가는, 모포족은 이번에 갈이 하신 모든 분들이 안하면, 정말 행복하고, 평화로우시기를 기원합니다.",
+  },
+  {
+    name: "봄 풍는 튜브",
+    text: "이런 자리 기획하고 만들어주신 달팽이 부부님 감사해요 ♡♡ OO님 첫 문장처럼 축복이라는 단어가 가득한 시간이었네요! 명상과 싱잉볼, 삶의 그릇 덕분에 많은 행복을 되찾은 개적인 경험이 있어서 그런지 곁에서 관심 가져주시는 분들 보면 제가 사나고 기분도 좋아요~",
+  },
+  {
+    name: "씩씩거리는 무지",
+    text: "완주를 벗어나니 바로 현실이더라고요? 1박 2일 힐링캠프가 벌써 아련하게 느껴집니다. 하지만, 어제 오늘 배운 것들을 일상생활에서 실천할 수 있는 리스트를 제 스스로 정해봤어요! 혼자 갔지만 혼자일 틈이 없게 만들어주신 모든 분들 진심으로 감사했습니다.",
+  },
+];
+
 function ReviewSlider() {
-  const total = 5;
   const [current, setCurrent] = useState(0);
+  const total = REVIEWS.length;
   const touchStart = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const next = () => setCurrent((c) => (c + 1) % total);
   const prev = () => setCurrent((c) => (c === 0 ? total - 1 : c - 1));
-  const getIdx = (offset: number) => (current + offset) % total;
-
-  useEffect(() => {
-    timerRef.current = setInterval(next, 2000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [current]);
-
-  const pause = () => { if (timerRef.current) clearInterval(timerRef.current); };
-  const resume = () => { timerRef.current = setInterval(next, 2000); };
 
   return (
     <section className="pb-12 sm:pb-16">
       <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">참가자 후기</h2>
       <p className="text-sm text-gray-500 text-center mb-8">지난 리트릿에 참가한 분들의 실제 후기입니다</p>
       <div className="relative"
-        onMouseEnter={pause} onMouseLeave={resume}
-        onTouchStart={(e) => { pause(); touchStart.current = e.touches[0].clientX; }}
+        onTouchStart={(e) => { touchStart.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           const diff = touchStart.current - e.changedTouches[0].clientX;
           if (diff > 50) next();
           else if (diff < -50) prev();
-          resume();
         }}
       >
-        <div className="flex gap-3 justify-center">
-          {[0, 1].map((offset) => (
-            <div key={offset} className="w-[45%] sm:w-[35%] flex-shrink-0 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-              <img
-                src={`/img/review-${getIdx(offset) + 1}.jpg`}
-                alt={`리트릿 참가자 후기 ${getIdx(offset) + 1}`}
-                className="w-full h-auto"
-              />
-            </div>
-          ))}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 min-h-[200px] flex flex-col justify-between shadow-sm">
+          <div>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line">&ldquo;{REVIEWS[current].text}&rdquo;</p>
+          </div>
+          <p className="text-sm font-bold text-primary mt-4">— {REVIEWS[current].name}</p>
         </div>
-        <button onClick={() => { pause(); prev(); resume(); }} className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
+        <button onClick={prev} className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
           <ChevronLeft size={16} className="text-gray-700" />
         </button>
-        <button onClick={() => { pause(); next(); resume(); }} className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
+        <button onClick={next} className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
           <ChevronRight size={16} className="text-gray-700" />
         </button>
         <div className="flex items-center justify-center gap-2 mt-4">
           {Array.from({ length: total }).map((_, i) => (
-            <button key={i} onClick={() => { pause(); setCurrent(i); resume(); }}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-110" : "bg-gray-300"}`} />
+            <button key={i} onClick={() => setCurrent(i)}
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-gray-300"}`} />
           ))}
         </div>
+        <p className="text-center text-xs text-gray-400 mt-2">{current + 1} / {total}</p>
       </div>
     </section>
   );
@@ -349,8 +359,7 @@ function ApplyForm() {
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-600 block mb-1">현재 하시는 일</label>
-              <p className="text-[11px] text-gray-400 mb-1.5">직무와 업종을 자유롭게 소개해 주세요. (예: 프리랜서, 직장인, 크리에이터, 강사, 기획자 등)</p>
-              <input value={occupation} onChange={e => setOccupation(e.target.value)} placeholder="예: 프리랜서 디자이너" className={inputClass} />
+              <input value={occupation} onChange={e => setOccupation(e.target.value)} placeholder="예: 프리랜서 강사" className={inputClass} />
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-600 block mb-1">신청 이유 / 기대하는 점</label>
@@ -358,22 +367,32 @@ function ApplyForm() {
                 placeholder="리트릿에 참가하고 싶은 이유나 기대하는 점을 자유롭게 적어주세요."
                 className={`${inputClass} resize-none`} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법</label>
-                <div className="flex gap-2">
-                  {["대중교통", "자차"].map((t) => (
-                    <button key={t} type="button" onClick={() => setTransport(t)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                        transport === t ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400 hover:bg-gray-50"
-                      }`}>{t}</button>
-                  ))}
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">지역 (시/군 단위)</label>
+              <input value={region} onChange={e => setRegion(e.target.value)} placeholder="예: 완주군" className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 (선택)</label>
+              <div className="flex gap-2">
+                {[
+                  { value: "대중교통", label: "대중교통", sub: "전주역/전주고속버스터미널 픽업 가능 (카니발 운행)" },
+                  { value: "자차", label: "자차 이동", sub: "" },
+                ].map((t) => (
+                  <button key={t.value} type="button" onClick={() => setTransport(t.value)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                      transport === t.value ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400 hover:bg-gray-50"
+                    }`}>
+                    {t.label}
+                    {t.sub && <span className="block text-[10px] font-normal mt-0.5">{t.sub}</span>}
+                  </button>
+                ))}
+              </div>
+              {transport === "대중교통" && (
+                <div className="mt-2 p-3 bg-primary/10 border border-primary/30 rounded-xl">
+                  <p className="text-xs font-bold text-primary">🚐 전주역 / 전주고속버스터미널로 오시면 픽업 가능!</p>
+                  <p className="text-[11px] text-primary/80 mt-0.5">카니발 차량 운행 — 도착 시간 알려주시면 맞춰 픽업해드립니다</p>
                 </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">지역 (시/군 단위)</label>
-                <input value={region} onChange={e => setRegion(e.target.value)} placeholder="예: 서울 강남구" className={inputClass} />
-              </div>
+              )}
             </div>
             <div>
               <label className="flex items-start gap-2 cursor-pointer">
@@ -410,6 +429,7 @@ function ApplyForm() {
 
 /* ───── 메인 페이지 ───── */
 export default function SpringRetreatPage() {
+  const [activeDay, setActiveDay] = useState<1 | 2>(1);
   return (
     <div className="min-h-screen bg-background">
       {/* 상단 내비 */}
@@ -441,7 +461,7 @@ export default function SpringRetreatPage() {
                 <Calendar size={14} /> 2026.4.18(토)~19(일)
               </div>
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-                <MapPin size={14} /> 달팽이아지트 + 펜션 (전북 완주)
+                <MapPin size={14} /> 달팽이아지트펜션 (전북 완주)
               </div>
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
                 <Users size={14} /> 20명 한정
@@ -531,6 +551,37 @@ export default function SpringRetreatPage() {
           </div>
         </section>
 
+        {/* 이끄미 소개 */}
+        <section className="pb-12 sm:pb-16">
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">이 시간을 함께 여는 이끄미</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">이 여정은 이끄미들과 함께 만들어집니다</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {LEADERS.map((l, i) => (
+              <div key={i} className={`rounded-2xl border p-5 ${l.color}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  {l.img ? (
+                    <img src={l.img} alt={l.name} className="w-20 h-20 rounded-full object-cover flex-shrink-0 border-2 border-white shadow-sm" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+                      <span className="text-3xl">{l.emoji}</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-lg font-black text-gray-900">{l.name} <span className="text-sm font-medium text-gray-500">이끄미</span></p>
+                    <p className="text-xs font-semibold text-gray-500">{l.role}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed mb-3">{l.desc}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {l.programs.map((prog) => (
+                    <span key={prog} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${l.tagColor}`}>{prog}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* 가격 임팩트 배너 */}
         <section className="pb-12 sm:pb-16">
           <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
@@ -567,8 +618,8 @@ export default function SpringRetreatPage() {
             {[
               { icon: "🏡", title: "1박 숙박", desc: "산속 펜션 1박", value: "9만원 상당" },
               { icon: "🍽", title: "완주 로컬 밥상", desc: "3끼 식사 제공", value: "3만원 상당" },
-              { icon: "💪", title: "감각깨우기", desc: "전문 이끄미 세션", value: "10만원 상당" },
-              { icon: "🎯", title: "실행을 만드는 계획 설계 워크숍", desc: "게이미피케이션 · 만다라트", value: "10만원 상당" },
+              { icon: "💪", title: "감각을 깨우는 움직임", desc: "전문 이끄미 세션", value: "10만원 상당" },
+              { icon: "🎯", title: "계획 설계 워크숍", desc: "게이미피케이션 · 만다라트", value: "10만원 상당" },
               { icon: "🧭", title: "삶의 방향 점검 & 명상", desc: "자애명상 · 걷기명상 · 대화", value: "10만원 상당" },
               { icon: "🎁", title: "웰컴키트", desc: "일상으로 이어가는 선물 세트", value: "정성 가득" },
               { icon: "🍵", title: "간식 & 음료", desc: "차, 과일, 다과 제공", value: "덤!" },
@@ -606,88 +657,47 @@ export default function SpringRetreatPage() {
 
         {/* 타임테이블 */}
         <section className="pb-12 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">1박 2일 타임테이블</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-6">1박 2일 타임테이블</h2>
 
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full bg-primary text-white text-xs font-bold">DAY 1</span>
-              <span className="text-sm font-semibold text-gray-700">4.18(토)</span>
-            </div>
-            <div className="space-y-3">
-              {DAY1.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 px-4 py-3 hover:shadow-sm transition-shadow">
-                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.time}</p>
-                  </div>
-                  {item.tag && (
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.color}`}>{item.tag}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+          {/* 탭 버튼 */}
+          <div className="flex gap-2 mb-5">
+            <button onClick={() => setActiveDay(1)}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeDay === 1 ? "bg-primary text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+              DAY 1 · 4.18(토)
+            </button>
+            <button onClick={() => setActiveDay(2)}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeDay === 2 ? "bg-accent text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+              DAY 2 · 4.19(일)
+            </button>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full bg-accent text-white text-xs font-bold">DAY 2</span>
-              <span className="text-sm font-semibold text-gray-700">4.19(일)</span>
-            </div>
-            <div className="space-y-3">
-              {DAY2.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 px-4 py-3 hover:shadow-sm transition-shadow">
-                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.time}</p>
-                  </div>
-                  {item.tag && (
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.color}`}>{item.tag}</span>
-                  )}
+          {/* 타임라인 */}
+          <div className="space-y-2.5">
+            {(activeDay === 1 ? DAY1 : DAY2).map((item, i) => (
+              <div key={i} className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {item.label.includes("(") ? (
+                      <>{item.label.split("(")[0].trim()}<br /><span className="font-normal text-xs text-gray-500">({item.label.split("(").slice(1).join("(")}</span></>
+                    ) : item.label}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{item.time}</p>
                 </div>
-              ))}
-            </div>
+                {item.tag && (
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${item.color}`}>{item.tag}</span>
+                )}
+              </div>
+            ))}
           </div>
         </section>
 
         {/* 프로그램 상세 */}
         <section className="pb-12 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">프로그램 상세</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">세부 프로그램</h2>
           <div className="space-y-4">
             {PROGRAMS.map((p) => (
               <ProgramAccordion key={p.num} p={p} />
-            ))}
-          </div>
-        </section>
-
-        {/* 이끄미 소개 */}
-        <section className="pb-12 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">이 시간을 함께 여는 이끄미</h2>
-          <p className="text-sm text-gray-500 text-center mb-8">이 여정은 이끄미들과 함께 만들어집니다</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {LEADERS.map((l, i) => (
-              <div key={i} className={`rounded-2xl border p-5 ${l.color}`}>
-                <div className="flex items-center gap-3 mb-3">
-                  {l.img ? (
-                    <img src={l.img} alt={l.name} className="w-20 h-20 rounded-full object-cover flex-shrink-0 border-2 border-white shadow-sm" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
-                      <span className="text-3xl">{l.emoji}</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-lg font-black text-gray-900">{l.name} <span className="text-sm font-medium text-gray-500">이끄미</span></p>
-                    <p className="text-xs font-semibold text-gray-500">{l.role}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 leading-relaxed mb-3">{l.desc}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {l.programs.map((prog) => (
-                    <span key={prog} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${l.tagColor}`}>{prog}</span>
-                  ))}
-                </div>
-              </div>
             ))}
           </div>
         </section>
@@ -726,8 +736,8 @@ export default function SpringRetreatPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">장소</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">달팽이아지트 + 펜션</p>
-                  <p className="text-xs text-gray-500">전북 완주군 해월신왕길 92</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1">달팽이아지트펜션</p>
+                  <p className="text-xs text-gray-500">전북 완주군 소양면 해월신왕길 92</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">인원</p>
@@ -763,11 +773,9 @@ export default function SpringRetreatPage() {
 
         {/* 경험 중심 CTA */}
         <section className="pb-12 sm:pb-16">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white text-center relative overflow-hidden">
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute top-0 left-0 w-40 h-40 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2" />
-              <div className="absolute bottom-0 right-0 w-60 h-60 bg-primary rounded-full translate-x-1/3 translate-y-1/3" />
-            </div>
+          <div className="rounded-2xl p-8 text-white text-center relative overflow-hidden">
+            <img src="/img/retreat-bg.jpg" alt="완주 자연 풍경" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
             <div className="relative z-10">
               <Sparkles size={32} className="mx-auto text-amber-400" />
               <h3 className="text-xl sm:text-2xl font-black mt-4">
@@ -800,21 +808,6 @@ export default function SpringRetreatPage() {
           </div>
         </section>
 
-        {/* 하단 최종 CTA */}
-        <section className="pb-8 text-center">
-          <div className="bg-gradient-to-br from-primary to-primary-light rounded-2xl p-8 text-white">
-            <span className="text-4xl">🌱</span>
-            <h3 className="text-xl font-black mt-4">봄, 다시 깨어나는 시간</h3>
-            <p className="text-white/70 text-sm mt-2">2026.4.18(토)~19(일) · 달팽이아지트 + 펜션 · 20명 한정</p>
-            <div className="flex items-center justify-center gap-2 mt-3">
-              <span className="text-lg line-through text-white/40">200,000원</span>
-              <span className="text-2xl font-black text-white">90,000원</span>
-            </div>
-            <a href="#apply" className="inline-flex items-center gap-2 mt-6 px-8 py-3.5 bg-white text-primary rounded-full font-bold hover:bg-gray-50 transition-colors">
-              나도 함께하기 <ArrowRight size={16} />
-            </a>
-          </div>
-        </section>
 
       </div>
 

@@ -17,51 +17,34 @@ const photos = [
   // 외관/야외
   { src: "/img/exterior-main.jpg", cat: "exterior", label: "펜션 전경 (산 배경)" },
   { src: "/img/exterior-front.jpg", cat: "exterior", label: "본관 정면" },
-  { src: "/img/exterior-side.jpg", cat: "exterior", label: "본관 측면" },
   { src: "/img/entrance.jpg", cat: "exterior", label: "입구" },
   { src: "/img/bbq-area.jpg", cat: "exterior", label: "야외 바베큐 공간" },
-  { src: "/img/bbq-tables.jpg", cat: "exterior", label: "야외 테이블" },
   { src: "/img/nature-yard.jpg", cat: "exterior", label: "자연 속 마당" },
   // 거실
   { src: "/img/living-room.jpg", cat: "living", label: "거실 대형 TV" },
   { src: "/img/living-room-wide.jpg", cat: "living", label: "거실 전체" },
-  { src: "/img/living-tv.jpg", cat: "living", label: "거실 (다른 앵글)" },
-  { src: "/img/living-angle2.jpg", cat: "living", label: "거실 측면" },
   { src: "/img/whiteboard.jpg", cat: "living", label: "화이트보드 & 쿠션" },
   { src: "/img/games.jpg", cat: "living", label: "보드게임/놀이도구" },
   // 방
   { src: "/img/room.jpg", cat: "room", label: "방 (이불/창문)" },
-  { src: "/img/room2.jpg", cat: "room", label: "방 (TV/이불)" },
   { src: "/img/room-1.jpg", cat: "room", label: "방 1" },
   { src: "/img/room-2.jpg", cat: "room", label: "방 2" },
   { src: "/img/room-3.jpg", cat: "room", label: "방 3" },
-  { src: "/img/room-blue.jpg", cat: "room", label: "방 (블루톤)" },
-  { src: "/img/vr-tour.jpg", cat: "room", label: "이불/침구 보관" },
   // 부엌/식당
-  { src: "/img/kitchen.jpg", cat: "kitchen", label: "부엌 (타일)" },
+  { src: "/img/kitchen.jpg", cat: "kitchen", label: "부엌" },
   { src: "/img/kitchen-wide.jpg", cat: "kitchen", label: "부엌+식당 연결" },
-  { src: "/img/kitchen-detail.jpg", cat: "kitchen", label: "부엌+식탁 전경" },
-  { src: "/img/kitchen-dining.jpg", cat: "kitchen", label: "식당 전경" },
   { src: "/img/dining-room.jpg", cat: "kitchen", label: "대형 식탁" },
-  { src: "/img/dining-wide.jpg", cat: "kitchen", label: "식당 (넓은 앵글)" },
   { src: "/img/window-view.jpg", cat: "kitchen", label: "창문 뷰" },
   // 화장실/샤워
   { src: "/img/shower.jpg", cat: "bath", label: "샤워부스" },
-  { src: "/img/shower-2.jpg", cat: "bath", label: "샤워실 2" },
   { src: "/img/bathroom.jpg", cat: "bath", label: "화장실" },
-  { src: "/img/toilet.jpg", cat: "bath", label: "화장실 (세면대)" },
   // 활동/모임
-  { src: "/img/bbq-night.jpg", cat: "activity", label: "야간 바베큐 (MT)" },
-  { src: "/img/outdoor-night.jpg", cat: "activity", label: "야외 캠프파이어" },
-  { src: "/img/bbq-night-2.jpg", cat: "activity", label: "야간 모임" },
+  { src: "/img/bbq-night.jpg", cat: "activity", label: "야간 바베큐" },
   { src: "/img/campfire.jpg", cat: "activity", label: "캠프파이어" },
   { src: "/img/group-indoor.jpg", cat: "activity", label: "단체 실내 모임" },
-  { src: "/img/group-indoor-2.jpg", cat: "activity", label: "대가족 식사" },
   { src: "/img/group-dining.jpg", cat: "activity", label: "단체 식사" },
   { src: "/img/yoga.jpg", cat: "activity", label: "요가/명상" },
-  { src: "/img/yoga-lying.jpg", cat: "activity", label: "힐링 프로그램" },
   { src: "/img/group-event.jpg", cat: "activity", label: "단체 행사" },
-  { src: "/img/living-yoga.jpg", cat: "activity", label: "거실 요가 수업" },
 ];
 
 export default function Gallery() {
@@ -91,10 +74,10 @@ export default function Gallery() {
               GALLERY
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-text-dark mb-4">
-              사진으로 만나보세요
+              달팽이아지트펜션 미리보기
             </h2>
             <p className="text-text-light max-w-lg mx-auto">
-              달팽이아지트의 다양한 공간과 활동을 사진으로 확인하세요
+              다양한 공간과 활동을 사진으로 확인하세요
             </p>
           </div>
 

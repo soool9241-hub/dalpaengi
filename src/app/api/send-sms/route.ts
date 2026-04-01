@@ -35,9 +35,11 @@ interface ReservationSMS {
   busManagerName?: string;
   busManagerPhone?: string;
   busPickupPlace?: string;
+  busPickupDetailAddress?: string;
   busPickupPeople?: string;
   busPickupTime?: string;
   busDropoffPlace?: string;
+  busDropoffDetailAddress?: string;
   busDropoffPeople?: string;
   busDropoffTime?: string;
   timeSlot: string | null;
@@ -127,8 +129,8 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 1인당: 약 ${formatPrice(perPerson)}
 ${data.busRequested && data.busPickupPlace ? `
 🚌 버스 정보
-승차: ${data.busPickupPlace} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
-하차: ${data.busDropoffPlace || data.busPickupPlace} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
+승차: ${data.busPickupPlace}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+하차: ${data.busDropoffPlace || data.busPickupPlace}${data.busDropoffDetailAddress ? ` (${data.busDropoffDetailAddress})` : ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내드리겠습니다"}
 ` : ""}
 입금계좌: 카카오뱅크 3333-06-4749542 임솔
@@ -161,7 +163,7 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 1인당: 약 ${formatPrice(perPerson)}
 ${data.busRequested && data.busManagerName ? `
 🚌 책임자: ${data.busManagerName} (${data.busManagerPhone || ""})
-승차: ${data.busPickupPlace || ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+승차: ${data.busPickupPlace || ""}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
 하차: ${data.busDropoffPlace || data.busPickupPlace || ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내"}` : ""}`;
 }

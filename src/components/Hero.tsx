@@ -127,7 +127,7 @@ export default function Hero() {
             <span className="text-white/90">만들어지는 공간</span>
           </h1>
           <p className="text-white/70 text-xl sm:text-2xl mb-2 font-semibold">
-            달팽이 아지트 펜션
+            달팽이아지트펜션
           </p>
           <p className="text-white/50 text-sm mb-10 max-w-md mx-auto leading-relaxed">
             전북 완주의 자연 속에서 느리게, 깊이 쉬어가세요.
