@@ -19,7 +19,7 @@ export async function GET() {
     .from("retreat_applications")
     .select("*", { count: "exact", head: true });
 
-  return NextResponse.json({ count: count || 0, max: 20 });
+  return NextResponse.json({ closed: (count || 0) >= 20, max: 20 });
 }
 
 // POST: 신청 접수

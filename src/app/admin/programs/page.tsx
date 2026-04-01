@@ -27,6 +27,9 @@ interface Application {
   gender: string | null;
   occupation: string | null;
   reason: string | null;
+  region: string | null;
+  transport: string | null;
+  photo_consent: boolean | null;
   program: string;
   status: string;
   created_at: string;
@@ -69,7 +72,7 @@ export default function AdminProgramsPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: "", status: "confirmed" });
+  const [addForm, setAddForm] = useState({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", region: "", transport: "", photoConsent: true, program: "", status: "confirmed" });
   const [addLoading, setAddLoading] = useState(false);
 
   const fetchData = async () => {
@@ -119,7 +122,7 @@ export default function AdminProgramsPage() {
     setAddLoading(false);
     if (res.ok) {
       setShowAddModal(false);
-      setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: "", status: "confirmed" });
+      setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", region: "", transport: "", photoConsent: true, program: "", status: "confirmed" });
       fetchData();
     } else {
       const data = await res.json();
@@ -142,7 +145,7 @@ export default function AdminProgramsPage() {
           <p className="text-sm text-gray-500 mt-1">프로그램별 신청자 현황을 관리합니다</p>
         </div>
         <button
-          onClick={() => { setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
+          onClick={() => { setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", region: "", transport: "", photoConsent: true, program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
           className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-light transition-colors"
         >
           <Plus size={16} /> 수동 추가
@@ -215,6 +218,35 @@ export default function AdminProgramsPage() {
               <textarea value={addForm.reason} onChange={(e) => setAddForm({ ...addForm, reason: e.target.value })} rows={2} placeholder="참가 동기, 기대하는 점 등"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">지역</label>
+                <input value={addForm.region} onChange={(e) => setAddForm({ ...addForm, region: e.target.value })} placeholder="예: 완주군"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">이동방법</label>
+                <div className="flex flex-col gap-1.5">
+                  {[
+                    { value: "전주고속터미널", label: "전주고속터미널 (13:30)" },
+                    { value: "전주역", label: "전주역 (14:00)" },
+                    { value: "자차", label: "자차이용 (14:30 펜션집결)" },
+                  ].map((t) => (
+                    <button key={t.value} type="button" onClick={() => setAddForm({ ...addForm, transport: t.value })}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-bold border transition-all text-left ${
+                        addForm.transport === t.value ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400"
+                      }`}>{t.label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={addForm.photoConsent} onChange={(e) => setAddForm({ ...addForm, photoConsent: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20" />
+              <span className="text-xs text-gray-600">촬영 동의</span>
+            </label>
 
             <div>
               <label className="text-xs font-semibold text-gray-600 block mb-1">상태</label>
@@ -432,6 +464,29 @@ export default function AdminProgramsPage() {
                       <div className="bg-gray-50 rounded-xl p-3">
                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">신청 이유 / 기대하는 점</p>
                         <p className="text-sm text-gray-700">{app.reason}</p>
+                      </div>
+                    )}
+
+                    {(app.region || app.transport || app.photo_consent !== null) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {app.region && (
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">지역</p>
+                            <p className="text-sm text-gray-700">{app.region}</p>
+                          </div>
+                        )}
+                        {app.transport && (
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">이동방법</p>
+                            <p className="text-sm text-gray-700">{app.transport}</p>
+                          </div>
+                        )}
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">촬영동의</p>
+                          <p className={`text-sm font-semibold ${app.photo_consent ? "text-green-600" : "text-red-500"}`}>
+                            {app.photo_consent ? "동의" : "미동의"}
+                          </p>
+                        </div>
                       </div>
                     )}
 

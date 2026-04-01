@@ -291,11 +291,11 @@ function ApplyForm() {
   const [region, setRegion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [count, setCount] = useState(0);
+  const [closed, setClosed] = useState(false);
   const MAX = 20;
 
   useState(() => {
-    fetch("/api/programs/retreat").then(r => r.json()).then(d => setCount(d.count || 0)).catch(() => {});
+    fetch("/api/programs/retreat").then(r => r.json()).then(d => setClosed(d.closed || false)).catch(() => {});
   });
 
   const submit = async () => {
@@ -310,8 +310,8 @@ function ApplyForm() {
       });
       const data = await res.json();
       if (res.ok) {
-        setResult({ ok: true, msg: `신청 완료! (${data.count}/${data.max}명)` });
-        setCount(data.count);
+        setResult({ ok: true, msg: "신청이 완료되었습니다! 확인 문자가 발송됩니다." });
+        setClosed(data.count >= data.max);
         setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion("");
       } else {
         setResult({ ok: false, msg: data.error || "신청 실패" });
@@ -322,7 +322,7 @@ function ApplyForm() {
     setLoading(false);
   };
 
-  const remaining = MAX - count;
+  const remaining = closed ? 0 : 1;
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20";
 
   return (
@@ -373,24 +373,40 @@ function ApplyForm() {
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 (선택)</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 {[
-                  { value: "대중교통", label: "대중교통", sub: "전주역/전주고속버스터미널 픽업 가능 (카니발 운행)" },
-                  { value: "자차", label: "자차 이동", sub: "" },
+                  { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: "13:30", pickup: true },
+                  { value: "전주역", label: "뚜벅이전용 — 전주역", time: "14:00", pickup: true },
+                  { value: "자차", label: "개별이동 — 자차이용", time: "14:30", pickup: false },
                 ].map((t) => (
                   <button key={t.value} type="button" onClick={() => setTransport(t.value)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                      transport === t.value ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-400 hover:bg-gray-50"
+                    className={`w-full rounded-xl border-2 transition-all text-left overflow-hidden ${
+                      transport === t.value ? "border-primary bg-primary/5 shadow-md" : "border-gray-200 hover:border-gray-300"
                     }`}>
-                    {t.label}
-                    {t.sub && <span className="block text-[10px] font-normal mt-0.5">{t.sub}</span>}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        transport === t.value ? "border-primary bg-primary" : "border-gray-300"
+                      }`}>
+                        {transport === t.value && <span className="w-2 h-2 rounded-full bg-white" />}
+                      </span>
+                      <div className="flex-1">
+                        <p className={`text-sm font-bold ${transport === t.value ? "text-primary" : "text-gray-700"}`}>{t.label}</p>
+                        {t.time && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-bold">⏰ {t.time} 집결</span>
+                            {t.pickup ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[11px] font-bold">🚐 카니발 픽업</span>
+                            : <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold">🏡 펜션 집결</span>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
-              {transport === "대중교통" && (
-                <div className="mt-2 p-3 bg-primary/10 border border-primary/30 rounded-xl">
-                  <p className="text-xs font-bold text-primary">🚐 전주역 / 전주고속버스터미널로 오시면 픽업 가능!</p>
-                  <p className="text-[11px] text-primary/80 mt-0.5">카니발 차량 운행 — 도착 시간 알려주시면 맞춰 픽업해드립니다</p>
+              {(transport === "전주역" || transport === "전주고속터미널") && (
+                <div className="mt-2 p-3 bg-gradient-to-r from-primary/10 to-amber-50 border border-primary/30 rounded-xl">
+                  <p className="text-sm font-black text-primary">🚐 카니발로 친절히 모시러 갑니다!</p>
+                  <p className="text-xs text-gray-600 mt-1"><span className="font-bold text-amber-600">{transport}</span>에서 <span className="font-bold text-amber-600">{transport === "전주고속터미널" ? "13:30" : "14:00"}</span>에 집결 — 확정 후 상세 안내 드립니다</p>
                 </div>
               )}
             </div>
@@ -724,7 +740,7 @@ export default function SpringRetreatPage() {
         </section>
 
         {/* 참가 안내 */}
-        <section id="apply" className="pb-12 sm:pb-16">
+        <section className="pb-12 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">참가 안내</h2>
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="p-6 space-y-4">
@@ -763,7 +779,7 @@ export default function SpringRetreatPage() {
               </div>
             </div>
           </div>
-          <div className="mt-6">
+          <div id="apply" className="mt-6 scroll-mt-20">
             <ApplyForm />
           </div>
         </section>

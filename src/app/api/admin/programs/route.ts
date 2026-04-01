@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 // POST: 수동 신청자 추가
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, phone, age, gender, occupation, reason, program, status } = body;
+  const { name, phone, age, gender, occupation, reason, region, transport, photoConsent, program, status } = body;
 
   if (!name || !phone) {
     return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
@@ -71,6 +71,9 @@ export async function POST(req: NextRequest) {
       gender: gender || null,
       occupation: occupation || null,
       reason: reason || null,
+      region: region || null,
+      transport: transport || null,
+      ...(photoConsent !== undefined ? { photo_consent: photoConsent } : {}),
       program: program || "spring-retreat-2026",
       status: status || "confirmed",
     });
@@ -115,12 +118,22 @@ export async function PATCH(req: NextRequest) {
   if (status === "confirmed" && appData?.phone) {
     try {
       const phone = appData.phone.replace(/[^0-9]/g, "");
+      const transport = appData.transport || "";
+      let gatherInfo = "";
+      if (transport === "전주고속터미널") {
+        gatherInfo = `\n■ 집결: 전주고속터미널 13:30 (카니발 차량 픽업)`;
+      } else if (transport === "전주역") {
+        gatherInfo = `\n■ 집결: 전주역 14:00 (카니발 차량 픽업)`;
+      } else if (transport === "자차") {
+        gatherInfo = `\n■ 이동: 자차 14:30 집결 (전북 완주군 소양면 해월신왕길 92)`;
+      }
+
       const msg = `안녕하세요, ${appData.name}님!
 완주하다 봄 리트릿 참가가 확정되었습니다.
 
 ■ 프로그램: 완주하다 봄 리트릿
 ■ 일시: 2026.4.18(토) ~ 19(일) 1박2일
-■ 장소: 전북 완주
+■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)${gatherInfo}
 
 입금이 확인되어 참가가 최종 확정되었습니다.
 당일 현장에서 뵙겠습니다!
