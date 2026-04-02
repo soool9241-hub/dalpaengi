@@ -24,14 +24,14 @@ import Link from "next/link";
 /* ───── A코스 타임테이블 ───── */
 const COURSE_A = [
   { time: "09:30", label: "도착 & 웰컴 드링크", icon: "☕" },
-  { time: "09:40", label: "오프닝: \"이게 진짜 된다\" — 실제 운영 서비스 라이브 시연", icon: "🎬", duration: "15분" },
-  { time: "09:55", label: "MVP 스코핑 — 아이디어를 4시간 안에 만들 수 있는 크기로", icon: "🎯", duration: "15분" },
+  { time: "09:40", label: "오프닝: \"이게 진짜 된다\" — 펜션예약·조립공간·청소체크리스트 3개 서비스 라이브 시연", icon: "🎬", duration: "15분" },
+  { time: "09:55", label: "MVP 스코핑 — 테이블 멘토와 함께 아이디어를 4시간 크기로 정리", icon: "🎯", duration: "15분" },
   { time: "10:10", label: "AI에게 말 잘하는 법 — 프롬프트 3원칙", icon: "💬", duration: "20분" },
   { time: "10:30", label: "실습 1: 내 랜딩페이지 만들기", icon: "🖥️", duration: "60분", highlight: true },
   { time: "11:30", label: "쉬는 시간 + 간식", icon: "🍪", duration: "20분" },
   { time: "11:50", label: "실습 2: 신청폼 + DB 연결", icon: "🗄️", duration: "40분", highlight: true },
   { time: "12:30", label: "실습 3: 배포! 내 URL 생성", icon: "🚀", duration: "20분", highlight: true },
-  { time: "12:50", label: "Demo Day + 클로징", icon: "🎉", duration: "20분" },
+  { time: "12:50", label: "Demo Day (테이블별 대표 30초 발표) + \"만든 후 가이드\" 배포 + 클로징", icon: "🎉", duration: "20분" },
 ];
 
 const COURSE_B = [
@@ -47,25 +47,44 @@ const COURSE_B = [
   { time: "15:15", label: "쉬는 시간 (목공 키트 체험)", icon: "🪵", duration: "15분" },
   { time: "15:30", label: "실습 4: SMS 알림 연동", icon: "📱", duration: "45분", highlight: true },
   { time: "16:15", label: "실습 5: 배포 & SEO 기초", icon: "🚀", duration: "30분", highlight: true },
-  { time: "16:45", label: "Demo Day + 클로징", icon: "🎉", duration: "25분" },
+  { time: "16:45", label: "Demo Day (테이블별 대표 1분 발표) + \"만든 후\" 4주 로드맵 배포 + 클로징", icon: "🎉", duration: "25분" },
+  { time: "17:30", label: "(선택) CNC 공방 풀 투어 + 굿즈 제작 시연", icon: "🏭" },
 ];
 
 /* ───── 차별화 포인트 ───── */
 const DIFF_POINTS = [
-  { emoji: "🏕️", title: "자연 속 코딩", desc: "서울 강남 빌딩이 아닙니다. 자연 속 펜션에서 여유롭게" },
-  { emoji: "💻", title: "이론 0% 실전 100%", desc: "PPT 강의 없음. 바로 만들기 시작" },
-  { emoji: "🎯", title: "각자 다른 결과물", desc: "따라하기 아닌, 내 아이디어로 내 서비스를" },
-  { emoji: "🔧", title: "진짜 운영 가능", desc: "DB + 관리자 + SMS까지 완성 (B코스)" },
-  { emoji: "🏭", title: "CNC 공방 연계", desc: "디지털 서비스 + 실물 굿즈, 메이커 펜션" },
-  { emoji: "📱", title: "사후 지원", desc: "디스코드/카톡 Q&A 채널 영구 접근" },
+  { emoji: "🏕️", title: "자연 속 메이커 펜션", desc: "서울 강남 빌딩이 아닙니다. 60평 독채 펜션 + 120평 CNC 공방에서" },
+  { emoji: "💻", title: "이론 0% 실전 100%", desc: "PPT 강의 없음. 바로 만들기 시작. 실제 서비스 5개를 만든 강사가 직접" },
+  { emoji: "👥", title: "테이블 멘토 밀착 지원", desc: "4인 1조 × 5팀, 테이블마다 멘토 배치. 막히면 바로 해결" },
+  { emoji: "🎯", title: "각자 다른 결과물", desc: "따라하기 아닌, 내 아이디어로. 아이디어 없으면 템플릿 20종에서 선택" },
+  { emoji: "🔧", title: "진짜 운영 가능 서비스", desc: "DB + 관리자 + SMS + SEO까지 완성 (B코스)" },
+  { emoji: "🔨", title: "디지털 + 피지컬", desc: "CNC 공방 투어 + 목공 체험 + 굿즈 제작 연계 (B코스)" },
+  { emoji: "📋", title: "만든 후까지 설계", desc: "배포 후 SEO, 마케팅, 유지보수까지 4주 로드맵 제공" },
+  { emoji: "📱", title: "사후 지원 영구", desc: "디스코드/카톡 Q&A 채널 + 1주 후 체크인 + 수료자 커뮤니티" },
 ];
 
-/* ───── 아이디어 템플릿 ───── */
+/* ───── 아이디어 템플릿 20종 ───── */
 const IDEAS = [
-  "카페 메뉴판 사이트", "공방 체험 예약", "펜션 예약 페이지",
-  "강사 프로필 사이트", "포트폴리오", "온라인 클래스 안내",
-  "뉴스레터 구독", "이벤트 접수", "웨딩 초대장",
-  "스터디 모집", "습관 트래커", "독서 기록 대시보드",
+  { name: "카페 메뉴판 사이트", cat: "소상공인" },
+  { name: "공방 체험 예약", cat: "소상공인" },
+  { name: "펜션 예약 페이지", cat: "소상공인" },
+  { name: "식당 주문 접수", cat: "소상공인" },
+  { name: "강사 프로필 사이트", cat: "프리랜서" },
+  { name: "포트폴리오 사이트", cat: "프리랜서" },
+  { name: "온라인 클래스 안내", cat: "프리랜서" },
+  { name: "사내 설문 도구", cat: "직장인" },
+  { name: "팀 회고 보드", cat: "직장인" },
+  { name: "출퇴근 기록", cat: "직장인" },
+  { name: "뉴스레터 구독", cat: "크리에이터" },
+  { name: "디지털 제품 판매", cat: "크리에이터" },
+  { name: "스터디 모집 페이지", cat: "학생" },
+  { name: "개인 브랜드 사이트", cat: "학생" },
+  { name: "동호회 모임 안내", cat: "커뮤니티" },
+  { name: "이벤트 접수 페이지", cat: "커뮤니티" },
+  { name: "웨딩 초대장", cat: "복합" },
+  { name: "반려동물 프로필", cat: "복합" },
+  { name: "독서 기록 대시보드", cat: "복합" },
+  { name: "습관 트래커", cat: "복합" },
 ];
 
 /* ───── FAQ ───── */
@@ -297,6 +316,27 @@ export default function VibeCodingPage() {
           <p className="text-sm text-gray-500 mt-6 max-w-md mx-auto">
             도구: Claude Code (AI 코딩 어시스턴트)<br />대상: 비개발자 / 코딩 경험 없는 누구나
           </p>
+          <div className="mt-8 inline-block px-5 py-2.5 bg-violet-50 border border-violet-200 rounded-xl">
+            <p className="text-xs font-bold text-violet-700">전주·전북권 유일의 오프라인 바이브코딩 워크숍</p>
+          </div>
+        </section>
+
+        {/* 4가지 원칙 */}
+        <section className="pb-12 sm:pb-16">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { num: "01", title: "배우지 말고 만들어라", desc: "AI를 공부하는 시간 대신, AI로 직접 만드는 시간" },
+              { num: "02", title: "내 것을 만들어라", desc: "투두앱 따라하기가 아닌, 본인의 아이디어로 진짜 서비스" },
+              { num: "03", title: "오늘 런칭하라", desc: "배포까지 완료하고 URL을 갖고 퇴장" },
+              { num: "04", title: "만든 후를 설계하라", desc: "SEO, 마케팅, 유지보수까지 안내" },
+            ].map((p, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <span className="text-[10px] font-black text-violet-400">{p.num}</span>
+                <p className="font-bold text-gray-900 text-sm mt-1">{p.title}</p>
+                <p className="text-[11px] text-gray-500 mt-1">{p.desc}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* 이런 분께 추천 */}
@@ -320,6 +360,41 @@ export default function VibeCodingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* 메이커 펜션 3중 무기 */}
+        <section className="pb-12 sm:pb-16">
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">왜 달팽이아지트인가?</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">경쟁사에 없는 3중 무기</p>
+          <div className="space-y-3">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-5">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🏕️</span>
+                <div>
+                  <p className="font-black text-gray-900 text-sm">펜션 (60평 독채)</p>
+                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">자연 속 코딩 환경 + 항아리 BBQ 점심 + 수영장·족욕 리프레시 + 1박2일 패키지 가능</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-5">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🔧</span>
+                <div>
+                  <p className="font-black text-gray-900 text-sm">CNC 공방 (120평)</p>
+                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">목공 체험 키트 + CNC 굿즈 제작 시연 + 디지털 서비스 + 실물 제품 = 완전한 비즈니스</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-2xl border border-violet-200 p-5">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">💻</span>
+                <div>
+                  <p className="font-black text-gray-900 text-sm">실전 운영 경험</p>
+                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">바이브코딩으로 만든 실제 서비스 5개+ 운영 중 (펜션 예약, 조립공간, 리트릿 신청 등) · 에어비앤비 5.0 · 7년 호스팅</p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -386,7 +461,11 @@ export default function VibeCodingPage() {
                 </div>
                 <div className="mt-3 p-3 bg-gray-50 rounded-xl">
                   <p className="text-xs font-bold text-gray-600 mb-1">산출물</p>
-                  <p className="text-sm text-gray-700">랜딩+신청폼+관리자+SMS = 실제 운영 가능 서비스</p>
+                  <p className="text-sm text-gray-700">랜딩+신청폼+관리자+SMS+SEO = 실제 운영 가능 서비스</p>
+                </div>
+                <div className="mt-2 p-3 bg-indigo-50 rounded-xl">
+                  <p className="text-xs font-bold text-indigo-600 mb-1">"만든 후" 4주 로드맵</p>
+                  <p className="text-[11px] text-indigo-500">Week1: URL 공유 → Week2: 구글 인덱싱 확인 → Week3: 피드백 반영 → Week4: 심화반 연결</p>
                 </div>
               </>
             )}
@@ -411,14 +490,15 @@ export default function VibeCodingPage() {
           </div>
         </section>
 
-        {/* 만들 수 있는 것들 */}
+        {/* 만들 수 있는 것들 — 템플릿 20종 */}
         <section className="pb-12 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">만들 수 있는 것들</h2>
-          <p className="text-sm text-gray-500 text-center mb-8">아이디어가 떠오르지 않아도 괜찮아요. 아래는 예시일 뿐!</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <p className="text-sm text-gray-500 text-center mb-8">아이디어가 없어도 OK! 템플릿 20종에서 골라 바로 시작</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {IDEAS.map((idea, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 text-center hover:shadow-md transition-all hover:-translate-y-0.5">
-                <p className="font-bold text-gray-900 text-sm">{idea}</p>
+              <div key={i} className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-md transition-all hover:-translate-y-0.5">
+                <span className="text-[10px] font-bold text-violet-400">{idea.cat}</span>
+                <p className="font-bold text-gray-900 text-xs mt-0.5">{idea.name}</p>
               </div>
             ))}
           </div>
@@ -475,20 +555,25 @@ export default function VibeCodingPage() {
           {/* 할인 안내 */}
           <div className="mt-6 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-2xl p-5 border border-violet-200">
             <p className="text-sm font-black text-gray-900 mb-3 text-center">할인 혜택</p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="bg-white rounded-xl p-3">
                 <p className="text-2xl font-black text-violet-600">20%</p>
-                <p className="text-xs text-gray-500 mt-1">얼리버드</p>
+                <p className="text-xs text-gray-500 mt-1">얼리버드 (2주 전)</p>
               </div>
-              <div>
+              <div className="bg-white rounded-xl p-3">
                 <p className="text-2xl font-black text-indigo-600">15%</p>
-                <p className="text-xs text-gray-500 mt-1">2인 동반</p>
+                <p className="text-xs text-gray-500 mt-1">2인 이상 동반</p>
               </div>
-              <div>
-                <p className="text-2xl font-black text-blue-600">30%</p>
+              <div className="bg-white rounded-xl p-3">
+                <p className="text-2xl font-black text-blue-600">20%</p>
+                <p className="text-xs text-gray-500 mt-1">달팽이아지트 숙박 이용자</p>
+              </div>
+              <div className="bg-white rounded-xl p-3">
+                <p className="text-2xl font-black text-emerald-600">30%</p>
                 <p className="text-xs text-gray-500 mt-1">재수강</p>
               </div>
             </div>
+            <p className="text-[11px] text-center text-violet-500 font-semibold mt-3">URL 배포 실패 시 다음 회차 무료 재수강 보장</p>
           </div>
         </section>
 
