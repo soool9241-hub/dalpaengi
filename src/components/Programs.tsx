@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -15,7 +15,7 @@ const categories = [
   { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "stay", "half", "daynight", "jolib", "healing"] as const;
+const PROGRAM_IDS = ["stay", "stay", "stay", "stay", "half", "daynight", "jolib", "healing"] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
@@ -46,6 +46,34 @@ export default function Programs() {
       description: "겨울 동안 움츠렸던 몸, 멈춰 있던 마음, 흐려졌던 의식을 봄의 리듬에 맞춰 다시 깨우는 1박 2일 리셋 캠프. 프리랜서, 1인 사업자, 창작자 등 자기 삶을 완주하고 싶은 사람들을 위한 프로그램입니다.",
       highlight: true,
       isRetreat: true,
+    },
+    {
+      icon: Code,
+      title: "바이브코딩 워크숍",
+      duration: "A코스 4시간 / B코스 8시간",
+      price: 150000,
+      priceLabel: "A코스 15만원~",
+      originalPrice: 250000,
+      perPerson: 150000,
+      maxPeople: "20명 한정",
+      categories: ["pension", "mt"],
+      tags: ["NEW", "바이브코딩", "SOLD OUT"],
+      tagColors: ["bg-violet-100 text-violet-600", "bg-indigo-100 text-indigo-600", "bg-red-100 text-red-600"],
+      gradient: "from-violet-500 to-indigo-500",
+      image: "/img/nature-yard.jpg",
+      features: [
+        "AI와 대화하며 내 웹사이트 직접 제작",
+        "코딩 경험 전혀 불필요 (완전 초보 환영)",
+        "실제 URL 배포까지 완료",
+        "B코스: 관리자 페이지 + SMS 알림까지",
+        "사전 1:1 원격 세팅 지원",
+        "사후 Q&A 채널 영구 접근",
+      ],
+      extras: [],
+      description: "코딩 한 줄 몰라도, 자연 속 펜션에서 AI와 대화하며 내 서비스를 만들고 배포하는 하루. 아이디어만 가져오세요. URL은 갖고 돌아갑니다. A코스(4시간)는 랜딩+신청폼+배포, B코스(8시간)는 관리자 페이지+SMS 알림+항아리BBQ 점심까지!",
+      highlight: true,
+      isVibeCoding: true,
+      soldOut: true,
     },
     {
       icon: GraduationCap,
@@ -271,6 +299,16 @@ export default function Programs() {
                         🔥 추천 프로그램
                       </div>
                     )}
+                    {prog.isVibeCoding && (
+                      <div className="absolute top-3 left-3 bg-violet-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+                        💻 NEW 프로그램
+                      </div>
+                    )}
+                    {prog.soldOut && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                        <span className="bg-red-600 text-white text-lg font-black px-6 py-2 rounded-full -rotate-12 shadow-xl">SOLD OUT</span>
+                      </div>
+                    )}
                     {prog.highlight && !prog.isRetreat && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
@@ -322,6 +360,16 @@ export default function Programs() {
                           🔥 얼리버드 특가 · 20명 한정!
                         </p>
                       </>
+                    ) : prog.isVibeCoding ? (
+                      <>
+                        <div className="flex items-baseline gap-1.5 mb-1">
+                          <span className="text-2xl font-black text-violet-600">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원~</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          A코스 15만원 / B코스 25만원 · 20명 한정
+                        </p>
+                      </>
                     ) : prog.isEvent ? (
                       <>
                         <div className="flex items-end gap-2 mb-1">
@@ -367,6 +415,17 @@ export default function Programs() {
                         className="block w-full py-3.5 rounded-xl font-bold text-sm transition-all bg-primary text-white hover:bg-primary-light text-center shadow-md"
                       >
                         추가혜택 확인 →
+                      </Link>
+                    ) : prog.isVibeCoding ? (
+                      <Link
+                        href="/programs/vibe-coding"
+                        className={`block w-full py-3.5 rounded-xl font-bold text-sm transition-all text-center shadow-md ${
+                          prog.soldOut
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-violet-600 text-white hover:bg-violet-700"
+                        }`}
+                      >
+                        {prog.soldOut ? "마감 — 상세보기 →" : "상세보기 →"}
                       </Link>
                     ) : (
                       <button
