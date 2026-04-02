@@ -22,7 +22,7 @@ const DAY1 = [
   { time: "15:00~17:00", label: "움직임으로 감각 깨우기 (스트레칭·바디스캔·뮤직샤워)", icon: "💪", tag: "마루", color: "bg-green-100 text-green-800" },
   { time: "17:00~19:00", label: "실행을 만드는 계획 설계 (게이미피케이션, 만다라트)", icon: "🎯", tag: "세경", color: "bg-blue-100 text-blue-800" },
   { time: "19:00~20:30", label: "저녁식사", icon: "🍽" },
-  { time: "21:00~23:00", label: "삶의 방향 점검 & 자애명상 (1대1 대화, 자애명상)", icon: "🧭", tag: "예진", color: "bg-purple-100 text-purple-800" },
+  { time: "21:00~23:00", label: "삶의 방향 점검 & 자애명상 (1대1 대화, 자애명상)", icon: "🧭", tag: "붓꽃", color: "bg-purple-100 text-purple-800" },
 ];
 
 const DAY2 = [
@@ -70,7 +70,7 @@ const PROGRAMS = [
     num: 3,
     title: "삶의 방향 점검 & 자애명상",
     sub: "6가지 질문, 1대1대화로 내 삶의 나침반을 찾는 시간",
-    leader: "예진",
+    leader: "붓꽃",
     time: "첫째날 21:00~23:00",
     img: "/img/program-3.jpg",
     desc: "OECD 자기주도적 학습 성찰 질문을 통해 내 삶의 방향을 점검하고, 진솔한 대화로 마음을 열어가는 시간",
@@ -136,13 +136,13 @@ const LEADERS = [
     programs: ["실행을 만드는 계획 설계 워크숍"],
   },
   {
-    name: "예진",
-    role: "상담심리사 · 붓꽃심리상담소 운영",
+    name: "붓꽃",
+    role: "상담심리사 · 붓꽃 심리상담소 운영",
     emoji: "🧭",
     color: "bg-purple-50 border-purple-200",
     tagColor: "bg-purple-100 text-purple-800",
     img: "/img/leader-yejin.jpg",
-    desc: "상담심리사로서 붓꽃심리상담소를 운영하며, 1대1 대화와 자애명상을 통해 삶의 방향을 되짚어주는 시간을 이끕니다.",
+    desc: "붓꽃 심리상담소를 운영하고 있습니다. 자신을 이해하고 사랑하며, 삶의 방향을 찾아가는 여정을 함께합니다. 조용하지만 깊은 대화와 마음챙김의 시간을 나눕니다.",
     programs: ["삶의 방향 점검 & 자애명상"],
   },
   {
