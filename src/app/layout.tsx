@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SettingsProvider } from "@/context/SettingsContext";
+import FloatingCTA from "@/components/FloatingCTA";
 
 const GA_ID = "G-5ZEGCE9PB1";
 
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} antialiased`}>
         <SettingsProvider>
           {children}
+          <FloatingCTA />
         </SettingsProvider>
         <Analytics />
         <SpeedInsights />

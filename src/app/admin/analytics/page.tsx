@@ -21,12 +21,14 @@ export default function AnalyticsPage() {
     allTimeTotalGuests?: number;
     cumulativeGuests?: { month: string; guests: number; cumulative: number }[];
     monthlyGuestsByYear?: Record<string, number | string>[];
+    monthlyRevenueByYear?: Record<string, number | string>[];
     chartYears?: string[];
     yearlyStats?: { year: string; amount: number; count: number; guests: number }[];
   } | null>(null);
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [month, setMonth] = useState("all");
+  const [basis, setBasis] = useState<"stay" | "booking">("stay"); // stay=이용일 / booking=신청일
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,19 +43,19 @@ export default function AnalyticsPage() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`/api/admin/analytics?year=${year}&month=${month}`)
+    fetch(`/api/admin/analytics?year=${year}&month=${month}&basis=${basis}`)
       .then((r) => {
         if (!r.ok) throw new Error("데이터 로드 실패");
         return r.json();
       })
       .then((d) => { setData(d); setLoading(false); })
       .catch((e) => { setError(e.message); setLoading(false); });
-  }, [year, month]);
+  }, [year, month, basis]);
 
   const searchPeriod = () => {
     if (!periodFrom || !periodTo) return;
     setPeriodLoading(true);
-    fetch(`/api/admin/analytics?year=${year}&month=${month}&from=${periodFrom}&to=${periodTo}`)
+    fetch(`/api/admin/analytics?year=${year}&month=${month}&basis=${basis}&from=${periodFrom}&to=${periodTo}`)
       .then((r) => r.json())
       .then((d) => { setPeriodStats(d.periodStats); setPeriodLoading(false); setPeriodExpanded(true); })
       .catch(() => setPeriodLoading(false));
@@ -125,6 +127,40 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* 매출 기준 토글 */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-4">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">매출 집계 기준</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setBasis("stay")}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              basis === "stay"
+                ? "bg-primary text-white shadow-md"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            🏡 이용일 기준
+            <span className="block text-[10px] font-normal opacity-90 mt-0.5">체크인 날짜</span>
+          </button>
+          <button
+            onClick={() => setBasis("booking")}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              basis === "booking"
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            📝 신청일 기준
+            <span className="block text-[10px] font-normal opacity-90 mt-0.5">예약 접수 날짜</span>
+          </button>
+        </div>
+        <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+          {basis === "stay"
+            ? "💡 손님이 실제로 펜션을 이용한 날짜 기준으로 매출을 집계합니다 (체크인 기준)."
+            : "💡 손님이 예약을 신청·입금한 날짜 기준으로 매출을 집계합니다 (이번 달 들어온 돈)."}
+        </p>
+      </div>
+
       {/* 목차 */}
       <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {[
@@ -132,6 +168,7 @@ export default function AnalyticsPage() {
           { id: "kpi", label: "주요 지표" },
           { id: "monthly-revenue", label: "월별 매출" },
           { id: "monthly-guests", label: "연도별 방문자" },
+          { id: "monthly-revenue-compare", label: "연도별 매출" },
           { id: "yearly-compare", label: "연도별 비교" },
           { id: "program", label: "프로그램별" },
           { id: "purpose", label: "목적별" },
@@ -377,6 +414,36 @@ export default function AnalyticsPage() {
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v, name) => [(v as number).toLocaleString() + "명", `${name}년`]} />
+              <Legend formatter={(v) => `${v}년`} />
+              {data.chartYears.map((y, i) => (
+                <Line
+                  key={y}
+                  type="monotone"
+                  dataKey={y}
+                  stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                  strokeWidth={y === year ? 3 : 1.5}
+                  dot={{ r: y === year ? 4 : 2 }}
+                  opacity={y === year ? 1 : 0.6}
+                  name={y}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">데이터 없음</div>
+        )}
+      </div>
+
+      {/* Monthly Revenue by Year Comparison */}
+      <div id="monthly-revenue-compare" className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-5">
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1">연도별 월별 매출 비교</h3>
+        <p className="text-[11px] text-gray-500 mb-3 sm:mb-4">{basis === "stay" ? "🏡 이용일 기준" : "📝 신청일 기준"}</p>
+        {data.monthlyRevenueByYear && data.chartYears && data.chartYears.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data.monthlyRevenueByYear}>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatPrice(v as number)} />
+              <Tooltip formatter={(v, name) => [(v as number).toLocaleString() + "원", `${name}년`]} />
               <Legend formatter={(v) => `${v}년`} />
               {data.chartYears.map((y, i) => (
                 <Line

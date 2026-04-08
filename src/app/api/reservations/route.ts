@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const {
       guestName, guestPhone, reservationDate, checkoutDate, stayNights,
       totalGuests, extraGuests, programType, bbqGrills, gasRanges,
-      dinnerCount, woodcraftCount, potBbqCount, busRequested, busForm,
+      dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover,
       selectedTimeSlot, totalPrice, notes, purpose,
     } = body;
 
@@ -72,11 +72,34 @@ export async function POST(req: NextRequest) {
       notes,
     };
 
-    const { data: inserted, error: resErr } = await supabaseAdmin
-      .from("reservations")
-      .insert(reservationData)
-      .select("id")
-      .single();
+    // 1차 시도: 새 컬럼 포함 (breakfast_count, breakfast_menu)
+    let inserted: { id: number } | null = null;
+    let resErr: { message?: string; code?: string } | null = null;
+    {
+      const res = await supabaseAdmin
+        .from("reservations")
+        .insert({
+          ...reservationData,
+          breakfast_count: breakfastCount || 0,
+          breakfast_menu: breakfastMenu || null,
+        })
+        .select("id")
+        .single();
+      inserted = res.data;
+      resErr = res.error;
+    }
+
+    // 2차 시도: 새 컬럼이 DB에 없으면 제외하고 재시도
+    if (resErr && String(resErr.message || "").toLowerCase().includes("breakfast")) {
+      console.warn("breakfast 컬럼 없음 - 제외 후 재시도");
+      const res2 = await supabaseAdmin
+        .from("reservations")
+        .insert(reservationData)
+        .select("id")
+        .single();
+      inserted = res2.data;
+      resErr = res2.error;
+    }
 
     if (resErr || !inserted) {
       console.error("예약 저장 실패:", resErr);
@@ -87,7 +110,10 @@ export async function POST(req: NextRequest) {
     if (busRequested && busForm) {
       const actualPickup = busForm.pickupPlace === "기타" ? busForm.customPickup : busForm.pickupPlace;
       const actualDropoff = busForm.pickupPlace === "기타" ? busForm.customDropoff : busForm.pickupPlace;
-      const { error: busErr } = await supabaseAdmin.from("bus_requests").insert({
+      const stopoverText = Array.isArray(busStopover) && busStopover.length > 0
+        ? busStopover.filter((s: { place: string; time: string }) => s.place?.trim()).map((s: { place: string; time: string }) => `${s.place}(${s.time || "시간미정"})`).join(" → ")
+        : null;
+      const baseBus = {
         reservation_id: inserted.id,
         manager_name: busForm.managerName,
         manager_phone: busForm.managerPhone,
@@ -97,7 +123,18 @@ export async function POST(req: NextRequest) {
         dropoff_place: actualDropoff,
         dropoff_people: busForm.dropoffPeople,
         dropoff_time: busForm.dropoffTime,
+      };
+      // 1차: stopover_text 포함
+      let { error: busErr } = await supabaseAdmin.from("bus_requests").insert({
+        ...baseBus,
+        stopover_text: stopoverText,
       });
+      // 2차: stopover_text 컬럼 없으면 제외 후 재시도
+      if (busErr && String(busErr.message || "").toLowerCase().includes("stopover")) {
+        console.warn("stopover_text 컬럼 없음 - 제외 후 재시도");
+        const retry = await supabaseAdmin.from("bus_requests").insert(baseBus);
+        busErr = retry.error;
+      }
       if (busErr) {
         console.error("버스 요청 저장 실패 (예약은 성공):", busErr);
       }

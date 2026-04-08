@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const month = url.get("month") || "all"; // "all" or "01"~"12"
   const fromDate = url.get("from") || "";
   const toDate = url.get("to") || "";
+  const basis = url.get("basis") || "stay"; // "stay" = 이용일(체크인), "booking" = 신청일(접수일)
 
   const { data: allData } = await supabaseAdmin
     .from("reservations")
@@ -21,6 +22,16 @@ export async function GET(req: NextRequest) {
     .order("reservation_date", { ascending: true });
 
   const reservations = (allData || []) as ReservationRow[];
+
+  // 기준 날짜 추출 헬퍼: stay = reservation_date / booking = submitted_at(YYYY-MM-DD)
+  const getBasisDate = (r: ReservationRow): string => {
+    if (basis === "booking") {
+      const submitted = (r as ReservationRow & { submitted_at?: string; created_at?: string }).submitted_at
+        || (r as ReservationRow & { submitted_at?: string; created_at?: string }).created_at;
+      return submitted ? String(submitted).substring(0, 10) : "";
+    }
+    return r.reservation_date || "";
+  };
 
   // Bus cost lookup
   const busResIds = reservations.filter(r => r.bus_requested).map(r => r.id);
@@ -34,14 +45,17 @@ export async function GET(req: NextRequest) {
   }
   const getTotal = (r: ReservationRow) => calculateRevenue(r) + (busMap[r.id] || 0);
 
-  const yearData = reservations.filter((r) => r.reservation_date?.startsWith(year));
+  const yearData = reservations.filter((r) => getBasisDate(r).startsWith(year));
   const filteredData = month === "all"
     ? yearData
-    : yearData.filter((r) => r.reservation_date?.substring(5, 7) === month);
+    : yearData.filter((r) => getBasisDate(r).substring(5, 7) === month);
 
   // Period-based filtering (from/to)
   const periodData = (fromDate && toDate)
-    ? reservations.filter((r) => r.reservation_date >= fromDate && r.reservation_date <= toDate)
+    ? reservations.filter((r) => {
+        const d = getBasisDate(r);
+        return d >= fromDate && d <= toDate;
+      })
     : null;
 
   let periodStats = null;
@@ -52,7 +66,8 @@ export async function GET(req: NextRequest) {
     // Daily breakdown
     const dailyMap: Record<string, { amount: number; count: number; guests: number }> = {};
     periodData.forEach((r) => {
-      const d = r.reservation_date;
+      const d = getBasisDate(r);
+      if (!d) return;
       if (!dailyMap[d]) dailyMap[d] = { amount: 0, count: 0, guests: 0 };
       dailyMap[d].amount += getTotal(r);
       dailyMap[d].count += 1;
@@ -78,7 +93,8 @@ export async function GET(req: NextRequest) {
     // Reservation list for period
     const periodList = periodData.map((r) => ({
       id: r.id,
-      date: r.reservation_date,
+      date: getBasisDate(r),
+      reservationDate: r.reservation_date,
       name: r.guest_name,
       phone: r.guest_phone,
       program: r.program_type,
@@ -103,7 +119,7 @@ export async function GET(req: NextRequest) {
   // Monthly revenue + guests (all reservations = confirmed)
   const monthlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
   yearData.forEach((r) => {
-    const m = r.reservation_date?.substring(0, 7);
+    const m = getBasisDate(r).substring(0, 7);
     if (!m) return;
     if (!monthlyMap[m]) monthlyMap[m] = { amount: 0, count: 0, guests: 0 };
     monthlyMap[m].amount += getTotal(r);
@@ -121,31 +137,39 @@ export async function GET(req: NextRequest) {
     return { month: m.month, guests: m.guests, cumulative: cumGuests };
   });
 
-  // All years monthly guests for comparison chart
+  // All years monthly guests + revenue for comparison chart
   const allYearsMonthly: Record<string, Record<string, number>> = {};
+  const allYearsMonthlyRevenue: Record<string, Record<string, number>> = {};
   reservations.forEach((r) => {
-    const y = r.reservation_date?.substring(0, 4);
-    const mm = r.reservation_date?.substring(5, 7);
+    const d = getBasisDate(r);
+    const y = d.substring(0, 4);
+    const mm = d.substring(5, 7);
     if (!y || !mm) return;
     if (!allYearsMonthly[y]) allYearsMonthly[y] = {};
+    if (!allYearsMonthlyRevenue[y]) allYearsMonthlyRevenue[y] = {};
     allYearsMonthly[y][mm] = (allYearsMonthly[y][mm] || 0) + (r.guest_count || 0) + (r.extra_guests || 0);
+    allYearsMonthlyRevenue[y][mm] = (allYearsMonthlyRevenue[y][mm] || 0) + getTotal(r);
   });
   // Build comparison data: rows = 01~12, cols = each year
   const monthlyGuestsByYear: Record<string, number | string>[] = [];
+  const monthlyRevenueByYear: Record<string, number | string>[] = [];
   for (let i = 1; i <= 12; i++) {
     const mm = String(i).padStart(2, "0");
-    const row: Record<string, number | string> = { month: `${i}월` };
+    const guestRow: Record<string, number | string> = { month: `${i}월` };
+    const revRow: Record<string, number | string> = { month: `${i}월` };
     for (const y of Object.keys(allYearsMonthly).sort()) {
-      row[y] = allYearsMonthly[y][mm] || 0;
+      guestRow[y] = allYearsMonthly[y][mm] || 0;
+      revRow[y] = allYearsMonthlyRevenue[y][mm] || 0;
     }
-    monthlyGuestsByYear.push(row);
+    monthlyGuestsByYear.push(guestRow);
+    monthlyRevenueByYear.push(revRow);
   }
   const availableYearsForChart = Object.keys(allYearsMonthly).sort();
 
   // Yearly totals (all years)
   const yearlyMap: Record<string, { amount: number; count: number; guests: number }> = {};
   reservations.forEach((r) => {
-    const y = r.reservation_date?.substring(0, 4);
+    const y = getBasisDate(r).substring(0, 4);
     if (!y) return;
     if (!yearlyMap[y]) yearlyMap[y] = { amount: 0, count: 0, guests: 0 };
     yearlyMap[y].amount += getTotal(r);
@@ -196,9 +220,10 @@ export async function GET(req: NextRequest) {
   ];
 
   // Available years
-  const years = [...new Set(reservations.map((r) => r.reservation_date?.substring(0, 4)).filter(Boolean))].sort();
+  const years = [...new Set(reservations.map((r) => getBasisDate(r).substring(0, 4)).filter(Boolean))].sort();
 
   return NextResponse.json({
+    basis,
     monthlyRevenue,
     programBreakdown,
     purposeBreakdown,
@@ -209,6 +234,7 @@ export async function GET(req: NextRequest) {
     totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0) + (r.extra_guests || 0), 0),
     cumulativeGuests,
     monthlyGuestsByYear,
+    monthlyRevenueByYear,
     chartYears: availableYearsForChart,
     yearlyStats,
     allTimeTotalGuests: reservations.reduce((sum, r) => sum + (r.guest_count || 0) + (r.extra_guests || 0), 0),

@@ -44,6 +44,7 @@ interface BusRow {
   dropoff_place: string;
   dropoff_people: string;
   dropoff_time: string;
+  stopover_text: string;
   pickup_detail: string;
   dropoff_detail: string;
   driver_name: string;
@@ -654,6 +655,13 @@ export default function BusManagementPage() {
                         </div>
                       )}
                     </div>
+
+                    {bus.stopover_text && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                        <p className="text-[10px] font-bold text-amber-700 mb-1">🛣️ 경유지</p>
+                        <p className="text-xs text-amber-900 font-semibold">{bus.stopover_text}</p>
+                      </div>
+                    )}
 
                     {cost > 0 && (
                       <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5">

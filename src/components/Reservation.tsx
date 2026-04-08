@@ -102,6 +102,25 @@ export default function Reservation() {
       setSelectedTimeSlots([]);
       // MT 패키지면 버스 선택함, 숙박이면 선택안함
       setShowBusForm(isMTPackage);
+      if (isMTPackage) {
+        // MT 패키지: 30인 기준 추천 세팅
+        setExtraGuests(15);
+        setTotalGuestsInput("30");
+        setBbqGrills(4);
+        setGasRanges(4);
+        setDinnerCount(30);
+      } else {
+        // 일반 숙박 패키지: 전부 0으로 초기화
+        setExtraGuests(0);
+        setTotalGuestsInput(String(BASE_PEOPLE));
+        setBbqGrills(0);
+        setGasRanges(0);
+        setDinnerCount(0);
+        setBreakfastCount(0);
+        setBreakfastMenu("");
+        setWoodcraftCount(0);
+        setPotBbqCount(0);
+      }
     }
   }, [selectedProgramId, isMTPackage]);
 
@@ -137,17 +156,21 @@ export default function Reservation() {
   const [checkOut, setCheckOut] = useState<{ year: number; month: number; day: number } | null>(null);
   const [selectedDate, setSelectedDate] = useState<{ year: number; month: number; day: number } | null>(null);
 
-  const [extraGuests, setExtraGuests] = useState(15);
-  const [totalGuestsInput, setTotalGuestsInput] = useState("30");
-  const [bbqGrills, setBbqGrills] = useState(4); // 30명 / 8 = 4개
-  const [gasRanges, setGasRanges] = useState(4); // 30명 / 8 = 4개
-  const [dinnerCount, setDinnerCount] = useState(30); // 30명
+  const [extraGuests, setExtraGuests] = useState(0);
+  const [totalGuestsInput, setTotalGuestsInput] = useState(String(BASE_PEOPLE));
+  const [bbqGrills, setBbqGrills] = useState(0);
+  const [gasRanges, setGasRanges] = useState(0);
+  const [dinnerCount, setDinnerCount] = useState(0);
+  const [breakfastCount, setBreakfastCount] = useState(0);
+  const [breakfastMenu, setBreakfastMenu] = useState<string>("");
   const [woodcraftCount, setWoodcraftCount] = useState(0);
   const [potBbqCount, setPotBbqCount] = useState(0); // 0=미선택, 10~N인분
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Bus rental
   const [showBusForm, setShowBusForm] = useState(false);
+  // MT 모드: Hero에서 isMTPackage=true 또는 예약폼에서 MT 패키지 버튼 직접 클릭
+  const isMTMode = isMTPackage || (programType === "stay" && showBusForm);
   const [busForm, setBusForm] = useState({
     managerName: "",
     managerPhone: "",
@@ -164,6 +187,7 @@ export default function Reservation() {
     dropoffPeople: "",
     dropoffTime: "",
   });
+  const [busStopover, setBusStopover] = useState<{ place: string; time: string }[]>([]);
   const [busRequested, setBusRequested] = useState(false);
 
   // 버스 종류/대수
@@ -339,12 +363,26 @@ export default function Reservation() {
     if (type === "healing") {
       setExtraGuests(0); // 기본 10명 (BASE_HEALING)
     }
+    // 일반 숙박(MT 아님)으로 전환 시 옵션 0으로 리셋
+    if (type === "stay") {
+      setExtraGuests(0);
+      setTotalGuestsInput(String(BASE_PEOPLE));
+      setBbqGrills(0);
+      setGasRanges(0);
+      setDinnerCount(0);
+    }
   };
 
   // 예약 확정 → Supabase INSERT (customers + reservations)
   const handleConfirmReservation = async () => {
     if (!guestName.trim() || !guestPhone.trim()) {
       alert("이름과 연락처를 입력해주세요.");
+      return;
+    }
+
+    // 조식 선택 시 메뉴 필수
+    if (breakfastCount > 0 && !breakfastMenu) {
+      alert("조식 메뉴를 선택해주세요.");
       return;
     }
 
@@ -390,6 +428,7 @@ export default function Reservation() {
       const notes = [
         extraGuests > 0 ? `추가인원 ${extraGuests}명` : "",
         dinnerCount > 0 ? `저녁식사 ${dinnerCount}명` : "",
+        breakfastCount > 0 ? `조식 ${breakfastCount}명${breakfastMenu ? ` (${breakfastMenu})` : ""}` : "",
         woodcraftCount > 0 ? `목공키트 ${woodcraftCount}개` : "",
         potBbqCount > 0 ? `항아리BBQ ${potBbqCount}인분` : "",
         busRequested ? `버스 렌트 (${busSelections.map(b => { const t = BUS_TYPES.find(bt => bt.id === b.typeId); return t ? `${t.label} ${b.count}대` : ""; }).join(" + ") || "미선택"})` : "",
@@ -417,10 +456,13 @@ export default function Reservation() {
           bbqGrills,
           gasRanges,
           dinnerCount,
+          breakfastCount,
+          breakfastMenu,
           woodcraftCount,
           potBbqCount,
           busRequested: showBusForm,
           busForm: showBusForm ? busForm : null,
+          busStopover: showBusForm && busStopover.length > 0 ? busStopover.filter(s => s.place.trim()) : null,
           selectedTimeSlot: selectedTimeSlots.join(",") || null,
           totalPrice,
           notes,
@@ -462,6 +504,8 @@ export default function Reservation() {
             bbqGrills,
             gasRanges,
             dinnerCount,
+            breakfastCount,
+            breakfastMenu,
             woodcraftCount,
             potBbqCount,
             busRequested: showBusForm,
@@ -477,6 +521,7 @@ export default function Reservation() {
             busDropoffDetailAddress: busForm.dropoffDetailAddress,
             busDropoffPeople: busForm.dropoffPeople,
             busDropoffTime: busForm.dropoffTime,
+            busStopover: showBusForm && busStopover.length > 0 ? busStopover.filter(s => s.place.trim()).map(s => `${s.place}(${s.time || "시간미정"})`).join(" → ") : "",
             timeSlot: timeSlotLabel,
             totalPrice,
           }),
@@ -500,6 +545,8 @@ export default function Reservation() {
       setBbqGrills(0);
       setGasRanges(0);
       setDinnerCount(0);
+      setBreakfastCount(0);
+      setBreakfastMenu("");
       setWoodcraftCount(0);
       setPotBbqCount(0);
       setGuestName("");
@@ -594,11 +641,12 @@ export default function Reservation() {
     }
 
     total += gasRanges * pricing.gasRange;
+    total += breakfastCount * 10000;
     total += woodcraftCount * pricing.woodcraft;
     total += potBbqCount * pricing.potBbq;
     total += busPrice;
     return total;
-  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, woodcraftCount, potBbqCount, busPrice, pricing, isEventPromo]);
+  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, potBbqCount, busPrice, pricing, isEventPromo]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -642,12 +690,14 @@ export default function Reservation() {
           <Minus className="w-3.5 h-3.5 text-text-mid" />
         </button>
         <input
-          type="number"
-          min={0}
+          type="text"
+          inputMode="numeric"
+          maxLength={2}
           value={value}
           onFocus={(e) => e.target.select()}
           onChange={(e) => {
-            const v = Math.max(0, parseInt(e.target.value) || 0);
+            const raw = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+            const v = Math.max(0, parseInt(raw) || 0);
             if (onChange) onChange(v);
           }}
           className="w-12 text-center font-semibold text-text-dark text-sm border border-border rounded-lg py-1 focus:outline-none focus:border-primary"
@@ -688,7 +738,16 @@ export default function Reservation() {
           {/* Program Tabs */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             {/* MT 패키지 */}
-            <button onClick={() => { handleProgramChange("stay"); setShowBusForm(true); }}
+            <button onClick={() => {
+              handleProgramChange("stay");
+              setShowBusForm(true);
+              // MT 모드: 30인 기준 자동 추천
+              setExtraGuests(15);
+              setTotalGuestsInput("30");
+              setBbqGrills(4);
+              setGasRanges(4);
+              setDinnerCount(30);
+            }}
               className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all relative ${programType === "stay" && showBusForm ? "border-primary bg-primary/5 shadow-md" : "border-border bg-white hover:border-primary/30"}`}>
               <div className="absolute -top-2 right-3 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">추천</div>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${programType === "stay" && showBusForm ? "bg-primary text-white" : "bg-sage text-text-light"}`}>
@@ -1037,9 +1096,7 @@ export default function Reservation() {
                             const total = Math.max(BASE_PEOPLE, parsed);
                             const extra = total - BASE_PEOPLE;
                             setExtraGuests(extra);
-                            setBbqGrills(Math.min(6, Math.ceil(total / 8)));
-                            setGasRanges(Math.min(5, Math.ceil(total / 8)));
-                            setDinnerCount(total);
+                            if (isMTMode) { setBbqGrills(Math.min(6, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
                           }
                         }}
                         onBlur={() => {
@@ -1048,9 +1105,7 @@ export default function Reservation() {
                           setTotalGuestsInput(String(total));
                           const extra = total - BASE_PEOPLE;
                           setExtraGuests(extra);
-                          setBbqGrills(Math.min(6, Math.ceil(total / 8)));
-                          setGasRanges(Math.min(5, Math.ceil(total / 8)));
-                          setDinnerCount(total);
+                          if (isMTMode) { setBbqGrills(Math.min(6, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
                         }}
                         className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary"
                       />
@@ -1098,9 +1153,9 @@ export default function Reservation() {
                 <h3 className="text-base font-semibold text-text-dark mb-2">추가 옵션</h3>
                 <div className="space-y-4">
                   <Counter label="추가 인원" desc={`기본 ${BASE_PEOPLE}명 포함 / 추가 1인당 ${formatPrice(pricing.extraGuest)}`} value={extraGuests} unitPrice={pricing.extraGuest}
-                    onDec={() => { const v = Math.max(0, extraGuests - 1); setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); }}
-                    onInc={() => { const v = extraGuests + 1; setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); }}
-                    onChange={(v) => { const extra = Math.max(0, v); setExtraGuests(extra); setTotalGuestsInput(String(BASE_PEOPLE + extra)); const t = BASE_PEOPLE + extra; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); }} />
+                    onDec={() => { const v = Math.max(0, extraGuests - 1); setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
+                    onInc={() => { const v = extraGuests + 1; setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
+                    onChange={(v) => { const extra = Math.max(0, v); setExtraGuests(extra); setTotalGuestsInput(String(BASE_PEOPLE + extra)); if (isMTMode) { const t = BASE_PEOPLE + extra; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }} />
 
                   <hr className="border-border" />
 
@@ -1129,6 +1184,36 @@ export default function Reservation() {
                   )}
                   <Counter label="저녁 식사" desc={`1인 ${formatPrice(pricing.dinner)} (고기+햇반+쌈장+채소)`} value={dinnerCount} unitPrice={isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? 0 : pricing.dinner}
                     onDec={() => setDinnerCount((g) => Math.max(0, g - 1))} onInc={() => setDinnerCount((g) => g + 1)} onChange={(v) => setDinnerCount(v)} />
+
+                  <hr className="border-border" />
+
+                  <Counter label="조식 식사" desc="1인 10,000원 (메뉴 선택)" value={breakfastCount} unitPrice={10000}
+                    onDec={() => setBreakfastCount((g) => Math.max(0, g - 1))} onInc={() => setBreakfastCount((g) => g + 1)} onChange={(v) => setBreakfastCount(v)} />
+
+                  {breakfastCount > 0 && (
+                    <div className="ml-1 -mt-2">
+                      <p className="text-[11px] font-semibold text-text-mid mb-1.5">조식 메뉴 선택</p>
+                      <div className="flex flex-wrap gap-2">
+                        {["육개장", "김치찌개", "보리밥 비빔밥"].map((menu) => (
+                          <button
+                            key={menu}
+                            type="button"
+                            onClick={() => setBreakfastMenu(menu)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                              breakfastMenu === menu
+                                ? "bg-primary text-white border-primary"
+                                : "bg-white text-text-mid border-border hover:border-primary/40"
+                            }`}
+                          >
+                            {menu}
+                          </button>
+                        ))}
+                      </div>
+                      {!breakfastMenu && (
+                        <p className="text-[10px] text-amber-600 mt-1">메뉴를 선택해주세요</p>
+                      )}
+                    </div>
+                  )}
 
                   <hr className="border-border" />
 
@@ -1297,6 +1382,41 @@ export default function Reservation() {
                             <p className="text-xs text-amber-700">* 직접 입력 시 별도 견적을 안내드립니다</p>
                           </div>
                         )}
+
+                        {/* 경유지 추가 */}
+                        <div className="pt-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-text-dark">경유지 <span className="font-normal text-text-light">(선택)</span></p>
+                            <button
+                              type="button"
+                              onClick={() => setBusStopover([...busStopover, { place: "", time: "" }])}
+                              className="text-xs text-primary font-semibold hover:underline"
+                            >+ 경유지 추가</button>
+                          </div>
+                          {busStopover.map((stop, idx) => (
+                            <div key={idx} className="flex items-center gap-2 mb-2">
+                              <input
+                                placeholder={`경유지 ${idx + 1} (예: 전주역)`}
+                                value={stop.place}
+                                onChange={(e) => { const arr = [...busStopover]; arr[idx].place = e.target.value; setBusStopover(arr); }}
+                                className="flex-1 px-3 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary"
+                              />
+                              <select
+                                value={stop.time}
+                                onChange={(e) => { const arr = [...busStopover]; arr[idx].time = e.target.value; setBusStopover(arr); }}
+                                className="w-24 px-2 py-2 rounded-lg border border-border text-sm bg-white focus:outline-none focus:border-primary"
+                              >
+                                <option value="">시간</option>
+                                {Array.from({ length: 24 }, (_, i) => { const h = Math.floor(i / 2) + 6; const m = i % 2 === 0 ? "00" : "30"; const t = `${String(h).padStart(2, "0")}:${m}`; return <option key={t} value={t}>{t}</option>; })}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => setBusStopover(busStopover.filter((_, i) => i !== idx))}
+                                className="w-8 h-8 rounded-full border border-red-200 flex items-center justify-center text-red-400 hover:bg-red-50 transition-colors text-xs font-bold"
+                              >✕</button>
+                            </div>
+                          ))}
+                        </div>
 
                         <p className="text-xs font-semibold text-text-dark mb-2 pt-2">하차 정보 <span className="font-normal text-text-light">(퇴실 11시 기준)</span></p>
                         <div className="grid grid-cols-3 gap-2">

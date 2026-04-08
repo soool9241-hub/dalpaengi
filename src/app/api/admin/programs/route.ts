@@ -23,38 +23,58 @@ function getTableName(program?: string | null): string {
 // GET: 프로그램별 신청자 목록 조회
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const program = searchParams.get("program"); // 특정 프로그램 필터
+  const program = searchParams.get("program"); // 특정 프로그램 필터 (목록용)
   const search = searchParams.get("search") || "";
-  const tableName = getTableName(program);
 
-  let query = supabaseAdmin
-    .from(tableName)
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (program) {
-    query = query.eq("program", program);
+  // 통계는 항상 두 테이블 모두에서 집계
+  const tablesForStats = ["retreat_applications", "vibecoding_applications"];
+  const allRowsForStats: { program: string; status: string }[] = [];
+  for (const t of tablesForStats) {
+    const { data: rows } = await supabaseAdmin.from(t).select("program, status");
+    if (rows) allRowsForStats.push(...rows);
   }
 
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
-  }
+  // 목록은 선택된 program 또는 전체
+  const listTable = program ? getTableName(program) : null;
+  let data: Record<string, unknown>[] = [];
 
-  const { data, error } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  // 프로그램별 통계
-  const stats: Record<string, { total: number; pending: number; confirmed: number; cancelled: number }> = {};
-  for (const row of data || []) {
-    if (!stats[row.program]) {
-      stats[row.program] = { total: 0, pending: 0, confirmed: 0, cancelled: 0 };
+  if (listTable) {
+    // 특정 프로그램만 조회
+    let query = supabaseAdmin
+      .from(listTable)
+      .select("*")
+      .eq("program", program!)
+      .order("created_at", { ascending: false });
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
     }
-    stats[row.program].total++;
-    if (row.status === "pending") stats[row.program].pending++;
-    else if (row.status === "confirmed") stats[row.program].confirmed++;
+    const { data: rows, error } = await query;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    data = rows || [];
+  } else {
+    // 전체 조회: 두 테이블 병합
+    for (const t of tablesForStats) {
+      let query = supabaseAdmin.from(t).select("*").order("created_at", { ascending: false });
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
+      }
+      const { data: rows } = await query;
+      if (rows) data.push(...rows);
+    }
+    // 최신순 정렬
+    data.sort((a, b) => new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime());
+  }
+
+  // 프로그램별 통계 (두 테이블 합산)
+  // total = pending + confirmed만 포함 (취소/대기자는 정원 카운트에서 제외)
+  const stats: Record<string, { total: number; pending: number; confirmed: number; waitlist: number; cancelled: number }> = {};
+  for (const row of allRowsForStats) {
+    if (!stats[row.program]) {
+      stats[row.program] = { total: 0, pending: 0, confirmed: 0, waitlist: 0, cancelled: 0 };
+    }
+    if (row.status === "pending") { stats[row.program].pending++; stats[row.program].total++; }
+    else if (row.status === "confirmed") { stats[row.program].confirmed++; stats[row.program].total++; }
+    else if (row.status === "waitlist") stats[row.program].waitlist++;
     else if (row.status === "cancelled") stats[row.program].cancelled++;
   }
 
@@ -146,24 +166,62 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // 대기자 → 정식 신청(pending)으로 전환 시: 자리 열림 안내 문자
+  if (status === "pending" && appData?.status === "waitlist" && appData?.phone && tableName === "retreat_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+      const msg = `안녕하세요, ${appData.name}님! 🌸
+
+대기해주셔서 감사합니다.
+완주하다 봄 리트릿에 자리가 생겼습니다!
+
+━━━━━━━━━━━━
+✨ 정식 신청자로 전환되었습니다
+━━━━━━━━━━━━
+
+■ 프로그램: 완주하다 봄 리트릿
+■ 일시: 2026.4.18(토) ~ 19(일) 1박2일
+■ 장소: 전북 완주군 해월신왕길 92
+■ 참가비: 50,000원 (얼리버드)
+
+입금계좌: 우리은행 1002-938-937713 임세진
+※ 입금 확인 후 최종 확정됩니다.
+
+자리가 생겼으니 빠른 입금 부탁드려요!
+감사합니다 :)
+
+문의: 010-5314-0146`;
+
+      await messageService.sendOne({
+        to: phone, from: SENDER, text: msg, type: "LMS", subject: "봄 리트릿 자리 열림 안내"
+      });
+    } catch (smsErr) {
+      console.error("자리 열림 SMS 발송 실패:", smsErr);
+    }
+  }
+
   // 확정 시 신청자에게 확정 문자 발송
   if (status === "confirmed" && appData?.phone) {
     try {
       const phone = appData.phone.replace(/[^0-9]/g, "");
 
       if (tableName === "vibecoding_applications") {
-        // 바이브코딩 워크숍 확정 문자
-        const courseLabel = appData.course || "A";
+        // 바이브코딩 워크숍 확정 문자 (입금 완료)
         const msg = `안녕하세요, ${appData.name}님!
-바이브코딩 워크숍 참가가 확정되었습니다.
+바이브코딩 워크숍 참가가 최종 확정되었습니다 🎉
 
-■ 프로그램: 바이브코딩 워크숍 ${courseLabel}코스
+■ 프로그램: 바이브코딩 워크숍 (6시간)
 ■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)
+■ 참가비: 290,000원 (입금 확인 완료 ✅)
 
-입금이 확인되어 참가가 최종 확정되었습니다.
-워크숍 전날 1:1 원격 세팅 안내를 별도로 드리겠습니다.
+━━ 📋 안내사항 ━━
+• 워크숍 전 1:1 원격 세팅 일정을 곧 안내드립니다.
+• 노트북만 준비해오시면 됩니다 (프로그래밍 경험 無 OK).
+• 워크숍 당일 점심/간식은 제공됩니다.
 
-문의: 010-5314-0146
+기대하셔도 좋아요! 당일 뵙겠습니다 🙌
+
+문의: 010-8531-9531 (임솔)
 감사합니다 :)`;
 
         await messageService.sendOne({

@@ -24,6 +24,11 @@ const faqs = [
     answer:
       "네, 무료 주차가 가능합니다. 대형 버스 주차도 가능하며, 주차 공간이 넉넉하니 편하게 이용해주세요.",
   },
+  {
+    question: "교통편은 어떻게 되나요?",
+    answer:
+      "📍 위치: 전북 완주군 소양면 해월신왕길 92 (소양IC에서 5분, 전주역에서 차로 10분)\n🚕 입실: 전주→소양 방향 택시 승차 가능합니다.\n⚠️ 퇴실: 소양→전주 방향은 소양에 택시가 많지 않아 택시 잡기 어렵습니다!\n🚗 자차 이용을 권장드리며, 대중교통 이용 시 버스 렌트 서비스를 도와드립니다.\n🚌 버스 렌트: 12인승 스타렉스 ~ 42인승 대형버스까지 가능합니다. 예약 폼에서 버스 렌트 옵션을 선택하시면 견적을 안내드려요!",
+  },
 ];
 
 export default function FAQ() {
@@ -85,7 +90,7 @@ export default function FAQ() {
               {openIndex === i && (
                 <div className="px-5 pb-5 animate-slide-up">
                   <div className="pl-8 border-l-2 border-primary/20">
-                    <p className="text-sm text-text-mid leading-relaxed">
+                    <p className="text-sm text-text-mid leading-relaxed whitespace-pre-line">
                       {faq.answer}
                     </p>
                   </div>

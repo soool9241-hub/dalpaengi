@@ -15,6 +15,8 @@ import {
   Filter,
   Plus,
   X,
+  Download,
+  Hourglass,
 } from "lucide-react";
 
 interface Application {
@@ -44,12 +46,14 @@ interface Stats {
   total: number;
   pending: number;
   confirmed: number;
+  waitlist: number;
   cancelled: number;
 }
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "대기", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  { value: "pending", label: "대기(입금전)", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   { value: "confirmed", label: "확정", color: "bg-green-100 text-green-800", icon: Check },
+  { value: "waitlist", label: "대기자명단", color: "bg-rose-100 text-rose-800", icon: Hourglass },
   { value: "cancelled", label: "취소", color: "bg-red-100 text-red-800", icon: XCircle },
 ];
 
@@ -68,7 +72,7 @@ export default function AdminProgramsPage() {
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterProgram, setFilterProgram] = useState("");
+  const [filterProgram, setFilterProgram] = useState("spring-retreat-2026");
   const [filterStatus, setFilterStatus] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -133,6 +137,53 @@ export default function AdminProgramsPage() {
   // 필터링된 목록
   const filtered = filterStatus ? apps.filter((a) => a.status === filterStatus) : apps;
 
+  const handleExportCSV = () => {
+    if (filtered.length === 0) {
+      alert("내보낼 데이터가 없습니다.");
+      return;
+    }
+    const headers = ["이름", "연락처", "이메일", "나이", "성별", "직업", "지역", "이동수단", "신청이유", "촬영동의", "프로그램", "상태", "신청일시"];
+    const escape = (v: string | null | boolean | undefined) => {
+      if (v === null || v === undefined) return "";
+      const s = String(v).replace(/"/g, '""');
+      return `"${s}"`;
+    };
+    // 전화번호 정규화 + Excel에서 앞자리 0 보존 (="..." 형식)
+    const formatPhone = (raw: string | null) => {
+      if (!raw) return "";
+      let digits = raw.replace(/[^0-9]/g, "");
+      if (digits.length === 10 && !digits.startsWith("0")) digits = "0" + digits; // 0 누락 복구
+      // 010-1234-5678 형식으로
+      if (digits.length === 11) digits = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+      return `="${digits}"`; // Excel이 텍스트로 인식
+    };
+    const rows = filtered.map((a) => [
+      escape(a.name),
+      formatPhone(a.phone),
+      escape(a.email),
+      escape(a.age),
+      escape(a.gender),
+      escape(a.occupation),
+      escape(a.region),
+      escape(a.transport),
+      escape(a.reason),
+      escape(a.photo_consent ? "동의" : "미동의"),
+      escape(programs[a.program]?.label || a.program),
+      escape(getStatusStyle(a.status).label),
+      escape(formatDate(a.created_at)),
+    ].join(","));
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const today = new Date().toISOString().slice(0, 10);
+    const programName = filterProgram ? `_${programs[filterProgram]?.label || filterProgram}` : "_전체";
+    a.href = url;
+    a.download = `프로그램신청자${programName}_${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // 프로그램 키 목록
   const programKeys = Object.keys(programs);
 
@@ -144,12 +195,20 @@ export default function AdminProgramsPage() {
           <h1 className="text-2xl font-black text-gray-900">프로그램 신청 관리</h1>
           <p className="text-sm text-gray-500 mt-1">프로그램별 신청자 현황을 관리합니다</p>
         </div>
-        <button
-          onClick={() => { setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", region: "", transport: "", photoConsent: true, program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-light transition-colors"
-        >
-          <Plus size={16} /> 수동 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors"
+          >
+            <Download size={16} /> 데이터 내보내기
+          </button>
+          <button
+            onClick={() => { setAddForm({ name: "", phone: "", age: "", gender: "", occupation: "", reason: "", region: "", transport: "", photoConsent: true, program: filterProgram || programKeys[0] || "", status: "confirmed" }); setShowAddModal(true); }}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-light transition-colors"
+          >
+            <Plus size={16} /> 수동 추가
+          </button>
+        </div>
       </div>
 
       {/* 수동 추가 모달 */}
@@ -280,12 +339,12 @@ export default function AdminProgramsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {programKeys.map((key) => {
           const info = programs[key];
-          const st = stats[key] || { total: 0, pending: 0, confirmed: 0, cancelled: 0 };
+          const st = stats[key] || { total: 0, pending: 0, confirmed: 0, waitlist: 0, cancelled: 0 };
           const isSelected = filterProgram === key;
           return (
             <button
               key={key}
-              onClick={() => setFilterProgram(isSelected ? "" : key)}
+              onClick={() => setFilterProgram(key)}
               className={`text-left rounded-2xl border p-5 transition-all ${
                 isSelected
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20"
@@ -304,34 +363,16 @@ export default function AdminProgramsPage() {
                   style={{ width: `${Math.min((st.total / info.maxCapacity) * 100, 100)}%` }}
                 />
               </div>
-              <div className="flex gap-3 mt-3 text-xs">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-xs">
                 <span className="text-yellow-600">대기 {st.pending}</span>
                 <span className="text-green-600">확정 {st.confirmed}</span>
+                <span className="text-rose-500">대기자 {st.waitlist}</span>
                 <span className="text-red-500">취소 {st.cancelled}</span>
               </div>
             </button>
           );
         })}
 
-        {/* 전체 보기 카드 */}
-        {programKeys.length > 1 && (
-          <button
-            onClick={() => setFilterProgram("")}
-            className={`text-left rounded-2xl border p-5 transition-all ${
-              !filterProgram
-                ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                : "border-gray-200 bg-white hover:shadow-md"
-            }`}
-          >
-            <p className="font-bold text-gray-900 text-sm">전체 프로그램</p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-3xl font-black text-gray-700">
-                {Object.values(stats).reduce((sum, s) => sum + s.total, 0)}
-              </span>
-              <span className="text-sm text-gray-400">명</span>
-            </div>
-          </button>
-        )}
       </div>
 
       {/* 검색 & 필터 */}
@@ -353,8 +394,9 @@ export default function AdminProgramsPage() {
             className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">전체 상태</option>
-            <option value="pending">대기</option>
+            <option value="pending">대기(입금전)</option>
             <option value="confirmed">확정</option>
+            <option value="waitlist">대기자명단</option>
             <option value="cancelled">취소</option>
           </select>
           <button

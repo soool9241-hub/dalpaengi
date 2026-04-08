@@ -28,6 +28,8 @@ interface ReservationSMS {
   bbqGrills: number;
   gasRanges: number;
   dinnerCount: number;
+  breakfastCount?: number;
+  breakfastMenu?: string;
   woodcraftCount: number;
   potBbqCount: number;
   busRequested: boolean;
@@ -42,6 +44,7 @@ interface ReservationSMS {
   busDropoffDetailAddress?: string;
   busDropoffPeople?: string;
   busDropoffTime?: string;
+  busStopover?: string;
   timeSlot: string | null;
   totalPrice: number;
 }
@@ -93,6 +96,8 @@ function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
     lines.push(`• 가스렌지 (${data.gasRanges}개 × ${formatPrice(p.gasRange)}): ${formatPrice(data.gasRanges * p.gasRange)}`);
   if (data.dinnerCount > 0)
     lines.push(`• 저녁식사 (${data.dinnerCount}명 × ${formatPrice(p.dinner)}): ${formatPrice(data.dinnerCount * p.dinner)}`);
+  if (data.breakfastCount && data.breakfastCount > 0)
+    lines.push(`• 조식${data.breakfastMenu ? ` [${data.breakfastMenu}]` : ""} (${data.breakfastCount}명 × ${formatPrice(10000)}): ${formatPrice(data.breakfastCount * 10000)}`);
   if (data.woodcraftCount > 0)
     lines.push(`• 목공키트 (${data.woodcraftCount}개 × ${formatPrice(p.woodcraft)}): ${formatPrice(data.woodcraftCount * p.woodcraft)}`);
   if (data.potBbqCount > 0)
@@ -130,7 +135,7 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 ${data.busRequested && data.busPickupPlace ? `
 🚌 버스 정보
 승차: ${data.busPickupPlace}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
-하차: ${data.busDropoffPlace || data.busPickupPlace}${data.busDropoffDetailAddress ? ` (${data.busDropoffDetailAddress})` : ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
+${data.busStopover ? `경유: ${data.busStopover}\n` : ""}하차: ${data.busDropoffPlace || data.busPickupPlace}${data.busDropoffDetailAddress ? ` (${data.busDropoffDetailAddress})` : ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내드리겠습니다"}
 ` : ""}
 입금계좌: 카카오뱅크 3333-06-4749542 임솔
@@ -164,7 +169,7 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 ${data.busRequested && data.busManagerName ? `
 🚌 책임자: ${data.busManagerName} (${data.busManagerPhone || ""})
 승차: ${data.busPickupPlace || ""}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
-하차: ${data.busDropoffPlace || data.busPickupPlace || ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
+${data.busStopover ? `경유: ${data.busStopover}\n` : ""}하차: ${data.busDropoffPlace || data.busPickupPlace || ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내"}` : ""}`;
 }
 

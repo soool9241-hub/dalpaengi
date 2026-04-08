@@ -62,6 +62,7 @@ export default function Home() {
         <FAQ />
         <Contact />
         <Footer />
+
       </main>
     </ReservationProvider>
   );

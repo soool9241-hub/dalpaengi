@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -25,12 +25,12 @@ export default function Programs() {
       icon: Leaf,
       title: "완주하다 봄 리트릿",
       duration: "1박 2일 (4.18~19)",
-      price: 90000,
-      priceLabel: "얼리버드 9만원",
-      originalPrice: 290000,
-      perPerson: 90000,
+      price: 50000,
+      priceLabel: "얼리버드 5만원",
+      originalPrice: 200000,
+      perPerson: 50000,
       maxPeople: "20명 한정",
-      categories: ["healing", "pension"],
+      categories: ["healing", "pension", "mt", "family", "membership"],
       tags: ["추천", "리트릿", "얼리버드"],
       tagColors: ["bg-red-100 text-red-600", "bg-green-100 text-green-600", "bg-amber-100 text-amber-600"],
       gradient: "from-green-500 to-emerald-500",
@@ -50,30 +50,55 @@ export default function Programs() {
     {
       icon: Code,
       title: "바이브코딩 워크숍",
-      duration: "A코스 4시간 / B코스 8시간",
-      price: 150000,
-      priceLabel: "A코스 15만원~",
-      originalPrice: 250000,
-      perPerson: 150000,
+      duration: "6시간 (13:00~19:00)",
+      price: 290000,
+      priceLabel: "290,000원",
+      originalPrice: 500000,
+      perPerson: 290000,
       maxPeople: "20명 한정",
-      categories: ["pension", "mt"],
-      tags: ["NEW", "바이브코딩", "SOLD OUT"],
-      tagColors: ["bg-violet-100 text-violet-600", "bg-indigo-100 text-indigo-600", "bg-red-100 text-red-600"],
+      categories: ["pension", "mt", "healing", "family", "membership"],
+      tags: ["NEW", "바이브코딩", "모집중"],
+      tagColors: ["bg-violet-100 text-violet-600", "bg-indigo-100 text-indigo-600", "bg-green-100 text-green-600"],
       gradient: "from-violet-500 to-indigo-500",
-      image: "/img/nature-yard.jpg",
+      image: "/img/living-room-wide.jpg",
       features: [
         "AI와 대화하며 내 웹사이트 직접 제작",
         "코딩 경험 전혀 불필요 (완전 초보 환영)",
+        "랜딩페이지 + 신청폼 + DB + 관리자 + SMS",
         "실제 URL 배포까지 완료",
-        "B코스: 관리자 페이지 + SMS 알림까지",
         "사전 1:1 원격 세팅 지원",
         "사후 Q&A 채널 영구 접근",
       ],
       extras: [],
-      description: "코딩 한 줄 몰라도, 자연 속 펜션에서 AI와 대화하며 내 서비스를 만들고 배포하는 하루. 아이디어만 가져오세요. URL은 갖고 돌아갑니다. A코스(4시간)는 랜딩+신청폼+배포, B코스(8시간)는 관리자 페이지+SMS 알림+항아리BBQ 점심까지!",
+      description: "코딩 한 줄 몰라도, 자연 속 펜션에서 AI와 대화하며 내 서비스를 만들고 배포하는 6시간. 아이디어만 가져오세요. URL은 갖고 돌아갑니다.",
       highlight: true,
       isVibeCoding: true,
-      soldOut: true,
+      soldOut: false,
+    },
+    {
+      icon: BookOpen,
+      title: "달팽이 멤버십 스터디",
+      duration: "월 정기 모임",
+      price: 0,
+      priceLabel: "무료",
+      perPerson: 0,
+      maxPeople: "제한 없음",
+      categories: ["membership", "healing", "pension", "mt", "family"],
+      tags: ["NEW", "멤버십", "모집중"],
+      tagColors: ["bg-emerald-100 text-emerald-600", "bg-amber-100 text-amber-600", "bg-green-100 text-green-600"],
+      gradient: "from-emerald-500 to-teal-500",
+      image: "/img/group-indoor.jpg",
+      features: [
+        "함께 성장하는 스터디 커뮤니티",
+        "자연 속 펜션에서 진행",
+        "다양한 분야의 멤버 네트워킹",
+        "정기 오프라인 모임",
+        "온라인 커뮤니티 상시 운영",
+      ],
+      extras: [],
+      description: "120평 CNC 공방과 60평 펜션을 AI로 실제 자동화하고 있는 대표가 수익모델부터 마케팅 시스템까지 함께 만듭니다. 이론이 아닌, 지금 돌아가고 있는 시스템을 공유합니다.",
+      highlight: false,
+      isMembership: true,
     },
     {
       icon: GraduationCap,
@@ -183,7 +208,7 @@ export default function Programs() {
       tags: ["멤버십전용", "목공체험", "SOLD OUT"],
       tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-red-100 text-red-600"],
       gradient: "from-teal-500 to-cyan-500",
-      image: "/img/exterior-front.jpg",
+      image: "/img/exterior-side.jpg",
       features: [
         "나만의 아지트를 직접 만드는 목공 체험",
         "탭앤슬롯(끼워맞춤) 방식 — 도구/접착제 불필요",
@@ -209,7 +234,7 @@ export default function Programs() {
       tags: ["힐링", "명상", "웰니스"],
       tagColors: ["bg-emerald-100 text-emerald-600", "bg-purple-100 text-purple-600", "bg-rose-100 text-rose-600"],
       gradient: "from-emerald-500 to-teal-500",
-      image: "/img/nature-yard.jpg",
+      image: "/img/yoga.jpg",
       features: [
         "1박 2일 (오후 3시 입실 ~ 익일 11시 퇴실)",
         "힐링 프로그램 4종 제공 (필라테스/명상/자기탐색/싱잉볼 등)",
@@ -300,8 +325,13 @@ export default function Programs() {
                       </div>
                     )}
                     {prog.isVibeCoding && (
-                      <div className="absolute top-3 left-3 bg-violet-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+                      <div className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                         💻 NEW 프로그램
+                      </div>
+                    )}
+                    {prog.isMembership && (
+                      <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+                        📚 멤버십
                       </div>
                     )}
                     {prog.soldOut && (
@@ -322,6 +352,16 @@ export default function Programs() {
                     {prog.isRetreat && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         4.18(토)~19(일)
+                      </div>
+                    )}
+                    {prog.isVibeCoding && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        일정 추후 공지
+                      </div>
+                    )}
+                    {prog.isMembership && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        상시 모집
                       </div>
                     )}
                   </div>
@@ -363,11 +403,21 @@ export default function Programs() {
                     ) : prog.isVibeCoding ? (
                       <>
                         <div className="flex items-baseline gap-1.5 mb-1">
-                          <span className="text-2xl font-black text-violet-600">{prog.price.toLocaleString()}</span>
-                          <span className="text-sm text-text-light">원~</span>
+                          <span className="text-2xl font-black text-primary">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원</span>
                         </div>
                         <p className="text-xs text-text-light mb-5">
-                          A코스 15만원 / B코스 25만원 · 20명 한정
+                          6시간 · 20명 한정
+                        </p>
+                      </>
+                    ) : prog.isMembership ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-2xl font-black text-emerald-600">무료</span>
+                          <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold">신청 무료</span>
+                        </div>
+                        <p className="text-xs text-text-light mb-5">
+                          가입비 없이 멤버십 혜택을 받아보세요
                         </p>
                       </>
                     ) : prog.isEvent ? (
@@ -412,21 +462,40 @@ export default function Programs() {
                     {prog.isRetreat ? (
                       <Link
                         href="/programs/spring-retreat"
-                        className="block w-full py-3.5 rounded-xl font-bold text-sm transition-all bg-primary text-white hover:bg-primary-light text-center shadow-md"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white text-center"
                       >
                         추가혜택 확인 →
                       </Link>
                     ) : prog.isVibeCoding ? (
                       <Link
                         href="/programs/vibe-coding"
-                        className={`block w-full py-3.5 rounded-xl font-bold text-sm transition-all text-center shadow-md ${
+                        className={`block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center ${
                           prog.soldOut
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-violet-600 text-white hover:bg-violet-700"
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-primary/10 text-primary hover:bg-primary hover:text-white"
                         }`}
                       >
                         {prog.soldOut ? "마감 — 상세보기 →" : "상세보기 →"}
                       </Link>
+                    ) : prog.isMembership ? (
+                      <div className="space-y-2">
+                        <a
+                          href="https://web-snail1.vercel.app/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center bg-primary/10 text-primary hover:bg-primary hover:text-white"
+                        >
+                          멤버십 살펴보기 →
+                        </a>
+                        <a
+                          href="https://web-snail1.vercel.app/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center bg-primary/10 text-primary hover:bg-primary hover:text-white"
+                        >
+                          📮 무료 레터 먼저 구독
+                        </a>
+                      </div>
                     ) : (
                       <button
                         onClick={() => setSelectedProgram(originalIndex)}

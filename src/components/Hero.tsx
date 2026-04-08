@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { ChevronDown, CalendarCheck, Moon, GraduationCap } from "lucide-react";
+import { ChevronDown, CalendarCheck, Moon, GraduationCap, Clock } from "lucide-react";
 
 const HERO_IMAGES = [
   "/img/exterior-main.jpg",
@@ -22,6 +22,7 @@ const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const HERO_PROGRAMS = [
   { id: "stay" as const, label: "숙박 패키지", icon: Moon },
   { id: "stay" as const, label: "대학생 MT", icon: GraduationCap, isMT: true },
+  { id: "half" as const, label: "3시간 대여(평일)", icon: Clock },
 ];
 
 export default function Hero() {
@@ -69,7 +70,7 @@ export default function Hero() {
   const todayStr = dateToStr(today);
   const isTodayAvailable = !bookedDates.has(todayStr);
 
-  // 선호 요일 기준 가능한 날짜 최대 4개
+  // 선호 요일 기준 가능한 날짜 최대 8개
   const availableDates = useMemo(() => {
     const results: Date[] = [];
     const d = new Date();
@@ -77,7 +78,7 @@ export default function Hero() {
     const diff = (preferredDay - d.getDay() + 7) % 7;
     d.setDate(d.getDate() + diff);
 
-    for (let i = 0; i < 52 && results.length < 4; i++) {
+    for (let i = 0; i < 52 && results.length < 8; i++) {
       const ds = dateToStr(d);
       if (!bookedDates.has(ds)) {
         results.push(new Date(d));
@@ -118,25 +119,32 @@ export default function Hero() {
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <div className="animate-fade-in-up">
-          <p className="text-white/60 text-sm tracking-[0.3em] uppercase mb-6">
-            Healing Stay &middot; Pension
-          </p>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            서로다른 우리들의 이야기가
+          <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
+            <span className="bg-white/15 backdrop-blur-sm text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full">전주역 10분</span>
+            <span className="bg-white/15 backdrop-blur-sm text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full">하루 1팀 독채</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight mb-4">
+            60평 독채 펜션
             <br />
-            <span className="text-white/90">만들어지는 공간</span>
+            <span className="text-white/90">숙박/BBQ/조식/버스/수영장까지</span>
           </h1>
           <p className="text-white/70 text-xl sm:text-2xl mb-2 font-semibold">
             달팽이아지트펜션
           </p>
+          <p className="text-green-300/90 text-base sm:text-lg font-bold mb-3 tracking-wide">30명 기준 1인 23,000원 — 시내 고기집보다 저렴해요</p>
+          <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+            <span className="bg-white/10 text-white/70 text-xs font-medium px-3 py-1.5 rounded-full">숙소+BBQ+버스 올인원 패키지</span>
+            <span className="bg-white/10 text-white/70 text-xs font-medium px-3 py-1.5 rounded-full">1박 70만원~</span>
+            <span className="bg-white/10 text-white/70 text-xs font-medium px-3 py-1.5 rounded-full">MT · 가족모임 · 워크숍</span>
+          </div>
           <p className="text-white/50 text-sm mb-10 max-w-md mx-auto leading-relaxed">
-            전북 완주의 자연 속에서 느리게, 깊이 쉬어가세요.
+            전주역에서 차로 10분 · KTX 서울↔전주 1시간 40분
             <br />
-            당신만의 힐링 프로그램이 준비되어 있습니다.
+            <span className="text-amber-300/80">⚠️ 퇴실 시 소양→전주 택시 잡기 어렵습니다! 자차 또는 버스 렌트 이용을 권장드려요.</span>
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-10">
+        <div className="flex flex-row items-center justify-center gap-3 animate-fade-in-up delay-200 mb-10">
           <a
             href="#programs"
             className="bg-white text-primary-dark px-8 py-4 rounded-full font-semibold text-sm hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
@@ -175,6 +183,13 @@ export default function Hero() {
                 );
               })}
             </div>
+            <p className="text-white/60 text-xs mb-3">
+              {selectedHeroProgram === 0
+                ? "가족모임·지인모임에 딱! 독채라서 눈치 볼 일 없어요"
+                : selectedHeroProgram === 1
+                ? "간사님 준비 부담 ZERO — 숙소/저녁식사/BBQ/버스렌트까지 올인원 서비스!"
+                : "소모임·회의·촬영에 딱! 평일 3시간 40만원"}
+            </p>
 
             {/* STEP 2: 선호 요일 */}
             <p className="text-white/40 text-[11px] tracking-wider uppercase mb-2">Step 2</p>

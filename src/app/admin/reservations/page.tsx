@@ -15,6 +15,7 @@ interface BusRequest {
   dropoff_place: string;
   dropoff_people: string;
   dropoff_time: string;
+  stopover_text?: string;
 }
 
 interface BusFormData {

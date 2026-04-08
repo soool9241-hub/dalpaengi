@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  MessageCircle,
+  Train,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,8 +31,7 @@ const DAY2 = [
   { time: "07:00", label: "아침식사", icon: "☀️" },
   { time: "08:00~09:00", label: "모닝페이지, 감사일기 (글쓰기로 비우고 감사로 채우기)", icon: "🌱", tag: "잎새", color: "bg-amber-100 text-amber-800" },
   { time: "09:00~11:00", label: "아침 산책 & 신체놀이 (바디스캔, 젠가, 테니스공 놀이)", icon: "🚶", tag: "마루", color: "bg-green-100 text-green-800" },
-  { time: "11:00", label: "체크아웃", icon: "👋" },
-  { time: "12:00", label: "점심식사 & 마무리", icon: "🍚" },
+  { time: "11:00", label: "정리 후 마무리 & 체크아웃", icon: "👋" },
 ];
 
 /* ───── 프로그램 상세 ───── */
@@ -209,8 +210,12 @@ function ProgramAccordion({ p }: { p: typeof PROGRAMS[0] }) {
 /* ───── 후기 텍스트 슬라이더 ───── */
 const REVIEWS = [
   {
+    name: "머리 빗는 네오",
+    text: "살짜기 금빛 들판에 석양을 바라보며 서울로 올라갑니다. 행사 기획부터 진행까지 수고해주신 기획자 분들께 깊이 감사드립니다. 좋은 강의해주신 분들께도 감사드립니다. 참여하기를 잘 했다는 저만의 생각입니다. 젊은 어른분들에게 작은 것을 배우고 가는, 모포족은 이번에 갈이 하신 모든 분들이 안하면, 정말 행복하고, 평화로우시기를 기원합니다.",
+  },
+  {
     name: "눈빛 예고 어피치",
-    text: "제가 뒤에 약속이 있어서 인사도 못드린 분들이 계셔서 죄송해요! 각자의 인생에 대해 들을 수 있어서 좋았어요~ 부모로서 제가 가진 불안도 들어다볼 수 있었고, 무엇보다 새벽까지 수다 떤 님 오랜만에 해봐서 좋았어요 ♥ 이런 좋은 프로그램 기획해주신 달팽이님들게 감사해용~^^ 이제 일상으로 돌아가서 명상하며 불안을 잘 다스리며 생활하겠습니다~",
+    text: "각자의 인생에 대해 들을 수 있어서 좋았어요~ 부모로서 제가 가진 불안도 들어다볼 수 있었고, 무엇보다 새벽까지 수다 떤 님 오랜만에 해봐서 좋았어요 ♥ 이런 좋은 프로그램 기획해주신 달팽이님들게 감사해용~^^ 이제 일상으로 돌아가서 명상하며 불안을 잘 다스리며 생활하겠습니다~",
   },
   {
     name: "피스메이커 프로도",
@@ -219,10 +224,6 @@ const REVIEWS = [
   {
     name: "불나게 일하는 네오",
     text: "좋은 프로그램 마련해주시고 함께 해주셔서 감사합니다. 명상 요가 산책 맛있는 식사 정말 힐링 그 자체였어요. 일상으로 돌아가서 신선한 마음 간직하며 하루하루 즐겁게 생활하도록 하겠습니다^^",
-  },
-  {
-    name: "머리 빗는 네오",
-    text: "살짜기 금빛 들판에 석양을 바라보며 서울로 올라갑니다. 행사 기획부터 진행까지 수고해주신 기획자 분들께 깊이 감사드립니다. 좋은 강의해주신 분들께도 감사드립니다. 참여하기를 잘 했다는 저만의 생각입니다. 젊은 어른분들에게 작은 것을 배우고 가는, 모포족은 이번에 갈이 하신 모든 분들이 안하면, 정말 행복하고, 평화로우시기를 기원합니다.",
   },
   {
     name: "봄 풍는 튜브",
@@ -291,12 +292,7 @@ function ApplyForm() {
   const [region, setRegion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [closed, setClosed] = useState(false);
-  const MAX = 20;
-
-  useState(() => {
-    fetch("/api/programs/retreat").then(r => r.json()).then(d => setClosed(d.closed || false)).catch(() => {});
-  });
+  const [waitlistModal, setWaitlistModal] = useState<{ show: boolean; number: number }>({ show: false, number: 0 });
 
   const submit = async () => {
     if (!name.trim() || !phone.trim()) { setResult({ ok: false, msg: "이름과 연락처를 입력해주세요." }); return; }
@@ -309,26 +305,72 @@ function ApplyForm() {
         body: JSON.stringify({ name, phone, age, gender, occupation, reason, photoConsent, transport, region }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setResult({ ok: true, msg: "신청이 완료되었습니다! 확인 문자가 발송됩니다." });
-        setClosed(data.count >= data.max);
+      console.log("[봄 리트릿 신청 응답]", data);
+
+      if (res.ok && data.success) {
+        // 폼 초기화
         setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion("");
+
+        if (data.waitlisted === true) {
+          // 🔒 마감 → 대기자 등록 → 모달 + 폴백 메시지
+          const num = Number(data.waitlistNumber) || 1;
+          setWaitlistModal({ show: true, number: num });
+          setResult({ ok: true, msg: `🌸 아쉽게도 마감되었습니다! 대기자 ${num}번으로 등록되었어요.` });
+        } else {
+          // 정상 신청 완료
+          setResult({ ok: true, msg: "신청이 완료되었습니다! 확인 문자가 발송됩니다." });
+        }
       } else {
         setResult({ ok: false, msg: data.error || "신청 실패" });
       }
-    } catch {
+    } catch (err) {
+      console.error("[봄 리트릿 신청 에러]", err);
       setResult({ ok: false, msg: "네트워크 오류" });
     }
     setLoading(false);
   };
 
-  const remaining = closed ? 0 : 1;
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* 마감 안내 모달 */}
+      {waitlistModal.show && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl animate-slide-up">
+            <div className="bg-gradient-to-br from-rose-500 to-pink-500 text-white px-6 py-8 text-center">
+              <div className="text-5xl mb-3">🌸</div>
+              <p className="text-xs font-bold tracking-widest opacity-90 mb-1">SOLD OUT</p>
+              <h3 className="text-2xl font-black">아쉽게도 마감되었어요</h3>
+              <p className="text-sm text-white/90 mt-2">20명 선착순이 이미 채워졌습니다</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-5 text-center">
+                <p className="text-xs font-bold text-rose-600 tracking-wide mb-1">대기자 번호</p>
+                <p className="text-5xl font-black text-rose-600">{waitlistModal.number}<span className="text-2xl">번</span></p>
+                <p className="text-xs text-gray-500 mt-2">대기자 명단에 등록 완료 ✅</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-bold text-gray-900">🌿 이렇게 진행됩니다</p>
+                <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
+                  <li>• 취소자 발생 시 <span className="font-bold text-rose-600">순번대로</span> 연락드립니다</li>
+                  <li>• 다음 회차 진행 시 <span className="font-bold text-rose-600">가장 먼저</span> 안내드립니다</li>
+                  <li>• 입력하신 연락처로 문자가 발송되었어요</li>
+                </ul>
+              </div>
+              <p className="text-xs text-center text-gray-500">관심 가져주셔서 진심으로 감사합니다 🙏</p>
+              <button
+                onClick={() => setWaitlistModal({ show: false, number: 0 })}
+                className="w-full py-3.5 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-light transition-colors"
+              >
+                확인했어요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="p-6 space-y-4">
-        {remaining > 0 ? (
+        {true ? (
           <>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -420,19 +462,11 @@ function ApplyForm() {
               </label>
             </div>
             <button onClick={submit} disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-base hover:bg-primary-light transition-colors disabled:opacity-50">
+              className="w-full py-3.5 rounded-xl text-white font-bold text-base transition-colors disabled:opacity-50 bg-primary hover:bg-primary-light">
               {loading ? "신청 중..." : "봄 리트릿 신청하기"}
             </button>
           </>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-lg font-bold text-red-500">마감되었습니다</p>
-            <p className="text-sm text-gray-500 mt-1">대기 신청은 전화로 문의해주세요</p>
-            <a href="tel:010-5314-0146" className="inline-flex items-center gap-1 mt-3 text-primary text-sm font-semibold">
-              <Phone size={14} /> 010-5314-0146
-            </a>
-          </div>
-        )}
+        ) : null}
         {result && (
           <p className={`text-center text-sm font-semibold ${result.ok ? "text-green-600" : "text-red-500"}`}>
             {result.msg}
@@ -443,9 +477,31 @@ function ApplyForm() {
   );
 }
 
+/* ───── 잔여석 카운터 훅 ───── */
+function useRetreatStatus() {
+  const [status, setStatus] = useState({ current: 0, remaining: 20, max: 20, closed: false });
+  useEffect(() => {
+    fetch("/api/programs/retreat")
+      .then((r) => r.json())
+      .then((d) => setStatus(d))
+      .catch(() => {});
+  }, []);
+  return status;
+}
+
+/* ───── D-day 계산 ───── */
+function getDday() {
+  const target = new Date("2026-04-18T00:00:00+09:00");
+  const now = new Date();
+  const diff = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : 0;
+}
+
 /* ───── 메인 페이지 ───── */
 export default function SpringRetreatPage() {
   const [activeDay, setActiveDay] = useState<1 | 2>(1);
+  const retreatStatus = useRetreatStatus();
+  const dday = getDday();
   return (
     <div className="min-h-screen bg-background">
       {/* 상단 내비 */}
@@ -455,9 +511,14 @@ export default function SpringRetreatPage() {
             <ChevronLeft size={18} />
             <span className="text-sm font-medium">달팽이아지트</span>
           </Link>
-          <a href="#apply" className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-primary-light transition-all">
-            신청하기
-          </a>
+          <div className="flex items-center gap-2">
+            <a href="https://open.kakao.com/o/ssowhRlg" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-[#FEE500] text-[#3C1E1E] px-3 py-2 rounded-full text-xs font-bold hover:brightness-95 transition-all">
+              <MessageCircle size={12} /> 카톡문의
+            </a>
+            <a href="#apply" className="bg-primary text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary-light transition-all">
+              신청하기
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -468,9 +529,9 @@ export default function SpringRetreatPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
             <span className="text-4xl mb-4">🌱</span>
-            <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">완주하다 봄 리트릿</h1>
-            <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">나를 다시 자라나게 하는 1박 2일</p>
-            <p className="text-sm sm:text-base text-white/60 mt-2 max-w-md">운동 · 목표설계 워크숍 · 명상 · 저널링 · 네트워킹</p>
+            <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">4월 18일, 완주 산속에서<br/>나를 리셋하는 1박 2일</h1>
+            <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">운동 · 명상 · 목표설계 · 저널링 · 네트워킹</p>
+            <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">5만원 올인원 · 20명 선착순 · 숙박+식사+프로그램 전부 포함</p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
@@ -483,17 +544,20 @@ export default function SpringRetreatPage() {
                 <Users size={14} /> 20명 한정
               </div>
             </div>
+            <p className="text-xs text-white/50 mt-3 flex items-center gap-1"><Train size={12} /> 서울에서 KTX 1시간 30분 · 자차 2시간 30분</p>
             <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
               <div className="flex items-center justify-center gap-3">
                 <span className="text-lg line-through text-white/40">200,000원</span>
-                <span className="text-3xl font-black text-white">90,000원</span>
-                <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-black rounded-full">55% OFF</span>
+                <span className="text-3xl font-black text-white">50,000원</span>
+                <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-black rounded-full">75% OFF</span>
               </div>
-              <p className="text-xs text-white/50 mt-1.5">얼리버드 특가 · 선착순 20명 마감</p>
+              <p className="text-xs text-white/50 mt-1.5">얼리버드 특가 · 선착순 20명</p>
             </div>
           </div>
         </div>
       </section>
+
+
 
       <div className="max-w-3xl mx-auto px-4 pb-24">
 
@@ -610,30 +674,30 @@ export default function SpringRetreatPage() {
               <div className="flex items-center justify-center gap-3 mt-3">
                 <span className="text-2xl sm:text-3xl line-through text-white/50 font-bold">200,000원</span>
                 <ArrowRight size={24} className="text-white/60" />
-                <span className="text-4xl sm:text-5xl font-black">90,000원</span>
+                <span className="text-4xl sm:text-5xl font-black">50,000원</span>
               </div>
               <div className="inline-block mt-3 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-lg font-black">55% OFF</span>
-                <span className="text-sm ml-2 text-white/80">· 11만원 절약</span>
+                <span className="text-lg font-black">75% OFF</span>
+                <span className="text-sm ml-2 text-white/80">· 15만원 절약</span>
               </div>
-              <p className="text-sm text-white/70 mt-3">20명 선착순 마감</p>
+              <p className="text-sm text-white/70 mt-3">20명 선착순</p>
             </div>
           </div>
         </section>
 
-        {/* 9만원에 얻어가는 10가지 혜택 */}
+        {/* 5만원에 얻어가는 10가지 혜택 */}
         <section className="pb-12 sm:pb-16">
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2">VALUE PACKAGE</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              9만원에 얻어가는 <span className="text-primary">10가지 혜택</span>
+              5만원에 얻어가는 <span className="text-primary">10가지 혜택</span>
             </h2>
             <p className="text-sm text-gray-500 mt-2">이 모든 것이 한 번의 참가비에 포함됩니다</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
             {[
-              { icon: "🏡", title: "1박 숙박", desc: "산속 펜션 1박", value: "9만원 상당" },
-              { icon: "🍽", title: "완주 로컬 밥상", desc: "3끼 식사 제공", value: "3만원 상당" },
+              { icon: "🏡", title: "1박 숙박", desc: "산속 펜션 1박", value: "5만원 상당" },
+              { icon: "🍽", title: "완주 로컬 밥상", desc: "2끼 식사 제공", value: "2만원 상당" },
               { icon: "💪", title: "감각을 깨우는 움직임", desc: "전문 이끄미 세션", value: "10만원 상당" },
               { icon: "🎯", title: "계획 설계 워크숍", desc: "게이미피케이션 · 만다라트", value: "10만원 상당" },
               { icon: "🧭", title: "삶의 방향 점검 & 명상", desc: "자애명상 · 걷기명상 · 대화", value: "10만원 상당" },
@@ -663,7 +727,7 @@ export default function SpringRetreatPage() {
             <div className="mt-4 space-y-1">
               <p className="text-base text-gray-500">정가 <span className="line-through font-semibold">20만원</span></p>
               <p className="text-sm text-gray-500">얼리버드 특가 적용 시</p>
-              <p className="text-4xl font-black text-red-500 mt-1">9만원 !!</p>
+              <p className="text-4xl font-black text-red-500 mt-1">5만원 !!</p>
             </div>
             <a href="#apply" className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
               지금 바로 신청하기 <ArrowRight size={14} />
@@ -764,28 +828,66 @@ export default function SpringRetreatPage() {
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">참가비</p>
                   <p className="text-sm font-semibold text-gray-900 mt-1">
                     <span className="line-through text-gray-400 mr-1">20만원</span>
-                    <span className="text-primary text-lg font-black">9만원</span>
+                    <span className="text-primary text-lg font-black">5만원</span>
                   </p>
-                  <p className="text-xs text-red-500 font-semibold">55% OFF 얼리버드 특가</p>
+                  <p className="text-xs text-red-500 font-semibold">75% OFF 얼리버드 특가</p>
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">포함 내용</p>
                 <div className="flex flex-wrap gap-2">
-                  {["1박 2일 숙박", "3끼 식사 & 간식", "프로그램 4~5타임", "웰컴키트"].map((item) => (
+                  {["1박 2일 숙박", "2끼 식사 & 간식", "프로그램 4~5타임", "웰컴키트"].map((item) => (
                     <span key={item} className="px-3 py-1.5 rounded-full bg-sage text-sm text-gray-700 font-medium">{item}</span>
                   ))}
                 </div>
               </div>
             </div>
           </div>
+          {/* 교통편 안내 (서울 타겟) */}
+          <div className="mt-8 bg-blue-50 rounded-2xl p-6 border border-blue-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Train size={20} className="text-blue-600" />
+              <h3 className="font-black text-gray-900">서울에서 오시나요?</h3>
+              <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">참가자 36%가 서울</span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 bg-white rounded-xl p-4">
+                <span className="text-lg">🚄</span>
+                <div>
+                  <p className="font-bold text-sm text-gray-900">KTX (추천)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">용산역 → 전주역 <span className="font-bold text-blue-600">1시간 30분</span></p>
+                  <p className="text-xs text-gray-400">전주역에서 펜션까지 차량 30분</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-white rounded-xl p-4">
+                <span className="text-lg">🚌</span>
+                <div>
+                  <p className="font-bold text-sm text-gray-900">고속버스</p>
+                  <p className="text-xs text-gray-500 mt-0.5">센트럴시티 → 전주 <span className="font-bold text-blue-600">2시간 40분</span></p>
+                  <p className="text-xs text-gray-400">전주터미널에서 펜션까지 차량 30분</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-white rounded-xl p-4">
+                <span className="text-lg">🚗</span>
+                <div>
+                  <p className="font-bold text-sm text-gray-900">자차</p>
+                  <p className="text-xs text-gray-500 mt-0.5">서울 → 완주 <span className="font-bold text-blue-600">약 2시간 30분</span> (고속도로)</p>
+                  <p className="text-xs text-gray-400">무료 주차 가능 · 네비: 전북 완주군 해월신왕길 92</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-blue-500 font-semibold mt-4 text-center">💡 교통편 고민되시면 카톡으로 편하게 물어보세요!</p>
+          </div>
+
           <div id="apply" className="mt-6 scroll-mt-20">
             <ApplyForm />
           </div>
         </section>
 
         {/* 참가자 실제 후기 — 슬라이더 */}
-        <ReviewSlider />
+        <div id="reviews" className="scroll-mt-20">
+          <ReviewSlider />
+        </div>
 
         {/* 경험 중심 CTA */}
         <section className="pb-12 sm:pb-16">
@@ -827,13 +929,7 @@ export default function SpringRetreatPage() {
 
       </div>
 
-      {/* 모바일 하단 고정 CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-        <a href="#apply" className="flex items-center justify-center gap-2 w-full py-3.5 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-light transition-colors">
-          지금 바로 함께하기! <ArrowRight size={16} />
-        </a>
-      </div>
-      <div className="h-[72px] sm:hidden" />
+      <div className="h-[72px]" />
     </div>
   );
 }
