@@ -32,6 +32,12 @@ export async function POST(req: NextRequest) {
   if (!name || !phone) {
     return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
   }
+  if (!age || !gender || !occupation || !reason || !region || !transport) {
+    return NextResponse.json({ error: "모든 항목을 입력해주세요." }, { status: 400 });
+  }
+  if (photoConsent !== true) {
+    return NextResponse.json({ error: "촬영 동의는 필수입니다." }, { status: 400 });
+  }
 
   // 전화번호 정규화: 숫자만 추출 + 0 누락 시 복구 + 010-1234-5678 형식
   let digits = String(phone).replace(/[^0-9]/g, "");

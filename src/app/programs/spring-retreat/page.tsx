@@ -287,7 +287,7 @@ function ApplyForm() {
   const [gender, setGender] = useState("");
   const [occupation, setOccupation] = useState("");
   const [reason, setReason] = useState("");
-  const [photoConsent, setPhotoConsent] = useState(true);
+  const [photoConsent, setPhotoConsent] = useState(false);
   const [transport, setTransport] = useState("");
   const [region, setRegion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -295,7 +295,15 @@ function ApplyForm() {
   const [waitlistModal, setWaitlistModal] = useState<{ show: boolean; number: number }>({ show: false, number: 0 });
 
   const submit = async () => {
-    if (!name.trim() || !phone.trim()) { setResult({ ok: false, msg: "이름과 연락처를 입력해주세요." }); return; }
+    if (!name.trim()) { setResult({ ok: false, msg: "이름을 입력해주세요." }); return; }
+    if (!phone.trim()) { setResult({ ok: false, msg: "연락처를 입력해주세요." }); return; }
+    if (!age.trim()) { setResult({ ok: false, msg: "나이를 입력해주세요." }); return; }
+    if (!gender) { setResult({ ok: false, msg: "성별을 선택해주세요." }); return; }
+    if (!occupation.trim()) { setResult({ ok: false, msg: "현재 하시는 일을 입력해주세요." }); return; }
+    if (!reason.trim()) { setResult({ ok: false, msg: "신청 이유를 입력해주세요." }); return; }
+    if (!region.trim()) { setResult({ ok: false, msg: "지역을 입력해주세요." }); return; }
+    if (!transport) { setResult({ ok: false, msg: "이동 방법을 선택해주세요." }); return; }
+    if (!photoConsent) { setResult({ ok: false, msg: "촬영 동의에 체크해주세요." }); return; }
     setLoading(true);
     setResult(null);
     try {
@@ -374,21 +382,21 @@ function ApplyForm() {
           <>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">이름 *</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">이름 <span className="text-red-500">*</span></label>
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="홍길동" className={inputClass} />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">연락처 *</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">연락처 <span className="text-red-500">*</span></label>
                 <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-1234-5678" className={inputClass} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">나이</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">나이 <span className="text-red-500">*</span></label>
                 <input value={age} onChange={e => setAge(e.target.value)} placeholder="예: 28" className={inputClass} />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">성별</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">성별 <span className="text-red-500">*</span></label>
                 <div className="flex gap-2">
                   {["남성", "여성"].map((g) => (
                     <button key={g} type="button" onClick={() => setGender(g)}
@@ -400,21 +408,21 @@ function ApplyForm() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">현재 하시는 일</label>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">현재 하시는 일 <span className="text-red-500">*</span></label>
               <input value={occupation} onChange={e => setOccupation(e.target.value)} placeholder="예: 프리랜서 강사" className={inputClass} />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">신청 이유 / 기대하는 점</label>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">신청 이유 / 기대하는 점 <span className="text-red-500">*</span></label>
               <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
                 placeholder="리트릿에 참가하고 싶은 이유나 기대하는 점을 자유롭게 적어주세요."
                 className={`${inputClass} resize-none`} />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">지역 (시/군 단위)</label>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">지역 (시/군 단위) <span className="text-red-500">*</span></label>
               <input value={region} onChange={e => setRegion(e.target.value)} placeholder="예: 완주군" className={inputClass} />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 (선택)</label>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 <span className="text-red-500">*</span></label>
               <div className="flex flex-col gap-2">
                 {[
                   { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: "13:30", pickup: true },
@@ -457,7 +465,7 @@ function ApplyForm() {
                 <input type="checkbox" checked={photoConsent} onChange={e => setPhotoConsent(e.target.checked)}
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20" />
                 <span className="text-xs text-gray-600">
-                  리트릿 중 촬영되는 사진/영상이 홍보 목적으로 활용될 수 있음에 동의합니다.
+                  <span className="font-bold text-red-500">*</span> 리트릿 중 촬영되는 사진/영상이 홍보 목적으로 활용될 수 있음에 동의합니다. (필수)
                 </span>
               </label>
             </div>

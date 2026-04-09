@@ -8,6 +8,10 @@ const messageService = new SolapiMessageService(
 );
 const SENDER = (process.env.SOLAPI_SENDER || "").trim();
 
+// 관리자 번호
+const ADMIN_SOL = "01085319531";    // 홈페이지 관리자 임솔
+const ADMIN_SEJIN = "01053140146";  // 리트릿 운영자 임세진
+
 // 프로그램 목록 정의 (향후 프로그램 추가 시 여기에 추가)
 const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "spring-retreat-2026": { label: "완주하다 봄 리트릿 2026", maxCapacity: 20 },
@@ -197,6 +201,64 @@ export async function PATCH(req: NextRequest) {
       });
     } catch (smsErr) {
       console.error("자리 열림 SMS 발송 실패:", smsErr);
+    }
+  }
+
+  // 취소 처리 시 신청자/관리자에게 안내 문자
+  if (status === "cancelled" && appData?.status !== "cancelled" && appData?.phone && tableName === "retreat_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+
+      // 1) 신청자 안내
+      const applicantMsg = `안녕하세요, ${appData.name}님.
+
+완주하다 봄 리트릿 신청이
+취소 처리되었습니다.
+
+━━━━━━━━━━━━
+❎ 신청 취소 완료
+━━━━━━━━━━━━
+
+• 입금하신 금액이 있다면
+  영업일 기준 2~3일 내 환불됩니다.
+• 다음 회차에도 관심 부탁드려요!
+
+문의: 010-5314-0146
+감사합니다 :)`;
+
+      // 2) 관리자 알림 (취소 + 현재 인원)
+      const { count: activeCount } = await supabaseAdmin
+        .from("retreat_applications")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["pending", "confirmed"]);
+
+      const { count: wlCount } = await supabaseAdmin
+        .from("retreat_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "waitlist");
+
+      const adminMsg = `[봄 리트릿 취소 처리]
+
+■ 이름: ${appData.name}
+■ 연락처: ${appData.phone}
+■ 이전상태: ${appData.status}
+
+━━━━━━━━━━━━
+현재 ${activeCount || 0}/20명
+대기자 ${wlCount || 0}명
+━━━━━━━━━━━━
+
+※ 대기자가 있다면 순번대로
+관리자 페이지에서 "pending"으로
+변경 시 자동 안내 문자가 발송됩니다.`;
+
+      await Promise.allSettled([
+        messageService.sendOne({ to: phone, from: SENDER, text: applicantMsg, type: "LMS", subject: "봄 리트릿 신청 취소 안내" }),
+        messageService.sendOne({ to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: "봄 리트릿 취소 처리" }),
+        messageService.sendOne({ to: ADMIN_SEJIN, from: SENDER, text: adminMsg, type: "LMS", subject: "봄 리트릿 취소 처리" }),
+      ]);
+    } catch (smsErr) {
+      console.error("취소 SMS 발송 실패:", smsErr);
     }
   }
 
