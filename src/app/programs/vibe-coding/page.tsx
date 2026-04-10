@@ -28,6 +28,7 @@ import {
   Send,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 /* ───── 커리큘럼 Part 1~6 ───── */
@@ -320,9 +321,14 @@ export default function VibeCodingPage() {
             <ChevronLeft size={18} />
             <span className="text-sm font-medium">달팽이아지트</span>
           </Link>
-          <a href="#apply" className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all">
-            신청하기
-          </a>
+          <div className="flex items-center gap-2">
+            <a href="tel:010-8531-9531" className="flex items-center gap-1 border border-primary text-primary px-4 py-2 rounded-full text-sm font-semibold hover:bg-sage transition-all">
+              <Phone size={14} /> 전화
+            </a>
+            <a href="#apply" className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all">
+              신청하기
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -578,13 +584,36 @@ export default function VibeCodingPage() {
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">VENUE</p>
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 text-center mb-3">왜 달팽이아지트인가?</h2>
           <p className="text-sm text-gray-500 text-center mb-10">메이커 펜션의 3중 무기</p>
+
+          {/* 펜션 사진 갤러리 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-10 rounded-2xl overflow-hidden">
+            <div className="col-span-2 sm:col-span-2 row-span-2 relative aspect-[4/3]">
+              <Image src="/img/exterior-main.jpg" alt="달팽이아지트 펜션 외관" fill className="object-cover" sizes="(max-width:640px) 100vw, 66vw" />
+            </div>
+            <div className="relative aspect-[4/3]">
+              <Image src="/img/living-room-wide.jpg" alt="30평 거실" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+            </div>
+            <div className="relative aspect-[4/3]">
+              <Image src="/img/kitchen-wide.jpg" alt="풀옵션 부엌" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+            </div>
+            <div className="relative aspect-[4/3]">
+              <Image src="/img/room-1.jpg" alt="방" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+            </div>
+            <div className="relative aspect-[4/3]">
+              <Image src="/img/shower.jpg" alt="샤워실" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+            </div>
+            <div className="relative aspect-[4/3]">
+              <Image src="/img/venue-yoga.jpg" alt="워크숍 활동" fill className="object-cover" sizes="(max-width:640px) 50vw, 33vw" />
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-6">
               <div className="flex items-start gap-3">
                 <span className="text-3xl">🏕️</span>
                 <div>
                   <p className="font-black text-gray-900 text-base">펜션 (60평 독채)</p>
-                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">자연 속 코딩 환경 + 수영장/족욕 리프레시 + 1박2일 패키지 가능</p>
+                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">방 4개 · 화장실 2개 · 30평 거실 · 풀옵션 부엌 · 넓은 마당 · 자연 속 코딩 환경</p>
                 </div>
               </div>
             </div>
@@ -774,10 +803,10 @@ export default function VibeCodingPage() {
         {/* 문의 */}
         <section className="pb-8 text-center">
           <p className="text-sm text-gray-500">문의사항이 있으시면</p>
-          <a href="tel:010-5314-0146" className="inline-flex items-center gap-1.5 mt-2 text-primary font-bold text-base">
-            <Phone size={16} /> 010-5314-0146
+          <a href="tel:010-8531-9531" className="inline-flex items-center gap-2 mt-3 px-6 py-3 bg-primary text-white rounded-full font-bold text-base hover:bg-primary-dark transition-colors shadow-md">
+            <Phone size={18} /> 전화하기 010-8531-9531
           </a>
-          <p className="text-xs text-gray-400 mt-2">전북 완주군 소양면 해월신왕길 92 / 달팽이아지트펜션</p>
+          <p className="text-xs text-gray-400 mt-3">전북 완주군 소양면 해월신왕길 92 / 달팽이아지트펜션</p>
         </section>
       </div>
     </div>
