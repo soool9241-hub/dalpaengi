@@ -121,7 +121,7 @@ export default function SmsPage() {
     setLd(false);
   }, [cQ, pF, sF]);
 
-  useEffect(() => { if (step === 2) loadC(); }, [step, pF, sF]);
+  useEffect(() => { if (step === 2) loadC(); }, [step, loadC]);
 
   const phaseTpls = useMemo(() => {
     if (!selPhase) return [];
@@ -363,6 +363,8 @@ export default function SmsPage() {
 
             {/* 고객 리스트 */}
             <div style={{ borderRadius: 14, border: `1px solid ${bdr}`, overflow: "hidden", maxHeight: 420, overflowY: "auto" }}>
+              {ld && <div style={{ padding: 40, textAlign: "center", color: tx2 }}>고객 데이터 불러오는 중...</div>}
+              {!ld && custs.length === 0 && !err && <div style={{ padding: 40, textAlign: "center", color: tx3 }}>조건에 맞는 고객이 없습니다. 필터를 변경해보세요.</div>}
               {custs.map((c, i) => {
                 const on = picks.includes(c.guest_phone);
                 const sc = SCO[c.status] || "#888";
@@ -381,11 +383,9 @@ export default function SmsPage() {
               })}
             </div>
 
-            {custs.length > 0 && (
-              <button onClick={goSend} disabled={!picks.length} style={{ width: "100%", padding: 16, fontSize: 17, fontWeight: 800, borderRadius: 14, border: "none", marginTop: 18, cursor: picks.length ? "pointer" : "not-allowed", background: picks.length ? grn : bg3, color: picks.length ? "#fff" : tx3 }}>
-                {picks.length}명에게 발송 준비 →
-              </button>
-            )}
+            <button onClick={goSend} disabled={!picks.length} style={{ width: "100%", padding: 16, fontSize: 17, fontWeight: 800, borderRadius: 14, border: "none", marginTop: 18, cursor: picks.length ? "pointer" : "not-allowed", background: picks.length ? grn : bg3, color: picks.length ? "#fff" : tx3 }}>
+              {picks.length ? `${picks.length}명에게 발송 준비 →` : "고객을 선택하세요"}
+            </button>
           </>
         )}
 
