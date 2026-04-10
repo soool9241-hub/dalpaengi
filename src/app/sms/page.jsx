@@ -126,7 +126,7 @@ export default function SmsPage(){
   const send=async()=>{
     setSending(true);setSendRes(null);
     try{
-      const res=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phones:picks,message:msg})});
+      const res=await fetch("/api/sms-bulk",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phones:picks,message:msg})});
       const data=await res.json();
       setSendRes(res.ok?{ok:true,n:picks.length}:{ok:false,e:data.error});
     }catch(e){setSendRes({ok:false,e:e.message});}
