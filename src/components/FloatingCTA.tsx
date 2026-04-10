@@ -6,8 +6,8 @@ import { MessageCircle, Phone, Calendar } from "lucide-react";
 export default function FloatingCTA() {
   const pathname = usePathname();
 
-  // 관리자 페이지에서는 숨김
-  if (pathname?.startsWith("/admin")) return null;
+  // 관리자 페이지, SMS 페이지에서는 숨김
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/sms")) return null;
 
   const isRetreat = pathname?.startsWith("/programs/spring-retreat");
 
