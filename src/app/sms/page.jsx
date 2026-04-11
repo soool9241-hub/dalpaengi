@@ -98,7 +98,7 @@ export default function SmsPage() {
   const [picks, setPicks] = useState([]);
   const [ld, setLd] = useState(false);
   const [err, setErr] = useState(null);
-  const [pF, setPF] = useState("전체");
+  const [pF, setPF] = useState([]); // 다중 선택 (빈 배열 = 전체)
   const [sF, setSF] = useState("전체");
 
   // 발송
@@ -110,7 +110,7 @@ export default function SmsPage() {
     setLd(true); setErr(null);
     try {
       const params = new URLSearchParams();
-      if (pF !== "전체") params.set("purpose", pF);
+      if (pF.length > 0) params.set("purpose", pF.join(","));
       if (sF !== "전체") params.set("status", sF);
       if (cQ.trim()) params.set("q", cQ.trim());
       const res = await fetch(`/api/customers?${params}`);
@@ -330,11 +330,23 @@ export default function SmsPage() {
 
             {/* 필터 */}
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: tx3, marginBottom: 6 }}>예약 목적</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: tx3 }}>예약 목적 <span style={{ color: tx3 }}>(다중 선택 가능)</span></div>
+                {pF.length > 0 && <button onClick={() => setPF([])} style={{ fontSize: 11, fontWeight: 600, color: grnL, background: "none", border: "none", cursor: "pointer", padding: 0 }}>전체 해제</button>}
+              </div>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {PFS.map(f => (
-                  <button key={f} onClick={() => setPF(f)} style={{ padding: "6px 12px", fontSize: 13, fontWeight: 600, borderRadius: 10, border: "none", cursor: "pointer", background: pF === f ? tx1 : bg3, color: pF === f ? bg0 : tx2 }}>{f}</button>
-                ))}
+                {PFS.filter(f => f !== "전체").map(f => {
+                  const on = pF.includes(f);
+                  return (
+                    <button
+                      key={f}
+                      onClick={() => setPF(v => v.includes(f) ? v.filter(x => x !== f) : [...v, f])}
+                      style={{ padding: "6px 12px", fontSize: 13, fontWeight: 600, borderRadius: 10, border: "none", cursor: "pointer", background: on ? grn : bg3, color: on ? "#fff" : tx2 }}
+                    >
+                      {on && "✓ "}{f}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
