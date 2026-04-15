@@ -101,6 +101,32 @@ export default function Programs() {
       isMembership: true,
     },
     {
+      icon: Leaf,
+      title: "완주하다 봄 리트릿",
+      duration: "1박 2일 (4.18~19)",
+      price: 50000,
+      priceLabel: "얼리버드 5만원",
+      originalPrice: 200000,
+      perPerson: 50000,
+      maxPeople: "20명 한정",
+      categories: ["healing", "pension", "mt", "family", "membership"],
+      tags: ["리트릿", "얼리버드", "한정"],
+      tagColors: ["bg-green-100 text-green-600", "bg-amber-100 text-amber-600", "bg-red-100 text-red-600"],
+      gradient: "from-green-500 to-emerald-500",
+      image: "/img/nature-yard.jpg",
+      features: [
+        "1박 2일 숙박 (달팽이아지트)",
+        "3끼 식사 & 간식 제공",
+        "프로그램 4~5타임 (운동/명상/저널링/대화)",
+        "웰컴키트 증정",
+        "20명 한정 · 선착순 마감",
+      ],
+      extras: [],
+      description: "겨울 동안 움츠렸던 몸, 멈춰 있던 마음, 흐려졌던 의식을 봄의 리듬에 맞춰 다시 깨우는 1박 2일 리셋 캠프. 프리랜서, 1인 사업자, 창작자 등 자기 삶을 완주하고 싶은 사람들을 위한 프로그램입니다.",
+      highlight: true,
+      isRetreat: true,
+    },
+    {
       icon: Moon,
       title: "숙박 패키지",
       duration: "1박 2일",
@@ -278,22 +304,22 @@ export default function Programs() {
                 <div
                   key={originalIndex}
                   className={`group rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
-                    false
+                    prog.isRetreat
                       ? "bg-gradient-to-b from-green-50 to-white ring-2 ring-primary shadow-lg hover:shadow-2xl md:col-span-2 lg:col-span-1"
                       : "bg-white border border-border hover:shadow-xl"
                   }`}
                 >
                   {/* Image Area */}
-                  <div className={`relative overflow-hidden flex items-center justify-center ${false ? "h-56" : "h-48"}`}>
+                  <div className={`relative overflow-hidden flex items-center justify-center ${prog.isRetreat ? "h-56" : "h-48"}`}>
                     <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                    <div className={`absolute inset-0 ${false ? "bg-gradient-to-b from-primary/60 to-black/50" : "bg-black/40"}`} />
+                    <div className={`absolute inset-0 ${prog.isRetreat ? "bg-gradient-to-b from-primary/60 to-black/50" : "bg-black/40"}`} />
                     <div className="relative text-center text-white z-10">
-                      {false && <span className="text-4xl block mb-2">🌱</span>}
-                      {!false && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
-                      <p className={`font-bold ${false ? "text-xl" : "text-lg"}`}>{prog.title}</p>
-                      {false && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
+                      {prog.isRetreat && <span className="text-4xl block mb-2">🌱</span>}
+                      {!prog.isRetreat && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
+                      <p className={`font-bold ${prog.isRetreat ? "text-xl" : "text-lg"}`}>{prog.title}</p>
+                      {prog.isRetreat && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
                     </div>
-                    {false && (
+                    {prog.isRetreat && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
                         🔥 추천 프로그램
                       </div>
@@ -313,7 +339,7 @@ export default function Programs() {
                         <span className="bg-red-600 text-white text-lg font-black px-6 py-2 rounded-full -rotate-12 shadow-xl">SOLD OUT</span>
                       </div>
                     )}
-                    {prog.highlight && !false && (
+                    {prog.highlight && !prog.isRetreat && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
                       </div>
@@ -323,7 +349,7 @@ export default function Programs() {
                         EVENT 무료
                       </div>
                     )}
-                    {false && (
+                    {prog.isRetreat && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         4.18(토)~19(일)
                       </div>
@@ -360,7 +386,7 @@ export default function Programs() {
                     <p className="text-sm text-text-light mb-4">{prog.duration}</p>
 
                     {/* Price */}
-                    {false ? (
+                    {prog.isRetreat ? (
                       <>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
@@ -433,7 +459,7 @@ export default function Programs() {
                       </>
                     )}
 
-                    {false ? (
+                    {prog.isRetreat ? (
                       <Link
                         href="/programs/spring-retreat"
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white text-center"
