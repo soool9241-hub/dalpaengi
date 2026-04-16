@@ -96,8 +96,12 @@ export default function JiffPage() {
           <h1 className="text-5xl sm:text-7xl font-black tracking-tight mb-3" style={{ color: JIFF_YELLOW }}>
             JIFF STAY
           </h1>
-          <p className="text-lg sm:text-xl font-semibold text-white/90 mb-2">
+          <p className="text-lg sm:text-xl font-semibold text-white/90 mb-3">
             &ldquo;영화 다 보고 별 보러 오세요&rdquo;
+          </p>
+          <p className="text-sm leading-relaxed mb-2" style={{ color: TEXT_SEC }}>
+            일 년 중 단 10일, 전주에서 가장 큰 축제에<br />
+            더 많이 여행 오시길 기대하며 드리는 달팽이아지트의 선물 같은 하루
           </p>
           <p className="text-sm mb-8" style={{ color: TEXT_SEC }}>
             2026. 4.29 WED — 5.8 FRI

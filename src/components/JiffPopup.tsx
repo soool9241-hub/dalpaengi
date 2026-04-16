@@ -91,8 +91,13 @@ export default function JiffPopup() {
             <p className="text-[#9c9a92] text-xs mb-3">
               2026. 4.29 WED — 5.8 FRI
             </p>
-            <p className="text-white/90 text-base font-semibold leading-relaxed mb-5">
+            <p className="text-white/90 text-base font-semibold leading-relaxed mb-2">
               &ldquo;영화 다 보고 별 보러 오세요&rdquo;
+            </p>
+            <p className="text-[11px] leading-relaxed mb-5" style={{ color: "#9c9a92" }}>
+              일 년 중 단 10일, 전주에서 가장 큰 축제에<br />
+              더 많이 여행 오시길 기대하며 드리는<br />
+              달팽이아지트의 선물 같은 하루
             </p>
 
             {/* Location pill */}
