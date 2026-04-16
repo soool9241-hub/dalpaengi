@@ -14,6 +14,7 @@ import FAQ from "@/components/FAQ";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import EventPopup from "@/components/EventPopup";
+import JiffPopup from "@/components/JiffPopup";
 import { ReservationProvider, useReservation } from "@/context/ReservationContext";
 
 function QueryParamHandler() {
@@ -50,6 +51,7 @@ export default function Home() {
         <QueryParamHandler />
       </Suspense>
       <EventPopup />
+      <JiffPopup />
       <main className="min-h-screen">
         <Header />
         <Hero />

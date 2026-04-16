@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -21,6 +21,32 @@ export default function Programs() {
   const { pricing } = usePricing();
 
   const programs = useMemo(() => [
+    {
+      icon: Film,
+      title: "🎬 JIFF STAY (전주국제영화제 특가)",
+      duration: "1박 (4.29~5.8)",
+      price: 560000,
+      priceLabel: "560,000원",
+      originalPrice: 700000,
+      perPerson: 560000,
+      maxPeople: "하루 1팀",
+      categories: ["pension", "mt", "healing", "family"],
+      tags: ["🎬 영화제", "20% OFF", "한정"],
+      tagColors: ["bg-yellow-100 text-yellow-700", "bg-red-100 text-red-600", "bg-orange-100 text-orange-600"],
+      gradient: "from-yellow-500 to-amber-600",
+      image: "/img/outdoor-night.jpg",
+      features: [
+        "60평 독채 하루 1팀",
+        "BBQ 그릴 3개 무료",
+        "숯불 목살 5인분 무료",
+        "애플사이더 5병 무료",
+        "현물 혜택 19만원 무료 제공",
+      ],
+      extras: [],
+      description: "전주국제영화제 기간 한정 특가! 영화의거리에서 차로 12분. 영화 다 보고 별 보러 오세요. 독채에서 BBQ와 함께 영화 감상 토크를.",
+      highlight: true,
+      isJiff: true,
+    },
     {
       icon: GraduationCap,
       title: "대학생 MT 패키지 (60명 수용가능)",
@@ -319,6 +345,11 @@ export default function Programs() {
                       <p className={`font-bold ${prog.isRetreat ? "text-xl" : "text-lg"}`}>{prog.title}</p>
                       {prog.isRetreat && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
                     </div>
+                    {prog.isJiff && (
+                      <div className="absolute top-3 left-3 bg-yellow-500 text-black text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
+                        🎬 영화제 특가
+                      </div>
+                    )}
                     {prog.isRetreat && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
                         🔥 추천 프로그램
@@ -347,6 +378,11 @@ export default function Programs() {
                     {prog.isEvent && (
                       <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         EVENT 무료
+                      </div>
+                    )}
+                    {prog.isJiff && (
+                      <div className="absolute top-3 right-3 bg-yellow-400 text-black text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        4.29~5.8
                       </div>
                     )}
                     {prog.isRetreat && (
@@ -386,7 +422,21 @@ export default function Programs() {
                     <p className="text-sm text-text-light mb-4">{prog.duration}</p>
 
                     {/* Price */}
-                    {prog.isRetreat ? (
+                    {prog.isJiff ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
+                          <span className="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full font-bold">20% OFF</span>
+                        </div>
+                        <div className="flex items-baseline gap-1.5 mb-2">
+                          <span className="text-3xl font-black text-amber-600">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원</span>
+                        </div>
+                        <p className="text-xs font-bold text-amber-600 mb-5">
+                          🎬 10일 한정 · 현물 19만원 무료
+                        </p>
+                      </>
+                    ) : prog.isRetreat ? (
                       <>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
@@ -459,7 +509,14 @@ export default function Programs() {
                       </>
                     )}
 
-                    {prog.isRetreat ? (
+                    {prog.isJiff ? (
+                      <Link
+                        href="/programs/jiff"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white text-center"
+                      >
+                        🎬 JIFF STAY 자세히 보기 →
+                      </Link>
+                    ) : prog.isRetreat ? (
                       <Link
                         href="/programs/spring-retreat"
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white text-center"

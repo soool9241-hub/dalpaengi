@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Menu, X, Phone, ChevronDown, Settings } from "lucide-react";
 
 const navLinks = [
+  { label: "🎬 JIFF STAY", href: "/programs/jiff" },
   { label: "프로그램", href: "#programs" },
   { label: "공간", href: "#spaces" },
   { label: "갤러리", href: "#gallery" },
