@@ -647,6 +647,20 @@ export default function Reservation() {
   const JIFF_FREE_GRILLS = 3;
   const JIFF_FREE_DINNER = 5;
 
+  const jiffOriginalPrice = useMemo(() => {
+    if (!isJiffPromo) return 0;
+    let total = programPrice;
+    total += extraGuests * pricing.extraGuest;
+    total += bbqGrills * pricing.bbqGrill;
+    total += dinnerCount * pricing.dinner;
+    total += gasRanges * pricing.gasRange;
+    total += breakfastCount * 10000;
+    total += woodcraftCount * pricing.woodcraft;
+    total += potBbqCount * pricing.potBbq;
+    total += busPrice;
+    return total;
+  }, [isJiffPromo, programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, potBbqCount, busPrice, pricing]);
+
   const totalPrice = useMemo(() => {
     if (isJiffPromo) return 0;
     let total = programPrice;
@@ -765,7 +779,10 @@ export default function Reservation() {
                   <span className="text-lg">🎬</span>
                   <div>
                     <p className="text-sm font-bold text-amber-700">JIFF STAY 특가 적용 중!</p>
-                    <p className="text-xs text-gray-500">그릴 3개 + 목살 5인분 + 애플사이더 5병 무료 · 합산 0원</p>
+                    <p className="text-xs text-gray-500">
+                      그릴 3개 + 목살 5인분 + 조식 샌드위치 + 애플사이더 5병 무료
+                      {jiffOriginalPrice > 0 && <span className="ml-1 font-bold text-amber-600">({formatPrice(jiffOriginalPrice)} → 0원)</span>}
+                    </p>
                   </div>
                 </div>
                 <button onClick={() => setIsJiffPromo(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded">해제</button>
@@ -1545,7 +1562,12 @@ export default function Reservation() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-text-light">총 결제 금액</p>
-                {isJiffPromo && <p className="text-xs font-bold text-amber-600 mb-1">🎬 JIFF STAY 특가 적용</p>}
+                {isJiffPromo && jiffOriginalPrice > 0 && (
+                  <div className="mb-1">
+                    <span className="text-sm line-through text-text-light mr-2">{formatPrice(jiffOriginalPrice)}</span>
+                    <span className="text-xs font-bold text-amber-600 bg-yellow-50 border border-yellow-300 px-2 py-0.5 rounded-full">🎬 JIFF 전액 할인</span>
+                  </div>
+                )}
                 <p className="text-3xl font-bold text-primary">{formatPrice(totalPrice)}</p>
                 <p className="text-sm text-text-mid mt-1">1인당 약 <span className="font-semibold text-primary">{formatPrice(pricePerPerson)}</span></p>
                 {showBusForm && busPrice === 0 && <p className="text-xs text-text-light mt-1">+ 버스 렌트 별도 견적</p>}
