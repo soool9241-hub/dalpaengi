@@ -19,6 +19,8 @@ interface ReservationContextType {
   setIsMTPackage: (v: boolean) => void;
   isEventPromo: boolean;
   setIsEventPromo: (v: boolean) => void;
+  isJiffPromo: boolean;
+  setIsJiffPromo: (v: boolean) => void;
 }
 
 const ReservationContext = createContext<ReservationContextType | null>(null);
@@ -28,9 +30,10 @@ export function ReservationProvider({ children }: { children: ReactNode }) {
   const [selectedCheckInDate, setSelectedCheckInDate] = useState<SelectedDateInfo | null>(null);
   const [isMTPackage, setIsMTPackage] = useState(false);
   const [isEventPromo, setIsEventPromo] = useState(false);
+  const [isJiffPromo, setIsJiffPromo] = useState(false);
 
   return (
-    <ReservationContext.Provider value={{ selectedProgramId, setSelectedProgramId, selectedCheckInDate, setSelectedCheckInDate, isMTPackage, setIsMTPackage, isEventPromo, setIsEventPromo }}>
+    <ReservationContext.Provider value={{ selectedProgramId, setSelectedProgramId, selectedCheckInDate, setSelectedCheckInDate, isMTPackage, setIsMTPackage, isEventPromo, setIsEventPromo, isJiffPromo, setIsJiffPromo }}>
       {children}
     </ReservationContext.Provider>
   );

@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { X, Film } from "lucide-react";
 import Link from "next/link";
+import { useReservation } from "@/context/ReservationContext";
 
 const STORAGE_KEY = "jiff-popup-dismissed";
 
 export default function JiffPopup() {
   const [show, setShow] = useState(false);
   const [checked, setChecked] = useState(false);
+  const { setSelectedProgramId, setIsJiffPromo } = useReservation();
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
@@ -16,8 +18,7 @@ export default function JiffPopup() {
       const ts = parseInt(dismissed, 10);
       if (Date.now() - ts < 86400000) return;
     }
-    const timer = setTimeout(() => setShow(true), 3000);
-    return () => clearTimeout(timer);
+    setShow(true);
   }, []);
 
   useEffect(() => {
@@ -34,6 +35,15 @@ export default function JiffPopup() {
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
     }
     setShow(false);
+  };
+
+  const handleApply = () => {
+    setIsJiffPromo(true);
+    setSelectedProgramId("stay");
+    handleClose();
+    setTimeout(() => {
+      document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   if (!show) return null;
@@ -123,24 +133,22 @@ export default function JiffPopup() {
 
             {/* CTAs */}
             <div className="space-y-2.5">
-              <Link
-                href="/programs/jiff"
-                onClick={handleClose}
+              <button
+                onClick={handleApply}
                 className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm transition-all"
                 style={{ background: "#F5D547", color: "#0a0a0a" }}
               >
-                <Film size={16} />
-                JIFF STAY 자세히 보기
-              </Link>
-              <a
-                href="https://pf.kakao.com/_sxaExbxj"
-                target="_blank"
-                rel="noopener noreferrer"
+                🎬 신청하기
+              </button>
+              <Link
+                href="/programs/jiff"
+                onClick={handleClose}
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm border transition-all text-white/80 hover:text-white"
                 style={{ borderColor: "#2d2d2a" }}
               >
-                💬 카톡 상담하기
-              </a>
+                <Film size={14} />
+                자세히 보기
+              </Link>
             </div>
           </div>
         </div>
