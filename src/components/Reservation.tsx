@@ -132,14 +132,6 @@ export default function Reservation() {
     }
   }, [isEventPromo]);
 
-  // JIFF 프로모: 그릴 3개 + 저녁식사 5인분 자동 세팅 (전체 0원)
-  useEffect(() => {
-    if (isJiffPromo) {
-      setBbqGrills(3);
-      setDinnerCount(5);
-    }
-  }, [isJiffPromo]);
-
   // Hero에서 날짜 선택 시 → 달력에 체크인 + 체크아웃(1박) 자동 반영
   useEffect(() => {
     if (selectedCheckInDate) {
@@ -174,6 +166,26 @@ export default function Reservation() {
   const [woodcraftCount, setWoodcraftCount] = useState(0);
   const [potBbqCount, setPotBbqCount] = useState(0); // 0=미선택, 10~N인분
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // JIFF 프로모: 그릴 3개 + 저녁식사 5인분 + 조식(인원수) 자동 세팅 (전체 0원)
+  useEffect(() => {
+    if (isJiffPromo) {
+      setBbqGrills(3);
+      setDinnerCount(5);
+      setBreakfastCount(BASE_PEOPLE + extraGuests);
+      setBreakfastMenu("샌드위치");
+      setCurrentYear(2026);
+      setCurrentMonth(3);
+    }
+  }, [isJiffPromo, extraGuests]);
+
+  // JIFF 기간: 4.29 ~ 5.8
+  const JIFF_START = "2026-04-29";
+  const JIFF_END = "2026-05-08";
+  const isJiffDateAllowed = (dateStr: string) => {
+    if (!isJiffPromo) return true;
+    return dateStr >= JIFF_START && dateStr <= JIFF_END;
+  };
 
   // Bus rental
   const [showBusForm, setShowBusForm] = useState(false);
@@ -879,8 +891,10 @@ export default function Reservation() {
                     // 시간제에서 체크인일+체크아웃일 동시 → 이용 가능 슬롯 없으면 차단
                     const timeFullyBlocked = isTimeBased && !booked && isStayCheckout && !hasAvailableSlots(dateStr);
 
+                    const jiffBlocked = !isJiffDateAllowed(dateStr);
                     const disabled = !!(past
                       || weekendBlocked
+                      || jiffBlocked
                       || (booked && !isSelectingCheckout && !timePartial)
                       || timeFullyBlocked
                       || (isSelectingCheckout && disabledInCheckoutMode));
@@ -1225,7 +1239,13 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
-                  <Counter label="조식 식사" desc="1인 10,000원 (메뉴 선택)" value={breakfastCount} unitPrice={10000}
+                  {isJiffPromo && breakfastCount > 0 && (
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-amber-700 bg-yellow-50 border border-yellow-300 px-2 py-0.5 rounded-full">🎬 JIFF 무료</span>
+                      <span className="text-[10px] text-text-light">조식 샌드위치 {breakfastCount}인분 ({formatPrice(breakfastCount * 10000)} 상당)</span>
+                    </div>
+                  )}
+                  <Counter label="조식 식사" desc={isJiffPromo ? "샌드위치 · JIFF 무료 제공" : "1인 10,000원 (메뉴 선택)"} value={breakfastCount} unitPrice={isJiffPromo ? 0 : 10000}
                     onDec={() => setBreakfastCount((g) => Math.max(0, g - 1))} onInc={() => setBreakfastCount((g) => g + 1)} onChange={(v) => setBreakfastCount(v)} />
 
                   {breakfastCount > 0 && (
