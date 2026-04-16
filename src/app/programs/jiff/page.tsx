@@ -105,7 +105,7 @@ export default function JiffPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href="#reservation"
+              href="/?program=stay#reservation"
               className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 shadow-lg"
               style={{ background: JIFF_YELLOW, color: DARK_BG }}
             >
@@ -393,21 +393,19 @@ export default function JiffPage() {
           </h2>
           <div className="flex flex-col gap-3">
             <a
-              href="tel:010-8531-9531"
+              href="/?program=stay#reservation"
               className="flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-110 shadow-lg"
               style={{ background: JIFF_YELLOW, color: DARK_BG }}
             >
-              <Phone size={18} />
-              전화 예약 010-8531-9531
+              🎬 지금 예약하기
             </a>
             <a
-              href="https://pf.kakao.com/_sxaExbxj"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="tel:010-8531-9531"
               className="flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold text-base border transition-all hover:bg-white/5"
               style={{ borderColor: BORDER, color: "#fff" }}
             >
-              💬 카톡 상담 sool9241
+              <Phone size={18} />
+              전화 010-8531-9531
             </a>
           </div>
         </div>
@@ -417,21 +415,19 @@ export default function JiffPage() {
       <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden p-3" style={{ background: `${DARK_BG}ee`, backdropFilter: "blur(12px)" }}>
         <div className="flex gap-2">
           <a
-            href="tel:010-8531-9531"
+            href="/?program=stay#reservation"
             className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-sm"
             style={{ background: JIFF_YELLOW, color: DARK_BG }}
           >
-            <Phone size={14} />
-            전화 예약
+            🎬 예약하기
           </a>
           <a
-            href="https://pf.kakao.com/_sxaExbxj"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="tel:010-8531-9531"
             className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-sm border"
             style={{ borderColor: BORDER, color: "#fff" }}
           >
-            💬 카톡 상담
+            <Phone size={14} />
+            전화
           </a>
         </div>
       </div>
