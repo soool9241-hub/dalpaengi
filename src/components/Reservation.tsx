@@ -164,6 +164,7 @@ export default function Reservation() {
   const [breakfastCount, setBreakfastCount] = useState(0);
   const [breakfastMenu, setBreakfastMenu] = useState<string>("");
   const [woodcraftCount, setWoodcraftCount] = useState(0);
+  const [assemblyCount, setAssemblyCount] = useState(0);
   const [potBbqCount, setPotBbqCount] = useState(0); // 0=미선택, 10~N인분
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -450,6 +451,7 @@ export default function Reservation() {
         dinnerCount > 0 ? `저녁식사 ${dinnerCount}명` : "",
         breakfastCount > 0 ? `조식 ${breakfastCount}명${breakfastMenu ? ` (${breakfastMenu})` : ""}` : "",
         woodcraftCount > 0 ? `목공키트 ${woodcraftCount}개` : "",
+        assemblyCount > 0 ? `조립체험 ${assemblyCount}인` : "",
         potBbqCount > 0 ? `항아리BBQ ${potBbqCount}인분` : "",
         busRequested ? `버스 렌트 (${busSelections.map(b => { const t = BUS_TYPES.find(bt => bt.id === b.typeId); return t ? `${t.label} ${b.count}대` : ""; }).join(" + ") || "미선택"})` : "",
         selectedTimeSlots.length > 0 ? `시간대: ${getTimeSlotLabel()}` : "",
@@ -656,10 +658,11 @@ export default function Reservation() {
     total += gasRanges * pricing.gasRange;
     total += breakfastCount * 10000;
     total += woodcraftCount * pricing.woodcraft;
+    total += assemblyCount * 5000;
     total += potBbqCount * pricing.potBbq;
     total += busPrice;
     return total;
-  }, [isJiffPromo, programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, potBbqCount, busPrice, pricing]);
+  }, [isJiffPromo, programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, busPrice, pricing]);
 
   const totalPrice = useMemo(() => {
     if (isJiffPromo) return 0;
@@ -679,10 +682,11 @@ export default function Reservation() {
     total += gasRanges * pricing.gasRange;
     total += breakfastCount * 10000;
     total += woodcraftCount * pricing.woodcraft;
+    total += assemblyCount * 5000;
     total += potBbqCount * pricing.potBbq;
     total += busPrice;
     return total;
-  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, potBbqCount, busPrice, pricing, isEventPromo, isJiffPromo]);
+  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, busPrice, pricing, isEventPromo, isJiffPromo]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -1329,6 +1333,18 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
+                  {/* 조립공간 셀프체험 */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-xs font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">숙박 예약 할인</span>
+                      <span className="text-[10px] text-text-light"><span className="line-through">30,000원</span> → <span className="font-bold text-primary">5,000원</span>/인</span>
+                    </div>
+                  </div>
+                  <Counter label="🧩 조립공간 셀프체험" desc="아이들 추천! CNC 나무 끼워맞추기 · 도구 불필요 · 셀프 자유 체험" value={assemblyCount} unitPrice={5000}
+                    onDec={() => setAssemblyCount((g) => Math.max(0, g - 1))} onInc={() => setAssemblyCount((g) => g + 1)} onChange={(v) => setAssemblyCount(v)} />
+
+                  <hr className="border-border" />
+
                   {/* 버스 렌트 */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -1555,6 +1571,7 @@ export default function Reservation() {
                   {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * pricing.gasRange)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-amber-600 font-bold">무료(JIFF)</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, dinnerCount - (isEventPromo ? EVENT_FREE_DINNER : 0)) * pricing.dinner)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * pricing.woodcraft)}</p>}
+                  {assemblyCount > 0 && <p>조립공간 셀프체험 ({assemblyCount}인): <span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span><span className="text-primary font-semibold">{formatPrice(assemblyCount * 5000)}</span></p>}
                   {potBbqCount > 0 && <p>항아리 바베큐 ({potBbqCount}인분): {formatPrice(potBbqCount * pricing.potBbq)}</p>}
                   {showBusForm && busPrice > 0 && <p>버스 렌트 ({busForm.pickupPlace} 왕복): {formatPrice(busPrice)}</p>}
                   {showBusForm && busPrice === 0 && <p>버스 렌트: 별도 견적</p>}
@@ -1635,6 +1652,7 @@ export default function Reservation() {
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? " (JIFF)" : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-amber-600">무료</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-red-500">무료</span></> : formatPrice(dinnerCount * pricing.dinner)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * pricing.woodcraft)}</span></div>}
+              {assemblyCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">조립공간 셀프체험 ({assemblyCount}인)</span><span className="font-medium text-text-dark"><span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span>{formatPrice(assemblyCount * 5000)}</span></div>}
               {potBbqCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">항아리 바베큐 ({potBbqCount}인분)</span><span className="font-medium text-text-dark">{formatPrice(potBbqCount * pricing.potBbq)}</span></div>}
               {showBusForm && busPrice > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트 ({busForm.pickupPlace} 왕복)</span><span className="font-medium text-text-dark">{formatPrice(busPrice)}</span></div>}
               {showBusForm && busPrice === 0 && <div className="flex justify-between text-sm"><span className="text-text-light">버스 렌트</span><span className="font-medium text-amber-600">별도 견적</span></div>}

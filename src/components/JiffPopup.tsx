@@ -109,27 +109,52 @@ export default function JiffPopup() {
               <span className="text-[11px] text-white/80">60평 독채</span>
             </div>
 
-            {/* Offer cards */}
-            <div className="space-y-2.5 mb-5">
-              <div className="flex items-center gap-3 bg-[#151514] border border-[#2d2d2a] rounded-xl p-3 text-left">
-                <span className="text-[#F5D547] text-lg font-black flex-shrink-0">20%</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-bold">특가 할인</p>
-                  <p className="text-[#9c9a92] text-[10px]">70만원 → 56만원</p>
+            {/* 할인 */}
+            <div className="rounded-xl p-3 mb-3 text-center" style={{ background: "#151514", border: "1px solid #2d2d2a" }}>
+              <p className="text-[10px] mb-1" style={{ color: "#9c9a92" }}>숙박 정상가</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg line-through text-white/30">700,000원</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#E8593C20", color: "#E8593C" }}>20% OFF</span>
+              </div>
+              <p className="text-2xl font-black mt-1" style={{ color: "#F5D547" }}>560,000원</p>
+            </div>
+
+            {/* 현물 혜택 */}
+            <div className="rounded-xl p-3 mb-3" style={{ background: "#F5D54708", border: "1px solid #F5D54740" }}>
+              <p className="text-[10px] font-bold text-center mb-2" style={{ color: "#F5D547" }}>+ 추가 선물 혜택</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/80">🔥 BBQ 그릴 3개</span>
+                  <span className="line-through text-white/30">90,000원</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/80">🥩 숯불 목살 5인분</span>
+                  <span className="line-through text-white/30">50,000원</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/80">🍎 애플사이더 5병</span>
+                  <span className="line-through text-white/30">50,000원</span>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/80">🥪 조식 샌드위치</span>
+                  <span className="line-through text-white/30">인원수 제공</span>
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 bg-[#151514] border border-[#2d2d2a] rounded-xl p-3 text-left">
-                <span className="text-lg flex-shrink-0">🎁</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-bold">현물 혜택 19만원 무료</p>
-                  <p className="text-[#9c9a92] text-[10px]">BBQ 그릴 3개 + 목살 5인분 + 애플사이더 5병</p>
-                </div>
+              <div className="h-px my-2" style={{ background: "#2d2d2a" }} />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold" style={{ color: "#F5D547" }}>선물 혜택 합계</span>
+                <span className="text-base font-black" style={{ color: "#F5D547" }}>190,000원 무료</span>
               </div>
             </div>
 
+            {/* 실질 혜택 총합 */}
+            <div className="rounded-xl p-2.5 mb-4 text-center" style={{ background: "#F5D54712", border: "1px solid #F5D54760" }}>
+              <p className="text-[10px]" style={{ color: "#9c9a92" }}>실질 혜택</p>
+              <p className="text-xl font-black" style={{ color: "#F5D547" }}>총 330,000원</p>
+            </div>
+
             {/* Urgency */}
-            <div className="flex items-center justify-center gap-1.5 mb-5">
+            <div className="flex items-center justify-center gap-1.5 mb-4">
               <span className="w-2 h-2 rounded-full bg-[#E8593C] animate-pulse" />
               <span className="text-[11px] font-bold text-[#E8593C]">
                 10일 한정 · 하루 1팀 선착순
@@ -143,7 +168,7 @@ export default function JiffPopup() {
                 className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm transition-all"
                 style={{ background: "#F5D547", color: "#0a0a0a" }}
               >
-                🎬 신청하기
+                🎁 19만원 상당 선물 받기
               </button>
               <Link
                 href="/programs/jiff"
@@ -152,7 +177,7 @@ export default function JiffPopup() {
                 style={{ borderColor: "#2d2d2a" }}
               >
                 <Film size={14} />
-                자세히 보기
+                상세 내용 보기
               </Link>
             </div>
           </div>

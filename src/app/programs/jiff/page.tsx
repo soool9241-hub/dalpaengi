@@ -236,7 +236,12 @@ export default function JiffPage() {
 
       {/* ── 추가 옵션 ─────────────────────────────────────────────── */}
       <section className="py-16 px-5" style={{ background: CARD_BG }}>
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <p className="text-center text-[10px] font-bold tracking-[0.3em] mb-2" style={{ color: JIFF_YELLOW }}>
+            ADD-ON
+          </p>
+          <h3 className="text-lg font-black text-center text-white mb-6">추가 옵션</h3>
+
           <div className="rounded-2xl border p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-4" style={{ borderColor: BORDER, background: DARK_BG }}>
             <span className="text-3xl">🥪</span>
             <div className="flex-1">
@@ -247,6 +252,24 @@ export default function JiffPage() {
               <p className="text-[11px]" style={{ color: TEXT_SEC }}>전날 저녁 냉장고에 사전 세팅</p>
             </div>
             <span className="text-sm font-bold" style={{ color: JIFF_YELLOW }}>1인 10,000원</span>
+          </div>
+
+          <div className="rounded-2xl border p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-4" style={{ borderColor: JIFF_YELLOW + "40", background: DARK_BG }}>
+            <span className="text-3xl">🧩</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-bold text-white">조립공간 셀프체험</h3>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${JIFF_YELLOW}20`, color: JIFF_YELLOW }}>아이들 추천!</span>
+              </div>
+              <p className="text-[11px] mb-1.5" style={{ color: TEXT_SEC }}>
+                CNC 정밀 커팅 나무 조각을 아이들이 직접 끼워맞춰<br />
+                상자 · 집 · 자동차를 만들어요!
+              </p>
+              <p className="text-[11px]" style={{ color: TEXT_SEC }}>
+                접착제 · 도구 없이 손으로만 → 안전 · 셀프 자유 체험
+              </p>
+            </div>
+            <span className="text-sm font-bold" style={{ color: JIFF_YELLOW }}>1인 5,000원</span>
           </div>
         </div>
       </section>
