@@ -13,12 +13,8 @@ export default function JiffPopup() {
   const { setSelectedProgramId, setIsJiffPromo } = useReservation();
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (dismissed) {
-      const ts = parseInt(dismissed, 10);
-      if (Date.now() - ts < 86400000) return;
-    }
-    setShow(true);
+    // 팝업 비활성화
+    return;
   }, []);
 
   useEffect(() => {

@@ -46,6 +46,7 @@ export default function Programs() {
       description: "전주국제영화제 기간 한정 특가! 영화의거리에서 차로 12분. 영화 다 보고 별 보러 오세요. 독채에서 BBQ와 함께 영화 감상 토크를.",
       highlight: true,
       isJiff: true,
+      soldOut: true,
     },
     {
       icon: GraduationCap,
@@ -512,9 +513,13 @@ export default function Programs() {
                     {prog.isJiff ? (
                       <Link
                         href="/programs/jiff"
-                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white text-center"
+                        className={`block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center ${
+                          prog.soldOut
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
+                        }`}
                       >
-                        🎬 JIFF STAY 자세히 보기 →
+                        {prog.soldOut ? "SOLD OUT — 상세보기 →" : "🎬 JIFF STAY 자세히 보기 →"}
                       </Link>
                     ) : prog.isRetreat ? (
                       <Link
