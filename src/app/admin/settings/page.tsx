@@ -16,7 +16,7 @@ const PRICE_FIELDS: { key: keyof PricingData; label: string }[] = [
   { key: "daynight", label: "주/야간 패키지 (타임당)" },
   { key: "extraGuest", label: "추가인원 (1인)" },
   { key: "bbqGrill", label: "BBQ 그릴 (1개)" },
-  { key: "gasRange", label: "가스렌지 (1개)" },
+  { key: "gasRange", label: "가스버너 (1개)" },
   { key: "dinner", label: "저녁식사 (1인)" },
   { key: "woodcraft", label: "목공키트 (1개)" },
   { key: "potBbq", label: "항아리BBQ (1인분)" },

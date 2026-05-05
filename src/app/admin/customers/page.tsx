@@ -350,7 +350,7 @@ export default function CustomersPage() {
                       <span className="font-bold text-gray-900">{detail.stats.totalBbq}개</span>
                     </div>
                     <div className="flex justify-between sm:flex-col sm:text-center">
-                      <span className="text-gray-500">가스렌지</span>
+                      <span className="text-gray-500">가스버너</span>
                       <span className="font-bold text-gray-900">{detail.stats.totalBurner}개</span>
                     </div>
                     <div className="flex justify-between sm:flex-col sm:text-center">

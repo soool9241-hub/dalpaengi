@@ -66,7 +66,7 @@ function formatCheckinOptions(r: any): { label: string; value: string; color: st
   if (r.dinner_count > 0) opts.push({ label: "저녁식사", value: `${r.dinner_count}인분`, color: "bg-orange-50 text-orange-700" });
   if (r.woodcraft_count > 0) opts.push({ label: "목공체험", value: `${r.woodcraft_count}명`, color: "bg-amber-50 text-amber-700" });
   if (r.pot_bbq_count > 0) opts.push({ label: "항아리BBQ", value: `${r.pot_bbq_count}개`, color: "bg-rose-50 text-rose-700" });
-  if (r.burner_count > 0) opts.push({ label: "가스렌지", value: `${r.burner_count}개`, color: "bg-blue-50 text-blue-700" });
+  if (r.burner_count > 0) opts.push({ label: "가스버너", value: `${r.burner_count}개`, color: "bg-blue-50 text-blue-700" });
   if (r.bus_requested) {
     const bd = r.bus_detail;
     if (bd && bd.pickup_place) {
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
         if (editForm.dinner_count !== original.dinner_count) changes.push(`저녁식사: ${original.dinner_count}인분 → ${editForm.dinner_count}인분`);
         if (editForm.woodcraft_count !== original.woodcraft_count) changes.push(`목공체험: ${original.woodcraft_count}개 → ${editForm.woodcraft_count}개`);
         if (editForm.pot_bbq_count !== original.pot_bbq_count) changes.push(`항아리BBQ: ${original.pot_bbq_count}개 → ${editForm.pot_bbq_count}개`);
-        if (editForm.burner_count !== original.burner_count) changes.push(`가스렌지: ${original.burner_count}개 → ${editForm.burner_count}개`);
+        if (editForm.burner_count !== original.burner_count) changes.push(`가스버너: ${original.burner_count}개 → ${editForm.burner_count}개`);
         if (editForm.bus_requested !== original.bus_requested) changes.push(`버스: ${original.bus_requested ? "요청" : "미요청"} → ${editForm.bus_requested ? "요청" : "미요청"}`);
       }
 
@@ -536,7 +536,7 @@ export default function AdminDashboard() {
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-gray-500 font-bold">가스렌지</label>
+                          <label className="text-[10px] text-gray-500 font-bold">가스버너</label>
                           <input type="number" value={editForm.burner_count || ""} onChange={e => setEditForm({ ...editForm, burner_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>

@@ -93,7 +93,7 @@ function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
   if (data.bbqGrills > 0)
     lines.push(`• 그릴 대여 (${data.bbqGrills}개 × ${formatPrice(p.bbqGrill)}): ${formatPrice(data.bbqGrills * p.bbqGrill)}`);
   if (data.gasRanges > 0)
-    lines.push(`• 가스렌지 (${data.gasRanges}개 × ${formatPrice(p.gasRange)}): ${formatPrice(data.gasRanges * p.gasRange)}`);
+    lines.push(`• 가스버너 (${data.gasRanges}개 × ${formatPrice(p.gasRange)}): ${formatPrice(data.gasRanges * p.gasRange)}`);
   if (data.dinnerCount > 0)
     lines.push(`• 저녁식사 (${data.dinnerCount}명 × ${formatPrice(p.dinner)}): ${formatPrice(data.dinnerCount * p.dinner)}`);
   if (data.breakfastCount && data.breakfastCount > 0)

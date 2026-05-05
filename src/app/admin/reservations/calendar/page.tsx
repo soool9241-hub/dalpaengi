@@ -267,7 +267,7 @@ export default function CalendarPage() {
               <h4 className="text-sm font-bold text-gray-900 mb-3">옵션 상세</h4>
               <div className="grid grid-cols-2 gap-2">
                 <OptionBox label="BBQ 그릴" value={detailRes.bbq_count} unit="개" active={detailRes.bbq_count > 0} />
-                <OptionBox label="가스렌지" value={detailRes.burner_count} unit="개" active={detailRes.burner_count > 0} />
+                <OptionBox label="가스버너" value={detailRes.burner_count} unit="개" active={detailRes.burner_count > 0} />
                 <OptionBox label="저녁식사" value={detailRes.dinner_count} unit="명" active={detailRes.dinner_count > 0} />
                 <OptionBox label="목공키트" value={detailRes.woodcraft_count} unit="개" active={detailRes.woodcraft_count > 0} />
                 <OptionBox label="항아리BBQ" value={detailRes.pot_bbq_count} unit="인분" active={detailRes.pot_bbq_count > 0} />

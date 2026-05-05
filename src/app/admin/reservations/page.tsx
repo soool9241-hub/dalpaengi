@@ -220,7 +220,7 @@ export default function ReservationsPage() {
       changes.push(`• 인원: ${oldLabel} → ${newLabel}`);
     }
     if (editData.bbq_count !== detail.bbq_count) changes.push(`• BBQ 그릴: ${detail.bbq_count}개 → ${editData.bbq_count}개`);
-    if (editData.burner_count !== detail.burner_count) changes.push(`• 가스렌지: ${detail.burner_count}개 → ${editData.burner_count}개`);
+    if (editData.burner_count !== detail.burner_count) changes.push(`• 가스버너: ${detail.burner_count}개 → ${editData.burner_count}개`);
     if (editData.dinner_count !== detail.dinner_count) changes.push(`• 저녁식사: ${detail.dinner_count}명 → ${editData.dinner_count}명`);
     if (editData.woodcraft_count !== detail.woodcraft_count) changes.push(`• 목공키트: ${detail.woodcraft_count}개 → ${editData.woodcraft_count}개`);
     if (editData.pot_bbq_count !== detail.pot_bbq_count) changes.push(`• 항아리BBQ: ${detail.pot_bbq_count}인분 → ${editData.pot_bbq_count}인분`);
@@ -571,7 +571,7 @@ export default function ReservationsPage() {
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1 block">가스렌지</label>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">가스버너</label>
                     <input type="number" value={ed("burner_count") || ""} onChange={(e) => setEd("burner_count", Math.min(5, Math.max(0, parseInt(e.target.value) || 0)))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
@@ -747,7 +747,7 @@ export default function ReservationsPage() {
                   <Row label="목적" value={detail.purpose || detail.purpose_raw || "-"} />
                   {detail.time_slot && <Row label="시간대" value={detail.time_slot} />}
                   <Row label="BBQ 그릴" value={`${detail.bbq_count}개`} />
-                  <Row label="가스렌지" value={`${detail.burner_count}개`} />
+                  <Row label="가스버너" value={`${detail.burner_count}개`} />
                   {detail.dinner_count > 0 && <Row label="저녁식사" value={`${detail.dinner_count}명`} />}
                   {detail.woodcraft_count > 0 && <Row label="목공키트" value={`${detail.woodcraft_count}개`} />}
                   {detail.pot_bbq_count > 0 && <Row label="항아리BBQ" value={`${detail.pot_bbq_count}인분`} />}

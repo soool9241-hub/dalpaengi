@@ -84,7 +84,7 @@ ${d.originalAmount != null && d.newAmount != null ? `
 ${d.newAmount < d.originalAmount ? `• 환불 금액: ${fmt(d.originalAmount - d.newAmount)}\n※ 차액분은 입실 1일 전 입금 처리 예정입니다.` : d.newAmount > d.originalAmount ? `• 추가 결제: ${fmt(d.newAmount - d.originalAmount)}\n※ 추가 결제금을 아래 계좌로 입금 부탁드립니다.\n카카오뱅크 3333-06-4749542 임솔` : "• 금액 변동 없음"}
 ` : ""}
 ━━ 현재 옵션 ━━
-${d.bbqCount > 0 ? `• BBQ 그릴: ${d.bbqCount}개\n` : ""}${d.burnerCount > 0 ? `• 가스렌지: ${d.burnerCount}개\n` : ""}${d.dinnerCount > 0 ? `• 저녁식사: ${d.dinnerCount}명\n` : ""}${d.woodcraftCount > 0 ? `• 목공키트: ${d.woodcraftCount}개\n` : ""}${d.potBbqCount > 0 ? `• 항아리BBQ: ${d.potBbqCount}인분\n` : ""}${busSection}${d.notes ? `\n메모: ${d.notes}` : ""}
+${d.bbqCount > 0 ? `• BBQ 그릴: ${d.bbqCount}개\n` : ""}${d.burnerCount > 0 ? `• 가스버너: ${d.burnerCount}개\n` : ""}${d.dinnerCount > 0 ? `• 저녁식사: ${d.dinnerCount}명\n` : ""}${d.woodcraftCount > 0 ? `• 목공키트: ${d.woodcraftCount}개\n` : ""}${d.potBbqCount > 0 ? `• 항아리BBQ: ${d.potBbqCount}인분\n` : ""}${busSection}${d.notes ? `\n메모: ${d.notes}` : ""}
 문의: 010-8531-9531`;
 }
 
