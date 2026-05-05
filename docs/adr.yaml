@@ -1,0 +1,219 @@
+# 달팽이아지트 펜션 통합 시스템 - Architecture Decision Records
+# 주요 기술·비즈니스 결정 기록. mafia-codereview가 위반 시 자동 지적.
+
+# ============================================================
+# ADR-001: Next.js App Router 표준
+# ============================================================
+- id: ADR-001
+  title: 모든 달팽이아지트 웹 프로젝트는 Next.js 14+ App Router 사용
+  status: accepted
+  date: 2026-03-29
+  context: |
+    펜션 메인 웹사이트·청소관리앱·CRM 모두 풀스택 웹앱 필요.
+    솔의 기존 스택과 통일, Vercel 자동 배포.
+  decision: Next.js 14+ App Router + React Server Components
+  consequences:
+    positive:
+      - Server Component로 Supabase service_role 안전하게 사용
+      - Vercel 배포·프리뷰 자동화
+      - 솔의 경험치 재활용
+    negative:
+      - App Router 학습 곡선
+  alternatives_rejected:
+    - Remix (Vercel 편의성·경험 부족)
+    - Vite SPA (서버 로직 별도 필요)
+
+# ============================================================
+# ADR-002: Supabase 단일 백엔드
+# ============================================================
+- id: ADR-002
+  title: 모든 프로젝트가 하나의 Supabase 프로젝트 공유
+  status: accepted
+  date: 2026-03-29
+  context: |
+    예약·고객·청소 데이터가 서로 연결됨.
+    1인 운영이므로 복수 백엔드 관리 부담 큼.
+  decision: Supabase 프로젝트 `zujmishjfpmyjuipncby` 하나로 통합
+  consequences:
+    positive:
+      - 테이블 간 JOIN 가능
+      - RLS 통합 관리
+      - GitHub 로그인 공유
+      - Realtime 구독 활용
+    negative:
+      - Supabase 장애 시 전체 서비스 영향
+      - 무료 플랜 한도(DB 500MB, Storage 1GB) 모니터링
+  alternatives_rejected:
+    - Firebase (관계형 부적합)
+    - 자체 PostgreSQL + S3 (1인 운영 불가)
+  constraints:
+    - 모든 테이블 RLS 필수
+    - service_role은 서버사이드만
+    - 스키마 변경은 migration 파일로
+
+# ============================================================
+# ADR-003: Solapi SMS (한국 특화)
+# ============================================================
+- id: ADR-003
+  title: 모든 SMS/LMS 발송을 Solapi로 단일화
+  status: accepted
+  date: 2026-03-29
+  context: |
+    한국 수신자 대상 + 발신번호 사전등록 제도 준수 필요.
+    솔 계정·발신번호 등록 완료.
+  decision: Solapi API + 서버사이드 라우트(app/api/notify/**) 에서만
+  consequences:
+    positive:
+      - 한국 SMS 규제 준수
+      - 건당 9~20원 예측 가능
+      - 발신번호 재활용
+    negative:
+      - 90자 초과 시 LMS 전환·비용 증가
+      - API 장애 대응 필요
+  constraints:
+    - API 시크릿 서버사이드 전용
+    - 같은 번호 1분 3회 초과 차단
+    - 야간(21:00~08:00) 광고성 발송 금지 (정통법)
+
+# ============================================================
+# ADR-004: 레이어 아키텍처
+# ============================================================
+- id: ADR-004
+  title: app/ → components/ → lib/ 단방향 의존성
+  status: accepted
+  date: 2026-04-24
+  decision: |
+    - lib/ = 순수 도메인, Supabase·Solapi 래퍼 (최하위)
+    - components/ = 재사용 UI (lib/만 import)
+    - app/ = 페이지·라우트 (모두 import 가능)
+  enforcement: mafia-codereview 플러그인 자동 검증
+
+# ============================================================
+# ADR-005: 상태관리 라이브러리 없음
+# ============================================================
+- id: ADR-005
+  title: Redux·Zustand 등 전역 상태관리 라이브러리 미도입
+  status: accepted
+  date: 2026-04-24
+  context: 1인 개발, Supabase Realtime 활용
+  decision: useState + useReducer + Supabase Realtime
+  revisit_when: 공유 상태 5개 이상 늘어나면 재검토
+
+# ============================================================
+# ADR-006: 요금 계산 중앙화
+# ============================================================
+- id: ADR-006
+  title: 모든 요금 계산을 lib/pricing.ts 함수로 통일
+  status: accepted
+  date: 2026-04-24
+  context: |
+    웹사이트·CRM·SMS에서 동일 요금 로직 필요.
+    규칙 변경 시 한 곳만 수정해야 함.
+  decision: |
+    - PROGRAMS, EXTRA_GUEST_PRICE, DINNER_OPTIONS 등 상수 고정
+    - calculateTotalPrice() 함수로 모든 계산 통일
+    - 매직 넘버 금지, 반드시 상수 참조
+  rationale: |
+    2026년 요금 인상·옵션 추가 시 코드 전체에 흩어진
+    하드코딩을 찾는 비용 > 초기 투자 비용
+
+# ============================================================
+# ADR-007: 재방문 3회 이상 VIP 자동 태깅
+# ============================================================
+- id: ADR-007
+  title: 재방문 3회 이상 고객을 VIP로 자동 분류
+  status: accepted
+  date: 2026-04-24
+  context: |
+    재방문 고객이 매출·추천 기여도 높음.
+    수동 관리 대신 자동화 필요.
+  decision: |
+    - customers.is_vip 컬럼 추가
+    - 예약 INSERT 트리거로 visit_count 증가 + 3회 도달 시 VIP 자동
+    - VIP 전용 혜택·마케팅 분리
+  constraints:
+    - VIP 해제는 솔이 수동으로만
+    - 개인정보 보존 기간(3년) 지나면 자동 VIP 해제
+
+# ============================================================
+# ADR-008: 사진은 private 버킷
+# ============================================================
+- id: ADR-008
+  title: 청소 인증 사진은 private 버킷에 저장
+  status: accepted
+  date: 2026-04-24
+  context: 청소자·펜션 내부 사진 외부 노출 위험
+  decision: |
+    - 버킷: cleaning-photos (private)
+    - 파일명: {session_id}/{zone_id}/{uuid}.{ext}
+    - 접근: signed URL (24시간 유효)
+    - 30일 경과 후 자동 삭제
+  constraints:
+    - 사용자가 직접 URL 접근 금지
+    - 파일명 UUID 재생성
+    - MIME 화이트리스트: image/jpeg, image/png, image/webp
+
+# ============================================================
+# ADR-009: 개인정보 보존 기간
+# ============================================================
+- id: ADR-009
+  title: 고객 개인정보 3년 보관 후 익명화
+  status: accepted
+  date: 2026-04-24
+  context: |
+    개인정보보호법 + 세무 목적 보관 필요.
+    장기 보관은 위험·부담.
+  decision: |
+    - 예약 완료 후 3년까지 원본 보관
+    - 3년 경과 시 자동 익명화:
+      - guest_name → '삭제된 고객'
+      - guest_phone → NULL
+    - 삭제 요청 시 즉시 익명화
+  enforcement: supabase/functions/anonymize-old-data 크론 주 1회
+
+# ============================================================
+# ADR-010: n8n 자동화 기본
+# ============================================================
+- id: ADR-010
+  title: 반복 자동화는 n8n, 실시간 로직은 앱 내부
+  status: accepted
+  date: 2026-04-24
+  context: |
+    SMS 스케줄 발송·Google Sheets 동기화 등 비실시간 작업이 많음.
+    Next.js Cron보다 n8n이 UI 기반 관리 편함.
+  decision: |
+    - 비실시간: n8n (SMS 예약 발송·시트 동기화·광고 데이터 수집)
+    - 실시간: Next.js API Route (예약 즉시 확정·결제 처리)
+  constraints:
+    - n8n 환경변수 미지원 → API 키 Code 노드에 하드코딩
+    - 모놀리식 워크플로우 금지, Execute Workflow로 분리
+
+# ============================================================
+# ADR-011: 브랜드 일관성
+# ============================================================
+- id: ADR-011
+  title: 달팽이아지트 브랜드 토큰 고정
+  status: accepted
+  date: 2026-04-24
+  decision: |
+    - 키 컬러: 이끼 그린(#2d4a22·#3d6630), 세이지(#7a9e6e), 크림(#f5f0e8)
+    - 폰트: Pretendard 고정
+    - 브랜드 이모지: 🐌
+    - SMS 접두사: [달팽이아지트]
+    - 체크인 15:00 / 체크아웃 11:00 (변경 불가)
+  enforcement: brand-guardian 에이전트가 UI·카피 검토
+
+# ============================================================
+# ADR-012: 모노레포 vs 멀티레포
+# ============================================================
+- id: ADR-012
+  title: 현재는 멀티레포, 향후 모노레포 이전 고려
+  status: accepted
+  date: 2026-04-24
+  context: |
+    web·cleaning·crm 각각 독립적으로 시작.
+    공통 코드 재사용 필요성 증가 중.
+  decision: |
+    - 현재: 별도 저장소, .claude/ 하네스만 복사·공유
+    - 향후: pnpm workspace 기반 모노레포 이전 검토 (Turborepo)
+  revisit_when: 공통 코드 3개 이상 중복 복제될 때

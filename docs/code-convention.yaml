@@ -1,0 +1,206 @@
+# 달팽이아지트 펜션 통합 시스템 - 코드 컨벤션
+# mafia-codereview 플러그인이 리뷰 시 이 파일을 기준으로 검토
+
+project:
+  name: dalpaengi-pension-system
+  owner: 임솔 (sool9241)
+  description: 달팽이아지트 펜션 전체 디지털 운영 시스템 (웹사이트·청소관리·CRM·SMS)
+  brand_emoji: 🐌
+  main_url: https://dalpaengi-five.vercel.app
+
+stack:
+  framework: Next.js 14+ (App Router)
+  language: TypeScript (strict)
+  database: Supabase (PostgreSQL + Storage + Auth)
+  supabase_project_id: zujmishjfpmyjuipncby
+  sms: Solapi
+  styling: Tailwind CSS
+  ui_font: Pretendard
+  animation: Framer Motion (제한적)
+  deployment: Vercel
+  automation: n8n
+  code_review: mafia-codereview
+
+# ============================================================
+# 🚨 Critical (즉시 중단)
+# ============================================================
+critical:
+  - id: no-secret-commit
+    rule: .env·.env.local·.env.production 파일 커밋 금지
+    check: .gitignore 포함 여부
+
+  - id: no-service-role-in-client
+    rule: SUPABASE_SERVICE_ROLE_KEY·SOLAPI_API_SECRET은 클라이언트에서 사용 금지
+    check: "use client" 파일에 NEXT_PUBLIC_ 없는 환경변수 참조 없는지
+
+  - id: no-customer-data-client-exposure
+    rule: 클라이언트 컴포넌트에서 reservations·customers 전체 조회 금지
+    pattern_forbidden: ["supabase.from('reservations').select('*')", "supabase.from('customers').select('*')"]
+    exception: 공개 가능한 가공된 필드만 내려보내기
+
+  - id: rls-required
+    rule: Supabase 테이블 생성 시 반드시 RLS 활성화
+    check: 마이그레이션에 ENABLE ROW LEVEL SECURITY 포함
+
+  - id: reservation-validation-required
+    rule: 예약 생성 API는 반드시 validateReservation() 호출
+    check: app/api/reservations/ POST에 validation 함수 호출 존재
+
+  - id: no-magic-price
+    rule: 요금(700000, 300000, 400000, 10000)을 코드에 직접 쓰지 않음
+    allowed: PROGRAMS·EXTRA_GUEST_PRICE·DINNER_OPTIONS 상수 참조만
+    check: 정규식 /(700000|300000|400000|10000|30000|15000|20000)\b/ 매칭
+
+  - id: no-magic-schedule
+    rule: 체크인 15:00·체크아웃 11:00 시간을 다른 값으로 하드코딩 금지
+    allowed: SCHEDULE 상수만
+
+  - id: sms-brand-prefix
+    rule: 모든 SMS 메시지에 [달팽이아지트] 접두사 포함
+    check: templates.ts의 모든 함수 반환값에 '[달팽이아지트]' 문자열 존재
+
+  - id: sms-rate-limit
+    rule: SMS 발송에 checkRateLimit() 호출 필수
+    check: messageService.sendOne 직전 rate limit 검증
+
+  - id: phone-validation
+    rule: 전화번호는 normalizePhone()으로 정규화 후 사용
+    pattern_required: normalizePhone()
+
+  - id: phone-masking-in-logs
+    rule: 로그·콘솔 출력 시 전화번호 마스킹 필수
+    pattern_required: maskPhone()
+
+  - id: file-upload-validation
+    rule: 파일 업로드는 MIME·크기 검증 필수 (10MB 이하, image/* 만)
+    check: PhotoUpload·사진 관련 API에 validation 존재
+
+  - id: no-hardcoded-owner-info
+    rule: 솔 개인 번호(010-8531-9531)·카카오톡 ID·이메일 하드코딩 금지
+    allowed: 환경변수 또는 상수 파일 참조
+
+# ============================================================
+# ⚠️ Major (머지 전 수정)
+# ============================================================
+major:
+  - id: no-any
+    rule: any 타입 사용 금지
+    alternative: unknown + 타입가드
+    exception: 외부 라이브러리 any인 경우 주석으로 명시
+
+  - id: supabase-error-handling
+    rule: Supabase 쿼리 error 무시 금지
+    pattern_required: |
+      if (error) { console.error('[table]:', error); ... }
+
+  - id: layer-dependency
+    rule: app/ → components/ → lib/ 단방향
+    forbidden:
+      - lib/이 components/ import
+      - lib/이 app/ import
+      - components/이 app/ import
+
+  - id: server-component-default
+    rule: "use client"는 useState·useEffect·이벤트 핸들러 필수인 경우만
+    check: use client 선언 파일에 실제 훅/이벤트 사용 여부
+
+  - id: component-size
+    soft_limit: 200
+    hard_limit: 300
+    action: 200줄 초과 시 분리 권고, 300줄 초과 시 Critical
+
+  - id: named-export-preferred
+    rule: default export 대신 named export
+    exception: [page.tsx, layout.tsx, loading.tsx, error.tsx, middleware.ts]
+
+  - id: zod-validation-required
+    rule: API 라우트에 Zod 검증 필수
+    pattern_required: schema.safeParse() 또는 schema.parse()
+
+  - id: korean-format
+    rule: 날짜·금액·시간은 한국어 포맷
+    examples:
+      date: "2026년 4월 25일 (금)"
+      price: "700,000원"
+      time: "15:00"
+
+# ============================================================
+# 💡 Minor (다음 작업)
+# ============================================================
+minor:
+  - id: naming-convention
+    component: PascalCase
+    hook: camelCase + use
+    util: camelCase
+    constant: UPPER_SNAKE_CASE
+    db_table: snake_case
+
+  - id: import-order
+    order:
+      1: 외부 라이브러리
+      2: 절대경로 @/
+      3: 상대경로 ./
+      4: 타입 import (마지막)
+
+  - id: todo-format
+    pattern: "// TODO(sol, YYYY-MM-DD): ..."
+
+  - id: log-prefix
+    rule: 로그에 영역 접두사
+    examples: ["[reservations]", "[sms]", "[cleaning]", "[payments]"]
+
+  - id: no-unnecessary-emoji
+    rule: 한 메시지/컴포넌트에 이모지 3개 초과 금지
+    exception: 🐌 브랜드 이모지는 카운트 제외
+
+# ============================================================
+# 경계 파일
+# ============================================================
+boundary_files:
+  - middleware.ts
+  - lib/supabase/server.ts
+  - app/api/reservations/**
+  - app/api/notify/**
+  - app/api/webhooks/**
+  - supabase/migrations/*.sql
+  - lib/constants/programs.ts
+  - lib/constants/options.ts
+  - .env.example
+  - docs/adr.yaml
+
+# ============================================================
+# 금지 패턴
+# ============================================================
+forbidden_patterns:
+  - dangerouslySetInnerHTML
+  - eval
+  - "as any"
+  - "console.log"         # 프로덕션 코드 (console.error는 OK)
+  - "010-8531-9531"       # 솔 개인 번호 하드코딩
+  - "sool9241"            # 솔 카카오톡 ID 하드코딩
+  - "help@healingstay.com" # 솔 이메일 하드코딩
+
+# ============================================================
+# 권장 패턴
+# ============================================================
+preferred_patterns:
+  - "PROGRAMS.OVERNIGHT.basePrice"
+  - "calculateTotalPrice("
+  - "validateReservation("
+  - "normalizePhone("
+  - "maskPhone("
+  - "checkRateLimit("
+
+# ============================================================
+# 리뷰 톤 (솔 선호도)
+# ============================================================
+review_tone:
+  style: 직설·정확
+  avoid:
+    - 과한 칭찬 ("대박", "완벽", "최고")
+    - 애매한 표현 ("나쁘지 않다", "괜찮아 보인다")
+  prefer:
+    - 구체적 파일·줄번호
+    - 수정 예시 코드
+    - Critical / Major / Minor 분류
+    - 펜션 비즈니스 영향 언급 (예: "이 버그로 SMS가 중복 발송되면 고객 불만")
