@@ -530,6 +530,8 @@ export default function Reservation() {
           busRequested: showBusForm,
           busForm: showBusForm ? busForm : null,
           busStopover: showBusForm && busStopover.length > 0 ? busStopover.filter(s => s.place.trim()) : null,
+          // 폼이 화면에 표시한 버스 가격 — busRoutes 테이블 lookup (전북대 60만, 전주대 65만, 원광대 70만, 우석대 65만, 기타 0=별도견적)
+          busPrice: busPrice || 0,
           selectedTimeSlot: selectedTimeSlots.join(",") || null,
           totalPrice,
           notes,

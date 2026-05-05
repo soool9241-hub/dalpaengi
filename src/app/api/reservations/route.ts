@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const {
       guestName, guestPhone, reservationDate, checkoutDate, stayNights,
       totalGuests, extraGuests, programType, bbqGrills, gasRanges,
-      dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover,
+      dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover, busPrice,
       selectedTimeSlot, totalPrice, notes, purpose, purposeRaw,
     } = body;
 
@@ -101,6 +101,10 @@ export async function POST(req: NextRequest) {
       woodcraft_count: woodcraftCount,
       pot_bbq_count: potBbqCount,
       bus_requested: busRequested,
+      bus_fee: busRequested ? (busPrice || 0) : 0,
+      // total_amount은 폼이 계산한 totalPrice를 그대로 저장
+      // (DB trigger가 자동 계산하지 않도록 supabase 대시보드에서 트리거 제거 필요)
+      total_amount: totalPrice || 0,
       time_slot: selectedTimeSlot || null,
       purpose: purpose || null,
       purpose_raw: purposeRaw || purpose || null,

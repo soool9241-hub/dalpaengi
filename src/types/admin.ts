@@ -20,6 +20,13 @@ export interface ReservationRow {
   bus_requested: boolean;
   bus_pickup_info: string | null;
   bus_dropoff_info: string | null;
+  bus_fee: number | null;
+  breakfast_count: number | null;
+  breakfast_menu: string | null;
+  woodcraft_10k: number | null;
+  woodcraft_20k: number | null;
+  woodcraft_30k: number | null;
+  total_amount: number | null;
   time_slot: string | null;
   referral_source: string | null;
   source: string | null;
@@ -96,6 +103,9 @@ export interface DynamicPricing {
   potBbq: number;
 }
 
+// 폼(Reservation.tsx)과 동일한 가격 공식.
+// 추가인원은 (guest_count - 15)만 사용, extra_guests 컬럼은 사용 안 함.
+// 버스 비용도 포함.
 export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPricing): number {
   const p = dynamicPricing || {
     stay: PRICING.stay.base, half: PRICING.half.base, daynight: PRICING.daynight.base,
@@ -104,12 +114,14 @@ export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPric
   };
   const basePrice = p[r.program_type];
   let total = basePrice * (r.stay_nights || 1);
-  total += (r.extra_guests || 0) * p.extraGuest;
+  total += Math.max(0, (r.guest_count || 0) - 15) * p.extraGuest;
   total += (r.bbq_count || 0) * p.bbqGrill;
   total += (r.burner_count || 0) * p.gasRange;
   total += (r.dinner_count || 0) * p.dinner;
+  total += (r.breakfast_count || 0) * 10000;
   total += (r.woodcraft_count || 0) * p.woodcraft;
   total += (r.pot_bbq_count || 0) * p.potBbq;
+  total += (r.bus_fee || 0);
   return total;
 }
 
