@@ -606,6 +606,7 @@ export default function Reservation() {
             busStopover: showBusForm && busStopover.length > 0 ? busStopover.filter(s => s.place.trim()).map(s => `${s.place}(${s.time || "시간미정"})`).join(" → ") : "",
             timeSlot: timeSlotLabel,
             totalPrice,
+            purpose: finalPurpose,
           }),
         });
       } catch (smsErr) {

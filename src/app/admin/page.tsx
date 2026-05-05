@@ -302,6 +302,7 @@ export default function AdminDashboard() {
               busDetail,
               timeSlot: original.time_slot,
               notes: editForm.notes ?? original.notes,
+              purpose: original.purpose,
               changes,
               originalAmount,
               newAmount,

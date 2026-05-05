@@ -48,6 +48,7 @@ interface NotifyBody {
   changes: string[];
   originalAmount?: number;
   newAmount?: number;
+  purpose?: string | null;
 }
 
 function buildChangeMessage(d: NotifyBody): string {
@@ -74,7 +75,7 @@ function buildChangeMessage(d: NotifyBody): string {
 ■ 날짜: ${d.reservationDate} (${d.stayNights}박)
 ■ 프로그램: ${programLabel}
 ■ 인원: ${d.guestCount > 15 ? `총 ${d.guestCount}명 (기본 15 + 추가 ${d.guestCount - 15})` : `${d.guestCount}명`}
-${d.timeSlot ? `■ 시간대: ${d.timeSlot}\n` : ""}
+${d.purpose ? `■ 목적: ${d.purpose}\n` : ""}${d.timeSlot ? `■ 시간대: ${d.timeSlot}\n` : ""}
 ━━ 변경 내역 ━━
 ${changesStr}
 ${d.originalAmount != null && d.newAmount != null ? `

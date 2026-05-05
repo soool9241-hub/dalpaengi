@@ -264,6 +264,7 @@ export default function ReservationsPage() {
               busRequested: editData.bus_requested ?? detail.bus_requested,
               timeSlot: detail.time_slot,
               notes: editData.notes ?? detail.notes,
+              purpose: detail.purpose,
               changes,
             }),
           });

@@ -47,6 +47,7 @@ interface ReservationSMS {
   busStopover?: string;
   timeSlot: string | null;
   totalPrice: number;
+  purpose?: string | null;
 }
 
 async function loadPricing(): Promise<PricingData> {
@@ -126,7 +127,7 @@ function buildCustomerMessage(data: ReservationSMS, p: PricingData): string {
 ■ 날짜: ${data.reservationDate} (${getDurationLabel(data)})
 ■ 인원: ${peopleDesc}
 ■ 프로그램: ${data.programLabel}
-${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
+${data.purpose ? `■ 목적: ${data.purpose}\n` : ""}${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
 ━━ 요금 상세 ━━
 ${optionLines.join("\n")}
 ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace} 왕복): ${formatPrice(data.busPrice)}\n` : ""}${data.busRequested && !data.busPrice ? "• 버스 렌트: 별도 추후 안내\n" : ""}━━━━━━━━━━━━
@@ -160,7 +161,7 @@ function buildOwnerMessage(data: ReservationSMS, p: PricingData): string {
 ■ 날짜: ${data.reservationDate} (${getDurationLabel(data)})
 ■ 인원: ${peopleDesc}
 ■ 프로그램: ${data.programLabel}
-${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
+${data.purpose ? `■ 목적: ${data.purpose}\n` : ""}${data.timeSlot ? `■ 시간대: ${data.timeSlot}\n` : ""}
 ━━ 옵션 / 금액 ━━
 ${optionLines.join("\n")}
 ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace} 왕복): ${formatPrice(data.busPrice)}\n` : ""}${data.busRequested && !data.busPrice ? "• 버스 렌트: 별도 추후 안내\n" : ""}━━━━━━━━━━━━
