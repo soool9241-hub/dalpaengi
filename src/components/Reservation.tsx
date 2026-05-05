@@ -90,7 +90,20 @@ export default function Reservation() {
   // 예약 확정 상태
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestPurpose, setGuestPurpose] = useState("");
+  const [guestPurposeCustom, setGuestPurposeCustom] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const PURPOSE_OPTIONS = [
+    "가족모임",
+    "친구/지인 모임",
+    "회사 워크숍/MT",
+    "동호회/소모임",
+    "커플/데이트",
+    "생일/기념일",
+    "워케이션/작업",
+    "기타",
+  ];
 
   // Hero에서 프로그램 선택 시
   useEffect(() => {
@@ -269,11 +282,18 @@ export default function Reservation() {
   // 서버 API에서 예약 데이터 조회 - 체크인~체크아웃 전날까지 차단 (에어비앤비 방식)
   // 체크인 오후 3시 ~ 체크아웃 오전 11시 → 체크아웃 날짜는 새 체크인 가능
   // + 체크인/체크아웃 날짜 추적 (시간제 프로그램 3시간 청소 버퍼 적용)
+  const [calendarFetchFailed, setCalendarFetchFailed] = useState(false);
   const fetchReservations = useCallback(async () => {
     setLoadingReservations(true);
     try {
-      const res = await fetch("/api/calendar");
+      const res = await fetch("/api/calendar", { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`Calendar fetch failed: ${res.status}`);
+      }
       const json = await res.json();
+      if (json.error) {
+        throw new Error(json.error);
+      }
       const data = json.dates || [];
 
       const dates = new Set<string>();
@@ -296,8 +316,11 @@ export default function Reservation() {
       setBookedDates(dates);
       setCheckinDates(ciDates);
       setCheckoutDates(coDates);
+      setCalendarFetchFailed(false);
     } catch (err) {
       console.error("예약 데이터 조회 중 오류:", err);
+      // fetch 실패 시 플래그 세팅 → 예약 버튼 잠금 (중복 예약 위험 방지)
+      setCalendarFetchFailed(true);
     } finally {
       setLoadingReservations(false);
     }
@@ -306,6 +329,21 @@ export default function Reservation() {
   // 컴포넌트 마운트 시 + 월/프로그램 변경 시 예약 데이터 조회
   useEffect(() => {
     fetchReservations();
+  }, [fetchReservations]);
+
+  // 탭이 다시 활성화될 때 + 30초마다 재조회 (stale 달력으로 인한 중복 예약 방지)
+  useEffect(() => {
+    const refetchIfVisible = () => {
+      if (document.visibilityState === "visible") fetchReservations();
+    };
+    document.addEventListener("visibilitychange", refetchIfVisible);
+    window.addEventListener("focus", refetchIfVisible);
+    const intervalId = window.setInterval(refetchIfVisible, 30000);
+    return () => {
+      document.removeEventListener("visibilitychange", refetchIfVisible);
+      window.removeEventListener("focus", refetchIfVisible);
+      window.clearInterval(intervalId);
+    };
   }, [fetchReservations]);
 
   const isBooked = (day: number): boolean => {
@@ -401,6 +439,13 @@ export default function Reservation() {
       return;
     }
 
+    // 예약 목적 필수
+    const finalPurpose = guestPurpose === "기타" ? guestPurposeCustom.trim() : guestPurpose;
+    if (!finalPurpose) {
+      alert("예약 목적을 선택(또는 입력)해주세요.");
+      return;
+    }
+
     // 조식 선택 시 메뉴 필수
     if (breakfastCount > 0 && !breakfastMenu) {
       alert("조식 메뉴를 선택해주세요.");
@@ -488,11 +533,24 @@ export default function Reservation() {
           selectedTimeSlot: selectedTimeSlots.join(",") || null,
           totalPrice,
           notes,
-          purpose: purposeMap[programType] || programType,
+          purpose: finalPurpose,
+          purposeRaw: finalPurpose,
+          programLabel: purposeMap[programType] || programType,
         }),
       });
 
       const apiJson = await apiRes.json();
+      if (apiRes.status === 409 || apiJson.code === "DATE_CONFLICT") {
+        // 서버 중복 체크에서 차단 - 달력 새로고침 + 날짜 초기화
+        console.warn("서버 중복 체크 차단:", apiJson);
+        alert((apiJson.error || "해당 기간이 이미 예약되었습니다.") + "\n\n달력을 새로고침합니다. 다른 날짜를 선택해주세요.");
+        await fetchReservations();
+        setCheckIn(null);
+        setCheckOut(null);
+        setSelectedDate(null);
+        setShowConfirm(false);
+        return;
+      }
       if (!apiRes.ok || !apiJson.success) {
         console.error("예약 API 실패:", apiJson);
         alert("예약 저장에 실패했습니다. 다시 시도해주세요.\n" + (apiJson.error || ""));
@@ -573,6 +631,8 @@ export default function Reservation() {
       setPotBbqCount(0);
       setGuestName("");
       setGuestPhone("");
+      setGuestPurpose("");
+      setGuestPurposeCustom("");
     } catch (err) {
       console.error("예약 처리 중 오류:", err);
       alert("예약 처리 중 오류가 발생했습니다.");
@@ -1237,7 +1297,7 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
-                  <Counter label="가스렌지" desc={`버너+가스+불판 / 개당 ${formatPrice(pricing.gasRange)} (최대 5개)`} value={gasRanges} unitPrice={pricing.gasRange}
+                  <Counter label="가스버너" desc={`버너+가스+불판 / 개당 ${formatPrice(pricing.gasRange)} (최대 5개)`} value={gasRanges} unitPrice={pricing.gasRange}
                     onDec={() => setGasRanges((g) => Math.max(0, g - 1))} onInc={() => setGasRanges((g) => Math.min(5, g + 1))} onChange={(v) => setGasRanges(Math.min(5, v))} />
 
                   <hr className="border-border" />
@@ -1568,7 +1628,7 @@ export default function Reservation() {
                   {getTimeSlotLabel() && <p>시간대: {getTimeSlotLabel()}</p>}
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * pricing.extraGuest)}</p>}
                   {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? <><span className="line-through text-text-light">{formatPrice(bbqGrills * pricing.bbqGrill)}</span> <span className="text-amber-600 font-bold">무료(JIFF)</span></> : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light">{formatPrice(bbqGrills * pricing.bbqGrill)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, bbqGrills - (isEventPromo ? EVENT_FREE_GRILLS : 0)) * pricing.bbqGrill)}</p>}
-                  {gasRanges > 0 && <p>가스렌지 ({gasRanges}개): {formatPrice(gasRanges * pricing.gasRange)}</p>}
+                  {gasRanges > 0 && <p>가스버너 ({gasRanges}개): {formatPrice(gasRanges * pricing.gasRange)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-amber-600 font-bold">무료(JIFF)</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, dinnerCount - (isEventPromo ? EVENT_FREE_DINNER : 0)) * pricing.dinner)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * pricing.woodcraft)}</p>}
                   {assemblyCount > 0 && <p>조립공간 셀프체험 ({assemblyCount}인): <span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span><span className="text-primary font-semibold">{formatPrice(assemblyCount * 5000)}</span></p>}
@@ -1591,7 +1651,43 @@ export default function Reservation() {
               </div>
             </div>
             )}
-            <button onClick={() => setShowConfirm(true)}
+            <button onClick={async () => {
+              // 달력 로드 실패 시 예약 차단
+              if (calendarFetchFailed) {
+                alert("예약 현황을 불러오지 못했습니다.\n페이지를 새로고침한 후 다시 시도해주세요.");
+                await fetchReservations();
+                return;
+              }
+              // 확인 모달 열기 전 달력 최신화 + 중복 재검증 (stale 데이터로 인한 중복 예약 방지)
+              if (program.rangeMode && checkIn && checkOut) {
+                setLoadingReservations(true);
+                try {
+                  const res = await fetch("/api/calendar");
+                  const json = await res.json();
+                  const latest: { reservation_date: string; checkout_date: string | null }[] = json.dates || [];
+                  const ciStr = toDateStr(checkIn.year, checkIn.month, checkIn.day);
+                  const coStr = toDateStr(checkOut.year, checkOut.month, checkOut.day);
+                  const hasConflict = latest.some((r) => {
+                    if (!r.reservation_date) return false;
+                    const rCi = r.reservation_date;
+                    const rCo = r.checkout_date || new Date(new Date(r.reservation_date).getTime() + 86400000).toISOString().split("T")[0];
+                    return rCi < coStr && rCo > ciStr;
+                  });
+                  if (hasConflict) {
+                    alert("선택하신 기간이 방금 다른 예약으로 마감되었습니다.\n달력을 새로고침하니 다른 날짜를 선택해주세요.");
+                    await fetchReservations();
+                    setCheckIn(null);
+                    setCheckOut(null);
+                    return;
+                  }
+                } catch (e) {
+                  console.error("재검증 실패:", e);
+                } finally {
+                  setLoadingReservations(false);
+                }
+              }
+              setShowConfirm(true);
+            }}
               className="mt-6 w-full py-4 bg-primary text-white rounded-2xl font-semibold text-lg hover:bg-primary-light transition-colors shadow-md hover:shadow-lg">
               {programType === "jolib" ? "체험 신청하기" : programType === "healing" ? "힐링캠프 예약하기" : "예약하기"}
             </button>
@@ -1632,6 +1728,39 @@ export default function Reservation() {
                 }}
                 className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
+
+              {/* 예약 목적 */}
+              <div>
+                <p className="text-xs text-text-light mb-2">예약 목적 <span className="text-primary">*</span></p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {PURPOSE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        setGuestPurpose(opt);
+                        if (opt !== "기타") setGuestPurposeCustom("");
+                      }}
+                      className={`py-2 px-2 text-xs rounded-lg border transition-colors ${
+                        guestPurpose === opt
+                          ? "bg-primary text-white border-primary"
+                          : "bg-white text-text-mid border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                {guestPurpose === "기타" && (
+                  <input
+                    type="text"
+                    placeholder="목적을 직접 입력해주세요"
+                    value={guestPurposeCustom}
+                    onChange={(e) => setGuestPurposeCustom(e.target.value)}
+                    className="w-full mt-2 px-4 py-3 rounded-xl border border-border text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  />
+                )}
+              </div>
             </div>
 
             <div className="space-y-3 mb-6">
@@ -1649,7 +1778,7 @@ export default function Reservation() {
               <div className="flex justify-between text-sm"><span className="text-text-light">{program.label}{(programType === "half" || programType === "daynight") && selectedTimeSlots.length > 1 ? ` (${selectedTimeSlots.length}타임)` : ""}</span><span className="font-medium text-text-dark">{formatPrice(programPrice)}</span></div>
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * pricing.extraGuest)}</span></div>}
               {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여{isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? " (JIFF)" : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? <><span className="line-through text-text-light mr-1">{formatPrice(bbqGrills * pricing.bbqGrill)}</span><span className="text-amber-600">무료</span></> : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light mr-1">{formatPrice(bbqGrills * pricing.bbqGrill)}</span><span className="text-red-500">무료</span></> : formatPrice(bbqGrills * pricing.bbqGrill)}</span></div>}
-              {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스렌지</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
+              {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스버너</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? " (JIFF)" : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-amber-600">무료</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-red-500">무료</span></> : formatPrice(dinnerCount * pricing.dinner)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * pricing.woodcraft)}</span></div>}
               {assemblyCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">조립공간 셀프체험 ({assemblyCount}인)</span><span className="font-medium text-text-dark"><span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span>{formatPrice(assemblyCount * 5000)}</span></div>}

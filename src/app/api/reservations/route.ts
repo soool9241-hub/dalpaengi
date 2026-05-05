@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       guestName, guestPhone, reservationDate, checkoutDate, stayNights,
       totalGuests, extraGuests, programType, bbqGrills, gasRanges,
       dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover,
-      selectedTimeSlot, totalPrice, notes, purpose,
+      selectedTimeSlot, totalPrice, notes, purpose, purposeRaw,
     } = body;
 
     const phone = guestPhone.replace(/[^0-9]/g, "");
@@ -45,7 +45,42 @@ export async function POST(req: NextRequest) {
       customerId = newCust.id;
     }
 
-    // 2. 예약 생성
+    // 2. 중복 예약 방지 - 같은 날짜 범위에 다른 숙박/힐링 예약이 있는지 확인
+    //    [reservation_date, checkout_date) 반개구간 기준 (체크아웃 당일 새 체크인 허용 - 에어비앤비 방식)
+    //    두 구간이 겹치려면: existing.ci < new.co AND existing.co > new.ci
+    const isRangeProgram = programType === "stay" || programType === "healing";
+    if (isRangeProgram && reservationDate && checkoutDate) {
+      const { data: conflicts, error: confErr } = await supabaseAdmin
+        .from("reservations")
+        .select("id, guest_name, reservation_date, checkout_date, program_type, status")
+        .neq("status", "cancelled")
+        .in("program_type", ["stay", "healing"])
+        .lt("reservation_date", checkoutDate)
+        .gt("checkout_date", reservationDate);
+
+      if (confErr) {
+        console.error("중복 체크 실패:", confErr);
+      } else if (conflicts && conflicts.length > 0) {
+        const first = conflicts[0];
+        console.warn("중복 예약 차단:", {
+          new: { guest: guestName, from: reservationDate, to: checkoutDate },
+          existing: first,
+        });
+        return NextResponse.json(
+          {
+            error: `해당 기간(${reservationDate} ~ ${checkoutDate})은 이미 예약되어 있습니다.\n다른 날짜를 선택해주세요.`,
+            code: "DATE_CONFLICT",
+            conflict: {
+              reservation_date: first.reservation_date,
+              checkout_date: first.checkout_date,
+            },
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 3. 예약 생성
     const reservationData = {
       customer_id: customerId,
       guest_name: guestName.trim(),
@@ -64,8 +99,8 @@ export async function POST(req: NextRequest) {
       pot_bbq_count: potBbqCount,
       bus_requested: busRequested,
       time_slot: selectedTimeSlot || null,
-      purpose: purpose,
-      purpose_raw: purpose,
+      purpose: purpose || null,
+      purpose_raw: purposeRaw || purpose || null,
       referral_source: "website",
       source: "website",
       status: reservationDate >= new Date().toISOString().split("T")[0] ? "upcoming" : "confirmed",
