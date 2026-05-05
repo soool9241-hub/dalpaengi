@@ -150,7 +150,7 @@ export default function CalendarPage() {
                       <div className="hidden sm:block mt-0.5 space-y-0.5">
                         {dayRes.slice(0, 2).map((r) => (
                           <div key={r.id} className="text-[10px] text-gray-600 truncate leading-tight">
-                            {r.guest_name} {r.guest_count + (r.extra_guests || 0)}명
+                            {r.guest_name} {r.guest_count}명
                           </div>
                         ))}
                         {dayRes.length > 2 && (
@@ -200,7 +200,7 @@ export default function CalendarPage() {
                       </div>
                       <div>
                         <span className="text-gray-500">인원: </span>
-                        <span className="font-medium text-gray-800">{r.guest_count + (r.extra_guests || 0)}명{r.extra_guests > 0 ? ` (기본${r.guest_count}+추가${r.extra_guests})` : ""}</span>
+                        <span className="font-medium text-gray-800">{r.guest_count}명</span>
                       </div>
                       <div>
                         <span className="text-gray-500">기간: </span>
@@ -257,7 +257,7 @@ export default function CalendarPage() {
               <InfoRow label="체크인" value={`${detailRes.reservation_date} (${detailRes.stay_nights}박)`} />
               <InfoRow label="체크아웃" value={detailRes.checkout_date || "-"} />
               <InfoRow label="프로그램" value={PROGRAM_LABELS[detailRes.program_type]} />
-              <InfoRow label="인원" value={`${detailRes.guest_count + (detailRes.extra_guests || 0)}명${detailRes.extra_guests > 0 ? ` (기본${detailRes.guest_count}+추가${detailRes.extra_guests})` : ""}`} />
+              <InfoRow label="인원" value={`${detailRes.guest_count}명`} />
               {detailRes.time_slot && <InfoRow label="시간대" value={detailRes.time_slot} />}
               <InfoRow label="목적" value={detailRes.purpose || detailRes.purpose_raw || "-"} />
             </div>

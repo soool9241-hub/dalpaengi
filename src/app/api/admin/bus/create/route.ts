@@ -22,10 +22,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "필수 항목이 누락되었습니다." }, { status: 400 });
     }
 
-    // 인원 계산 (최대 45명)
-    const totalPeople = Math.min((parseInt(guestCount) || 15) + (parseInt(extraGuests) || 0), 45);
-    const baseCount = Math.min(totalPeople, 15);
-    const extraCount = Math.max(totalPeople - 15, 0);
+    // 인원 계산 (최대 45명) — guestCount를 총인원으로 사용 (extraGuests는 사용 안 함)
+    const totalPeople = Math.min(parseInt(guestCount) || 15, 45);
+    const baseCount = totalPeople;
+    const extraCount = 0;
 
     // 1) 해당 고객의 기존 예약이 있는지 확인 (같은 날짜 + 이름 + 전화번호)
     const phone = guestPhone.replace(/[^0-9]/g, "");

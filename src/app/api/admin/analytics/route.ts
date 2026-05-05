@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   let periodStats = null;
   if (periodData) {
     const periodTotal = periodData.reduce((sum, r) => sum + getTotal(r), 0);
-    const periodGuests = periodData.reduce((sum, r) => sum + (r.guest_count || 0) + (r.extra_guests || 0), 0);
+    const periodGuests = periodData.reduce((sum, r) => sum + (r.guest_count || 0), 0);
 
     // Daily breakdown
     const dailyMap: Record<string, { amount: number; count: number; guests: number }> = {};
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       if (!dailyMap[d]) dailyMap[d] = { amount: 0, count: 0, guests: 0 };
       dailyMap[d].amount += getTotal(r);
       dailyMap[d].count += 1;
-      dailyMap[d].guests += (r.guest_count || 0) + (r.extra_guests || 0);
+      dailyMap[d].guests += (r.guest_count || 0);
     });
     const dailyBreakdown = Object.entries(dailyMap)
       .map(([date, v]) => ({ date, ...v }))
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       const t = r.program_type;
       if (!pMap[t]) pMap[t] = { count: 0, guests: 0, revenue: 0 };
       pMap[t].count += 1;
-      pMap[t].guests += (r.guest_count || 0) + (r.extra_guests || 0);
+      pMap[t].guests += (r.guest_count || 0);
       pMap[t].revenue += getTotal(r);
     });
     const periodPrograms = Object.entries(pMap).map(([type, v]) => ({
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       name: r.guest_name,
       phone: r.guest_phone,
       program: r.program_type,
-      guests: (r.guest_count || 0) + (r.extra_guests || 0),
+      guests: (r.guest_count || 0),
       revenue: getTotal(r),
       busCost: busMap[r.id] || 0,
     }));
@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
     if (!monthlyMap[m]) monthlyMap[m] = { amount: 0, count: 0, guests: 0 };
     monthlyMap[m].amount += getTotal(r);
     monthlyMap[m].count += 1;
-    monthlyMap[m].guests += (r.guest_count || 0) + (r.extra_guests || 0);
+    monthlyMap[m].guests += (r.guest_count || 0);
   });
   const monthlyRevenue = Object.entries(monthlyMap)
     .map(([m, v]) => ({ month: m, ...v }))
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
     if (!y || !mm) return;
     if (!allYearsMonthly[y]) allYearsMonthly[y] = {};
     if (!allYearsMonthlyRevenue[y]) allYearsMonthlyRevenue[y] = {};
-    allYearsMonthly[y][mm] = (allYearsMonthly[y][mm] || 0) + (r.guest_count || 0) + (r.extra_guests || 0);
+    allYearsMonthly[y][mm] = (allYearsMonthly[y][mm] || 0) + (r.guest_count || 0);
     allYearsMonthlyRevenue[y][mm] = (allYearsMonthlyRevenue[y][mm] || 0) + getTotal(r);
   });
   // Build comparison data: rows = 01~12, cols = each year
@@ -174,7 +174,7 @@ export async function GET(req: NextRequest) {
     if (!yearlyMap[y]) yearlyMap[y] = { amount: 0, count: 0, guests: 0 };
     yearlyMap[y].amount += getTotal(r);
     yearlyMap[y].count += 1;
-    yearlyMap[y].guests += (r.guest_count || 0) + (r.extra_guests || 0);
+    yearlyMap[y].guests += (r.guest_count || 0);
   });
   const yearlyStats = Object.entries(yearlyMap)
     .map(([y, v]) => ({ year: y, ...v }))
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
     const t = r.program_type;
     if (!programMap[t]) programMap[t] = { count: 0, guests: 0, revenue: 0 };
     programMap[t].count += 1;
-    programMap[t].guests += (r.guest_count || 0) + (r.extra_guests || 0);
+    programMap[t].guests += (r.guest_count || 0);
     programMap[t].revenue += getTotal(r);
   });
   const programBreakdown = Object.entries(programMap).map(([type, v]) => ({
@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
     .slice(0, 10);
 
   // Guest stats (filtered by month if selected)
-  const guestCounts = filteredData.map((r) => (r.guest_count || 0) + (r.extra_guests || 0)).filter(Boolean);
+  const guestCounts = filteredData.map((r) => (r.guest_count || 0)).filter(Boolean);
   const avg = guestCounts.length > 0 ? Math.round(guestCounts.reduce((a, b) => a + b, 0) / guestCounts.length) : 0;
   const max = guestCounts.length > 0 ? Math.max(...guestCounts) : 0;
   const distribution = [
@@ -231,13 +231,13 @@ export async function GET(req: NextRequest) {
     years,
     totalRevenue: filteredData.reduce((sum, r) => sum + getTotal(r), 0),
     totalReservations: filteredData.length,
-    totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0) + (r.extra_guests || 0), 0),
+    totalGuests: filteredData.reduce((sum, r) => sum + (r.guest_count || 0), 0),
     cumulativeGuests,
     monthlyGuestsByYear,
     monthlyRevenueByYear,
     chartYears: availableYearsForChart,
     yearlyStats,
-    allTimeTotalGuests: reservations.reduce((sum, r) => sum + (r.guest_count || 0) + (r.extra_guests || 0), 0),
+    allTimeTotalGuests: reservations.reduce((sum, r) => sum + (r.guest_count || 0), 0),
     periodStats,
   });
 }

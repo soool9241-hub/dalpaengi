@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
       bbq_count: bbqGrills,
       burner_count: gasRanges,
       program_type: programType,
-      extra_guests: extraGuests,
+      // extra_guests는 항상 0으로 저장.
+      // 이유: DB trigger가 total_amount = stay + (guest_count-15)*10k + extra_guests*10k + 옵션 으로 계산.
+      // extraGuests를 따로 저장하면 (guest_count-15)와 이중 카운트되어 가격 부풀림 (2026-05 대량 사고 발생).
+      extra_guests: 0,
       dinner_count: dinnerCount,
       woodcraft_count: woodcraftCount,
       pot_bbq_count: potBbqCount,

@@ -73,7 +73,7 @@ function buildChangeMessage(d: NotifyBody): string {
 ■ 예약자: ${d.guestName}님
 ■ 날짜: ${d.reservationDate} (${d.stayNights}박)
 ■ 프로그램: ${programLabel}
-■ 인원: ${(d.guestCount + (d.extraGuests || 0)) > 15 ? `총 ${d.guestCount + (d.extraGuests || 0)}명 (기본${Math.min(d.guestCount, 15)} + 추가${d.extraGuests || 0})` : `${d.guestCount + (d.extraGuests || 0)}명`}
+■ 인원: ${d.guestCount > 15 ? `총 ${d.guestCount}명 (기본 15 + 추가 ${d.guestCount - 15})` : `${d.guestCount}명`}
 ${d.timeSlot ? `■ 시간대: ${d.timeSlot}\n` : ""}
 ━━ 변경 내역 ━━
 ${changesStr}

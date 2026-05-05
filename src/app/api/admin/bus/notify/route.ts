@@ -37,7 +37,7 @@ interface BusNotifyBody {
 
 function buildBusMessage(d: BusNotifyBody): string {
   const modeLabel = d.busMode === "roundtrip" ? "왕복" : "편도";
-  const totalPeople = Math.min((d.guestCount || 0) + (d.extraGuests || 0), 45);
+  const totalPeople = Math.min(d.guestCount || 0, 45);
 
   let msg = `[달팽이아지트] 버스 예약 확인
 

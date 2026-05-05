@@ -176,10 +176,10 @@ export default function AdminDashboard() {
     // 모든 state를 한번에 세팅
     setBusMode(loadedBusMode);
     setBusForm(loadedBusForm);
-    // 총인원 기준으로 기본/추가 재계산
-    const totalPeople = (r.guest_count || 0) + (r.extra_guests || 0);
-    const baseCount = Math.min(totalPeople, 15);
-    const extraCount = Math.max(0, totalPeople - 15);
+    // guest_count를 총인원으로 사용 (extra_guests는 사용 안 함)
+    const totalPeople = r.guest_count || 0;
+    const baseCount = totalPeople;
+    const extraCount = 0;
     setEditForm({
       guest_name: r.guest_name,
       guest_phone: r.guest_phone,
@@ -230,8 +230,8 @@ export default function AdminDashboard() {
       if (original) {
         if (editForm.guest_name !== original.guest_name) changes.push(`예약자: ${original.guest_name} → ${editForm.guest_name}`);
         if (editForm.guest_phone !== original.guest_phone) changes.push(`연락처: ${original.guest_phone} → ${editForm.guest_phone}`);
-        const origTotal = original.guest_count + (original.extra_guests || 0);
-        const newTotal = (editForm.guest_count || 0) + (editForm.extra_guests || 0);
+        const origTotal = original.guest_count || 0;
+        const newTotal = editForm.guest_count || 0;
         if (origTotal !== newTotal) changes.push(`인원: ${origTotal}명 → ${newTotal}명`);
         if (editForm.bbq_count !== original.bbq_count) changes.push(`BBQ 그릴: ${original.bbq_count}개 → ${editForm.bbq_count}개`);
         if (editForm.dinner_count !== original.dinner_count) changes.push(`저녁식사: ${original.dinner_count}인분 → ${editForm.dinner_count}인분`);
@@ -486,12 +486,10 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">총 인원</label>
-                          <input type="number" value={(() => { const t = (editForm.guest_count ?? 0) + (editForm.extra_guests ?? 0); return t || ""; })()}
+                          <input type="number" value={editForm.guest_count ?? ""}
                             onChange={e => {
                               const total = Math.min(parseInt(e.target.value) || 0, 45);
-                              const base = Math.min(total, 15);
-                              const extra = Math.max(0, total - 15);
-                              setEditForm({ ...editForm, guest_count: base, extra_guests: extra });
+                              setEditForm({ ...editForm, guest_count: total, extra_guests: 0 });
                             }}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
@@ -660,7 +658,7 @@ export default function AdminDashboard() {
                       <span className="font-semibold">{r.stay_nights}박</span>
                       <span className="flex items-center gap-1">
                         <Users size={13} className="text-gray-400" />
-                        {(() => { const total = r.guest_count + (r.extra_guests || 0); return total > 15 ? (<>기본15 <span className="text-amber-600">+추가{total - 15}</span> = <span className="font-black">{total}명</span></>) : (<span className="font-black">{total}명</span>); })()}
+                        {(() => { const total = r.guest_count || 0; return total > 15 ? (<>기본15 <span className="text-amber-600">+추가{total - 15}</span> = <span className="font-black">{total}명</span></>) : (<span className="font-black">{total}명</span>); })()}
                       </span>
                       <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] sm:text-xs font-bold">{PROGRAM_LABELS[r.program_type]}</span>
                     </div>
