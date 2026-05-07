@@ -1279,16 +1279,24 @@ export default function Reservation() {
                       <span className="text-sm font-bold text-primary">{extraGuests}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setBbqGrills(Math.min(6, Math.ceil(totalGuests / 8)));
-                      setGasRanges(Math.min(5, Math.ceil(totalGuests / 8)));
-                      setDinnerCount(totalGuests);
-                    }}
-                    className="px-4 py-2 bg-primary/10 text-primary text-xs font-semibold rounded-full hover:bg-primary/20 transition-colors"
-                  >
-                    옵션 자동추천
-                  </button>
+                  {/* 원클릭 옵션 자동 추천 — 인원수 기반 BBQ·가스버너·저녁 한 번에 셋팅 */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBbqGrills(Math.min(6, Math.ceil(totalGuests / 8)));
+                        setGasRanges(Math.min(5, Math.ceil(totalGuests / 8)));
+                        setDinnerCount(totalGuests);
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-bold rounded-full shadow-md hover:shadow-lg hover:scale-[1.02] transition-all animate-pulse"
+                    >
+                      ✨ 원클릭 옵션 자동추천
+                    </button>
+                    <span className="text-[11px] text-text-mid leading-tight">
+                      인원수 맞춰
+                      <br />BBQ·가스버너·저녁 자동 셋팅
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
