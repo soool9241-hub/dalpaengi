@@ -70,6 +70,8 @@ export default function Reservation() {
 
   const [programType, setProgramType] = useState<ProgramType>("stay");
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
+  // 프로그램 더보기 토글 (기본은 대학생 MT + 숙박만 노출)
+  const [showMorePrograms, setShowMorePrograms] = useState(false);
 
   const HALF_MAX_SLOTS = 3;
 
@@ -900,22 +902,33 @@ export default function Reservation() {
                 <p className="text-xs text-text-light">{formatPrice(pricing.stay)}/박 (60명 수용)</p>
               </div>
             </button>
-            {(Object.entries(PROGRAMS) as [ProgramType, typeof PROGRAMS[ProgramType]][]).map(([key, prog]) => {
-              const Icon = prog.icon;
-              const isActive = programType === key;
-              return (
-                <button key={key} onClick={() => handleProgramChange(key)}
-                  className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${isActive ? "border-primary bg-primary/5 shadow-md" : "border-border bg-white hover:border-primary/30"}`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? "bg-primary text-white" : "bg-sage text-text-light"}`}>
-                    <Icon size={20} />
-                  </div>
-                  <div className="text-left">
-                    <p className={`font-semibold text-sm ${isActive ? "text-primary" : "text-text-dark"}`}>{prog.label}</p>
-                    <p className="text-xs text-text-light">{formatPrice(prog.basePrice)}/{prog.unit}</p>
-                  </div>
-                </button>
-              );
-            })}
+            {(Object.entries(PROGRAMS) as [ProgramType, typeof PROGRAMS[ProgramType]][])
+              .filter(([key]) => key === "stay" || programType === key || showMorePrograms)
+              .map(([key, prog]) => {
+                const Icon = prog.icon;
+                const isActive = programType === key;
+                return (
+                  <button key={key} onClick={() => handleProgramChange(key)}
+                    className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${isActive ? "border-primary bg-primary/5 shadow-md" : "border-border bg-white hover:border-primary/30"}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? "bg-primary text-white" : "bg-sage text-text-light"}`}>
+                      <Icon size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className={`font-semibold text-sm ${isActive ? "text-primary" : "text-text-dark"}`}>{prog.label}</p>
+                      <p className="text-xs text-text-light">{formatPrice(prog.basePrice)}/{prog.unit}</p>
+                    </div>
+                  </button>
+                );
+              })}
+
+            {/* 더보기 / 접기 토글 */}
+            <button
+              type="button"
+              onClick={() => setShowMorePrograms((v) => !v)}
+              className="flex-1 sm:flex-initial sm:w-32 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-border bg-white text-text-mid hover:border-primary/40 hover:text-primary transition-all text-sm font-semibold"
+            >
+              {showMorePrograms ? "접기 ▴" : "더보기 ▾"}
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
