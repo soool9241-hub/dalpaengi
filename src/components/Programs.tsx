@@ -101,6 +101,33 @@ export default function Programs() {
       isMembership: true,
     },
     {
+      icon: Boxes,
+      title: "나만의 아지트 만들기(목공체험)",
+      duration: "2시간 (2타임 운영)",
+      price: 30000,
+      priceLabel: "30,000원/인",
+      originalPrice: 30000,
+      perPerson: 30000,
+      maxPeople: "기본 15명 / 추가 무제한",
+      categories: ["membership", "family"],
+      tags: ["목공체험", "전 연령", "키트 제공"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-amber-100 text-amber-600"],
+      gradient: "from-teal-500 to-cyan-500",
+      image: "/img/exterior-side.jpg",
+      features: [
+        "나만의 아지트를 직접 만드는 목공 체험",
+        "탭앤슬롯(끼워맞춤) 방식 — 도구/접착제 불필요",
+        "상자, 집, 자동차 등 다양한 형태 제작",
+        "운영 시간: 14:00~16:00 / 16:00~18:00 (2타임)",
+        "기본 15명 / 추가 인원 제한 없음",
+        "체험 후 50,000원 상당 무료 체험 바우처 증정",
+      ],
+      extras: [],
+      description: "나만의 아지트를 직접 만들어보는 목공 체험입니다. 정밀 커팅된 나무 조각을 끼워 맞춰 상자, 집, 자동차 등을 만들어볼 수 있습니다. 도구 없이도 단단하게 조립되는 탭앤슬롯 방식으로, 어린이도 안전하게 참여 가능합니다. 체험 후 50,000원 상당 무료 체험 바우처를 드립니다! 1인 30,000원",
+      highlight: false,
+      isEvent: false,
+    },
+    {
       icon: Leaf,
       title: "완주하다 봄 리트릿",
       duration: "1박 2일 (4.18~19)",
@@ -194,33 +221,6 @@ export default function Programs() {
       extras: [],
       description: "5시간 동안 다양한 활동을 즐길 수 있는 주/야간 패키지입니다. 주간+야간 복수 선택도 가능합니다. 바베큐, 캠프파이어 등 풍성한 프로그램이 준비되어 있습니다.",
       highlight: false,
-    },
-    {
-      icon: Boxes,
-      title: "나만의 아지트 만들기(목공체험)",
-      duration: "2시간 (2타임 운영)",
-      price: 30000,
-      priceLabel: "30,000원/인",
-      originalPrice: 30000,
-      perPerson: 30000,
-      maxPeople: "회당 6명",
-      categories: ["membership"],
-      tags: ["멤버십전용", "목공체험", "SOLD OUT"],
-      tagColors: ["bg-teal-100 text-teal-600", "bg-cyan-100 text-cyan-600", "bg-red-100 text-red-600"],
-      gradient: "from-teal-500 to-cyan-500",
-      image: "/img/exterior-side.jpg",
-      features: [
-        "나만의 아지트를 직접 만드는 목공 체험",
-        "탭앤슬롯(끼워맞춤) 방식 — 도구/접착제 불필요",
-        "상자, 집, 자동차 등 다양한 형태 제작",
-        "운영 시간: 14:00~16:00 / 16:00~18:00 (2타임)",
-        "어린이 안전 설계 (보호자 동반)",
-        "체험 후 50,000원 상당 무료 체험 바우처 증정",
-      ],
-      extras: [],
-      description: "나만의 아지트를 직접 만들어보는 목공 체험입니다. 정밀 커팅된 나무 조각을 끼워 맞춰 상자, 집, 자동차 등을 만들어볼 수 있습니다. 도구 없이도 단단하게 조립되는 탭앤슬롯 방식으로, 어린이도 안전하게 참여 가능합니다. 체험 후 50,000원 상당 무료 체험 바우처를 드립니다! 1인 30,000원",
-      highlight: false,
-      isEvent: false,
     },
     {
       icon: Heart,
@@ -511,16 +511,21 @@ export default function Programs() {
                     )}
 
                     {prog.isJiff ? (
-                      <Link
-                        href="/programs/jiff"
-                        className={`block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center ${
-                          prog.soldOut
-                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                            : "bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
-                        }`}
-                      >
-                        {prog.soldOut ? "SOLD OUT — 상세보기 →" : "🎬 JIFF STAY 자세히 보기 →"}
-                      </Link>
+                      prog.soldOut ? (
+                        <div
+                          aria-disabled="true"
+                          className="block w-full py-3 rounded-xl font-semibold text-sm text-center bg-gray-200 text-gray-500 cursor-not-allowed select-none pointer-events-none"
+                        >
+                          SOLD OUT
+                        </div>
+                      ) : (
+                        <Link
+                          href="/programs/jiff"
+                          className="block w-full py-3 rounded-xl font-semibold text-sm transition-all text-center bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
+                        >
+                          🎬 JIFF STAY 자세히 보기 →
+                        </Link>
+                      )
                     ) : prog.isRetreat ? (
                       <Link
                         href="/programs/spring-retreat"
