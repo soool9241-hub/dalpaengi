@@ -1329,8 +1329,8 @@ export default function Reservation() {
                   {isPoolSeason && (
                     <>
                       <Counter
-                        label="🏊 미니수영장"
-                        desc={`7~9월 한정 / ${formatPrice(pricing.miniPool)} (1대 한정)`}
+                        label="🏊 미니수영장 ☀️ 7~9월 추천 옵션"
+                        desc={`${formatPrice(pricing.miniPool)} / 여름 시즌 한정`}
                         value={poolCount}
                         unitPrice={pricing.miniPool}
                         onDec={() => setPoolCount((g) => Math.max(0, g - 1))}
