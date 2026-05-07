@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       guestName, guestPhone, reservationDate, checkoutDate, stayNights,
-      totalGuests, extraGuests, programType, bbqGrills, gasRanges,
+      totalGuests, extraGuests, programType, bbqGrills, gasRanges, poolCount,
       dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover, busPrice,
       selectedTimeSlot, totalPrice, notes, purpose, purposeRaw,
     } = body;
@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
       guest_count: totalGuests,
       bbq_count: bbqGrills,
       burner_count: gasRanges,
+      pool_count: poolCount || 0,
       program_type: programType,
       // extra_guests는 항상 0으로 저장.
       // 이유: DB trigger가 total_amount = stay + (guest_count-15)*10k + extra_guests*10k + 옵션 으로 계산.
@@ -132,11 +133,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 2차 시도: 새 컬럼이 DB에 없으면 제외하고 재시도
-    if (resErr && String(resErr.message || "").toLowerCase().includes("breakfast")) {
-      console.warn("breakfast 컬럼 없음 - 제외 후 재시도");
+    if (resErr && (String(resErr.message || "").toLowerCase().includes("breakfast") || String(resErr.message || "").toLowerCase().includes("pool_count"))) {
+      console.warn("새 컬럼 없음(breakfast/pool_count) - 제외 후 재시도");
+      const fallback = { ...reservationData };
+      delete (fallback as Record<string, unknown>).pool_count;
       const res2 = await supabaseAdmin
         .from("reservations")
-        .insert(reservationData)
+        .insert(fallback)
         .select("id")
         .single();
       inserted = res2.data;

@@ -13,6 +13,7 @@ export interface PricingData {
   dinner: number;
   woodcraft: number;
   potBbq: number;
+  miniPool: number;
 }
 
 export interface BusRoutes {
@@ -36,6 +37,7 @@ const DEFAULT_PRICING: PricingData = {
   dinner: 10000,
   woodcraft: 20000,
   potBbq: 30000,
+  miniPool: 50000,
 };
 
 const DEFAULT_BUS_ROUTES: BusRoutes = {

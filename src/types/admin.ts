@@ -14,6 +14,7 @@ export interface ReservationRow {
   purpose_raw: string | null;
   bbq_count: number;
   burner_count: number;
+  pool_count: number | null;
   dinner_count: number;
   woodcraft_count: number;
   pot_bbq_count: number;
@@ -89,6 +90,7 @@ export const PRICING = {
   dinner: 10000,
   woodcraft: 20000,
   potBbq: 30000,
+  miniPool: 50000,
 } as const;
 
 export interface DynamicPricing {
@@ -101,6 +103,7 @@ export interface DynamicPricing {
   dinner: number;
   woodcraft: number;
   potBbq: number;
+  miniPool: number;
 }
 
 // 폼(Reservation.tsx)과 동일한 가격 공식.
@@ -111,6 +114,7 @@ export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPric
     stay: PRICING.stay.base, half: PRICING.half.base, daynight: PRICING.daynight.base,
     extraGuest: PRICING.extraGuest, bbqGrill: PRICING.bbqGrill, gasRange: PRICING.gasRange,
     dinner: PRICING.dinner, woodcraft: PRICING.woodcraft, potBbq: PRICING.potBbq,
+    miniPool: PRICING.miniPool,
   };
   const basePrice = p[r.program_type];
   let total = basePrice * (r.stay_nights || 1);
@@ -121,6 +125,7 @@ export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPric
   total += (r.breakfast_count || 0) * 10000;
   total += (r.woodcraft_count || 0) * p.woodcraft;
   total += (r.pot_bbq_count || 0) * p.potBbq;
+  total += (r.pool_count || 0) * p.miniPool;
   total += (r.bus_fee || 0);
   return total;
 }

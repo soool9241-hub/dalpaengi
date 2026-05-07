@@ -173,6 +173,7 @@ export default function Reservation() {
   const [totalGuestsInput, setTotalGuestsInput] = useState(String(BASE_PEOPLE));
   const [bbqGrills, setBbqGrills] = useState(0);
   const [gasRanges, setGasRanges] = useState(0);
+  const [poolCount, setPoolCount] = useState(0);
   const [dinnerCount, setDinnerCount] = useState(0);
   const [breakfastCount, setBreakfastCount] = useState(0);
   const [breakfastMenu, setBreakfastMenu] = useState<string>("");
@@ -250,6 +251,13 @@ export default function Reservation() {
   const BASE_HEALING = 10;
   const MAX_HEALING = 15;
   const totalGuests = programType === "healing" ? Math.min(MAX_HEALING, BASE_HEALING + extraGuests) : BASE_PEOPLE + extraGuests;
+
+  // 미니수영장 — 7/8/9월(JS month 6/7/8)에만 노출. 그 외엔 자동 0.
+  const selectedMonth = checkIn?.month ?? selectedDate?.month ?? null;
+  const isPoolSeason = selectedMonth !== null && [6, 7, 8].includes(selectedMonth);
+  useEffect(() => {
+    if (!isPoolSeason && poolCount > 0) setPoolCount(0);
+  }, [isPoolSeason, poolCount]);
 
   const busRecommendation = recommendBus(totalGuests);
   const busRecommendText = busRecommendation.map(b => {
@@ -522,6 +530,7 @@ export default function Reservation() {
           programType,
           bbqGrills,
           gasRanges,
+          poolCount,
           dinnerCount,
           breakfastCount,
           breakfastMenu,
@@ -585,6 +594,7 @@ export default function Reservation() {
             slotCount: selectedTimeSlots.length,
             bbqGrills,
             gasRanges,
+            poolCount,
             dinnerCount,
             breakfastCount,
             breakfastMenu,
@@ -723,9 +733,10 @@ export default function Reservation() {
     total += woodcraftCount * pricing.woodcraft;
     total += assemblyCount * 5000;
     total += potBbqCount * pricing.potBbq;
+    total += poolCount * pricing.miniPool;
     total += busPrice;
     return total;
-  }, [isJiffPromo, programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, busPrice, pricing]);
+  }, [isJiffPromo, programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, poolCount, busPrice, pricing]);
 
   const totalPrice = useMemo(() => {
     if (isJiffPromo) return 0;
@@ -747,9 +758,10 @@ export default function Reservation() {
     total += woodcraftCount * pricing.woodcraft;
     total += assemblyCount * 5000;
     total += potBbqCount * pricing.potBbq;
+    total += poolCount * pricing.miniPool;
     total += busPrice;
     return total;
-  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, busPrice, pricing, isEventPromo, isJiffPromo]);
+  }, [programPrice, extraGuests, bbqGrills, gasRanges, dinnerCount, breakfastCount, woodcraftCount, assemblyCount, potBbqCount, poolCount, busPrice, pricing, isEventPromo, isJiffPromo]);
 
   const pricePerPerson = useMemo(() => Math.round(totalPrice / totalGuests), [totalPrice, totalGuests]);
 
@@ -1305,6 +1317,22 @@ export default function Reservation() {
 
                   <hr className="border-border" />
 
+                  {/* 미니수영장 — 7~9월 한정 */}
+                  {isPoolSeason && (
+                    <>
+                      <Counter
+                        label="🏊 미니수영장"
+                        desc={`7~9월 한정 / 1대 ${formatPrice(pricing.miniPool)} (최대 2대)`}
+                        value={poolCount}
+                        unitPrice={pricing.miniPool}
+                        onDec={() => setPoolCount((g) => Math.max(0, g - 1))}
+                        onInc={() => setPoolCount((g) => Math.min(2, g + 1))}
+                        onChange={(v) => setPoolCount(Math.min(2, v))}
+                      />
+                      <hr className="border-border" />
+                    </>
+                  )}
+
                   {/* 저녁 식사 */}
                   {isEventPromo && dinnerCount > 0 && (
                     <div className="mb-1 flex items-center gap-1.5">
@@ -1632,6 +1660,7 @@ export default function Reservation() {
                   {extraGuests > 0 && <p>추가 인원 ({extraGuests}명): {formatPrice(extraGuests * pricing.extraGuest)}</p>}
                   {bbqGrills > 0 && <p>그릴 대여 ({bbqGrills}개): {isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? <><span className="line-through text-text-light">{formatPrice(bbqGrills * pricing.bbqGrill)}</span> <span className="text-amber-600 font-bold">무료(JIFF)</span></> : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light">{formatPrice(bbqGrills * pricing.bbqGrill)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, bbqGrills - (isEventPromo ? EVENT_FREE_GRILLS : 0)) * pricing.bbqGrill)}</p>}
                   {gasRanges > 0 && <p>가스버너 ({gasRanges}개): {formatPrice(gasRanges * pricing.gasRange)}</p>}
+                  {poolCount > 0 && <p>🏊 미니수영장 ({poolCount}대): {formatPrice(poolCount * pricing.miniPool)}</p>}
                   {dinnerCount > 0 && <p>저녁 식사 ({dinnerCount}명): {isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-amber-600 font-bold">무료(JIFF)</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light">{formatPrice(dinnerCount * pricing.dinner)}</span> <span className="text-red-500 font-bold">무료(EVENT)</span></> : formatPrice(Math.max(0, dinnerCount - (isEventPromo ? EVENT_FREE_DINNER : 0)) * pricing.dinner)}</p>}
                   {woodcraftCount > 0 && <p>목공 키트 ({woodcraftCount}개): {formatPrice(woodcraftCount * pricing.woodcraft)}</p>}
                   {assemblyCount > 0 && <p>조립공간 셀프체험 ({assemblyCount}인): <span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span><span className="text-primary font-semibold">{formatPrice(assemblyCount * 5000)}</span></p>}
@@ -1782,6 +1811,7 @@ export default function Reservation() {
               {extraGuests > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">추가 인원</span><span className="font-medium text-text-dark">{formatPrice(extraGuests * pricing.extraGuest)}</span></div>}
               {bbqGrills > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">그릴 대여{isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? " (JIFF)" : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isJiffPromo && bbqGrills <= JIFF_FREE_GRILLS ? <><span className="line-through text-text-light mr-1">{formatPrice(bbqGrills * pricing.bbqGrill)}</span><span className="text-amber-600">무료</span></> : isEventPromo && bbqGrills <= EVENT_FREE_GRILLS ? <><span className="line-through text-text-light mr-1">{formatPrice(bbqGrills * pricing.bbqGrill)}</span><span className="text-red-500">무료</span></> : formatPrice(bbqGrills * pricing.bbqGrill)}</span></div>}
               {gasRanges > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">가스버너</span><span className="font-medium text-text-dark">{formatPrice(gasRanges * pricing.gasRange)}</span></div>}
+              {poolCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">🏊 미니수영장</span><span className="font-medium text-text-dark">{formatPrice(poolCount * pricing.miniPool)}</span></div>}
               {dinnerCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">저녁 식사{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? " (JIFF)" : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? " (EVENT)" : ""}</span><span className="font-medium text-text-dark">{isJiffPromo && dinnerCount <= JIFF_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-amber-600">무료</span></> : isEventPromo && dinnerCount <= EVENT_FREE_DINNER ? <><span className="line-through text-text-light mr-1">{formatPrice(dinnerCount * pricing.dinner)}</span><span className="text-red-500">무료</span></> : formatPrice(dinnerCount * pricing.dinner)}</span></div>}
               {woodcraftCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">목공 키트</span><span className="font-medium text-text-dark">{formatPrice(woodcraftCount * pricing.woodcraft)}</span></div>}
               {assemblyCount > 0 && <div className="flex justify-between text-sm"><span className="text-text-light">조립공간 셀프체험 ({assemblyCount}인)</span><span className="font-medium text-text-dark"><span className="line-through text-text-light mr-1">{formatPrice(assemblyCount * 30000)}</span>{formatPrice(assemblyCount * 5000)}</span></div>}

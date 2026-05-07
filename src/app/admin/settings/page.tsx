@@ -20,12 +20,14 @@ const PRICE_FIELDS: { key: keyof PricingData; label: string }[] = [
   { key: "dinner", label: "저녁식사 (1인)" },
   { key: "woodcraft", label: "목공키트 (1개)" },
   { key: "potBbq", label: "항아리BBQ (1인분)" },
+  { key: "miniPool", label: "미니수영장 (1대, 7~9월 한정)" },
 ];
 
 const DEFAULT_PRICING: PricingData = {
   stay: 700000, half: 400000, halfExtra: 200000, daynight: 400000,
   extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
   dinner: 10000, woodcraft: 20000, potBbq: 30000,
+  miniPool: 50000,
 };
 
 const DEFAULT_BUS_ROUTES: BusRoutes = {

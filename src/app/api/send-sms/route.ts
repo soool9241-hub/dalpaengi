@@ -27,6 +27,7 @@ interface ReservationSMS {
   slotCount?: number;
   bbqGrills: number;
   gasRanges: number;
+  poolCount?: number;
   dinnerCount: number;
   breakfastCount?: number;
   breakfastMenu?: string;
@@ -55,6 +56,7 @@ async function loadPricing(): Promise<PricingData> {
     stay: 700000, half: 400000, halfExtra: 200000, daynight: 400000,
     extraGuest: 10000, bbqGrill: 30000, gasRange: 15000,
     dinner: 10000, woodcraft: 20000, potBbq: 30000,
+    miniPool: 50000,
   };
   try {
     const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "pricing").single();
@@ -95,6 +97,8 @@ function buildOptionLines(data: ReservationSMS, p: PricingData): string[] {
     lines.push(`• 그릴 대여 (${data.bbqGrills}개 × ${formatPrice(p.bbqGrill)}): ${formatPrice(data.bbqGrills * p.bbqGrill)}`);
   if (data.gasRanges > 0)
     lines.push(`• 가스버너 (${data.gasRanges}개 × ${formatPrice(p.gasRange)}): ${formatPrice(data.gasRanges * p.gasRange)}`);
+  if (data.poolCount && data.poolCount > 0)
+    lines.push(`• 🏊 미니수영장 (${data.poolCount}대 × ${formatPrice(50000)}): ${formatPrice(data.poolCount * 50000)}`);
   if (data.dinnerCount > 0)
     lines.push(`• 저녁식사 (${data.dinnerCount}명 × ${formatPrice(p.dinner)}): ${formatPrice(data.dinnerCount * p.dinner)}`);
   if (data.breakfastCount && data.breakfastCount > 0)
