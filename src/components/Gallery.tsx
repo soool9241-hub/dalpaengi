@@ -37,12 +37,10 @@ const photos = [
   { src: "/img/window-view.jpg", cat: "kitchen", label: "창문 뷰" },
   // 화장실/샤워
   { src: "/img/shower.jpg", cat: "bath", label: "샤워부스" },
-  { src: "/img/bathroom.jpg", cat: "bath", label: "화장실" },
   // 활동/모임
   { src: "/img/bbq-night.jpg", cat: "activity", label: "야간 바베큐" },
   { src: "/img/campfire.jpg", cat: "activity", label: "캠프파이어" },
-  { src: "/img/group-indoor.jpg", cat: "activity", label: "단체 실내 모임" },
-  { src: "/img/group-dining.jpg", cat: "activity", label: "단체 식사" },
+  { src: "/img/group-indoor.jpg", cat: "activity", label: "단체 모임" },
   { src: "/img/yoga.jpg", cat: "activity", label: "요가/명상" },
   { src: "/img/group-event.jpg", cat: "activity", label: "단체 행사" },
 ];
