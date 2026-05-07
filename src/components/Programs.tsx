@@ -15,7 +15,20 @@ const categories = [
   { id: "membership", label: "멤버십 전용" },
 ];
 
-const PROGRAM_IDS = ["stay", "stay", "stay", "stay", "half", "daynight", "jolib", "healing"] as const;
+// programs 배열 인덱스 → 예약 폼의 programType 매핑
+// 별도 페이지로 빠지는 프로그램(바이브/멤버십/리트릿/JIFF)은 사용 안 됨 (placeholder)
+const PROGRAM_IDS = [
+  "stay",     // 0: 대학생 MT 패키지
+  "stay",     // 1: 바이브코딩 (별도 페이지)
+  "stay",     // 2: 멤버십 스터디 (별도 페이지)
+  "jolib",    // 3: 나만의 아지트 만들기 (목공체험) ⭐
+  "stay",     // 4: 완주하다 봄 리트릿 (별도 페이지)
+  "stay",     // 5: 숙박 패키지
+  "half",     // 6: 3시간 대여
+  "daynight", // 7: 주/야간 패키지
+  "healing",  // 8: 힐링캠프
+  "stay",     // 9: JIFF STAY (별도 페이지)
+] as const;
 
 export default function Programs() {
   const { pricing } = usePricing();
