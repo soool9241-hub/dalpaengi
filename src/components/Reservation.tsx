@@ -259,6 +259,13 @@ export default function Reservation() {
     if (!isPoolSeason && poolCount > 0) setPoolCount(0);
   }, [isPoolSeason, poolCount]);
 
+  // 조식 메뉴 — 육개장은 20인 이상 필수. 인원 미달 시 자동 해제.
+  useEffect(() => {
+    if (breakfastMenu === "육개장" && breakfastCount < 20) {
+      setBreakfastMenu("");
+    }
+  }, [breakfastCount, breakfastMenu]);
+
   const busRecommendation = recommendBus(totalGuests);
   const busRecommendText = busRecommendation.map(b => {
     const t = BUS_TYPES.find(bt => bt.id === b.typeId);
@@ -1364,20 +1371,31 @@ export default function Reservation() {
                     <div className="ml-1 -mt-2">
                       <p className="text-[11px] font-semibold text-text-mid mb-1.5">조식 메뉴 선택</p>
                       <div className="flex flex-wrap gap-2">
-                        {["육개장", "김치찌개", "보리밥 비빔밥"].map((menu) => (
-                          <button
-                            key={menu}
-                            type="button"
-                            onClick={() => setBreakfastMenu(menu)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                              breakfastMenu === menu
-                                ? "bg-primary text-white border-primary"
-                                : "bg-white text-text-mid border-border hover:border-primary/40"
-                            }`}
-                          >
-                            {menu}
-                          </button>
-                        ))}
+                        {[
+                          { name: "육개장", minPeople: 20 },
+                          { name: "김치찌개", minPeople: 0 },
+                          { name: "보리밥 비빔밥", minPeople: 0 },
+                        ].map(({ name, minPeople }) => {
+                          const disabled = minPeople > 0 && breakfastCount < minPeople;
+                          const selected = breakfastMenu === name;
+                          return (
+                            <button
+                              key={name}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => !disabled && setBreakfastMenu(name)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                                disabled
+                                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                  : selected
+                                  ? "bg-primary text-white border-primary"
+                                  : "bg-white text-text-mid border-border hover:border-primary/40"
+                              }`}
+                            >
+                              {name}{minPeople > 0 ? ` (${minPeople}인↑)` : ""}
+                            </button>
+                          );
+                        })}
                       </div>
                       {!breakfastMenu && (
                         <p className="text-[10px] text-amber-600 mt-1">메뉴를 선택해주세요</p>
