@@ -1322,12 +1322,12 @@ export default function Reservation() {
                     <>
                       <Counter
                         label="🏊 미니수영장"
-                        desc={`7~9월 한정 / 1대 ${formatPrice(pricing.miniPool)} (최대 2대)`}
+                        desc={`7~9월 한정 / ${formatPrice(pricing.miniPool)} (1대 한정)`}
                         value={poolCount}
                         unitPrice={pricing.miniPool}
                         onDec={() => setPoolCount((g) => Math.max(0, g - 1))}
-                        onInc={() => setPoolCount((g) => Math.min(2, g + 1))}
-                        onChange={(v) => setPoolCount(Math.min(2, v))}
+                        onInc={() => setPoolCount((g) => Math.min(1, g + 1))}
+                        onChange={(v) => setPoolCount(Math.min(1, v))}
                       />
                       <hr className="border-border" />
                     </>
