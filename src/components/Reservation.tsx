@@ -7,6 +7,7 @@ import { usePricing } from "@/context/SettingsContext";
 
 const POT_BBQ_MIN = 10;
 const BREAKFAST_MIN = 10;
+const JOLIB_MIN = 10;
 
 type ProgramType = "stay" | "half" | "daynight" | "jolib" | "healing";
 
@@ -259,7 +260,7 @@ export default function Reservation() {
   // - 그 외(stay·half·daynight): BASE_PEOPLE + extras
   const totalGuests =
     programType === "healing" ? Math.min(MAX_HEALING, BASE_HEALING + extraGuests) :
-    programType === "jolib" ? Math.max(1, extraGuests || 1) :
+    programType === "jolib" ? Math.max(0, extraGuests || 0) :
     BASE_PEOPLE + extraGuests;
 
   // 미니수영장 — 7/8/9월(JS month 6/7/8)에만 노출. 그 외엔 자동 0.
@@ -474,6 +475,12 @@ export default function Reservation() {
     // 조식 선택 시 메뉴 필수
     if (breakfastCount > 0 && !breakfastMenu) {
       alert("조식 메뉴를 선택해주세요.");
+      return;
+    }
+
+    // 목공체험: 최소 10명 검증
+    if (programType === "jolib" && (extraGuests || 0) < JOLIB_MIN) {
+      alert(`목공 체험은 최소 ${JOLIB_MIN}명부터 신청 가능합니다.`);
       return;
     }
 
@@ -728,8 +735,8 @@ export default function Reservation() {
       const count = Math.max(1, selectedTimeSlots.length);
       return pricing.daynight * count;
     }
-    // 목공체험: 1인당 30,000원 × 총 인원
-    if (programType === "jolib") return 30000 * Math.max(1, totalGuests);
+    // 목공체험: 1인당 30,000원 × 총 인원 (0명이면 0원)
+    if (programType === "jolib") return 30000 * Math.max(0, totalGuests);
     if (programType === "healing") return 290000 * totalGuests;
     return program.basePrice * nights;
   }, [programType, selectedTimeSlots.length, pricing.half, pricing.halfExtra, pricing.daynight, program.basePrice, nights, totalGuests]);
@@ -1215,32 +1222,38 @@ export default function Reservation() {
                     <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mb-4">
                       <p className="text-sm font-semibold text-teal-700 mb-2">나만의 아지트 만들기(목공체험) 안내</p>
                       <ul className="text-xs text-teal-600 space-y-1">
-                        <li>• 2시간 체험 / 회당 최대 6명</li>
+                        <li>• 2시간 체험 / <span className="font-bold">최소 {JOLIB_MIN}명부터</span> · 추가 인원 제한 없음</li>
                         <li>• <span className="font-bold">1인 30,000원</span></li>
                         <li>• 운영: 14:00~16:00 / 16:00~18:00 (2타임)</li>
                         <li>• 체험 후 50,000원 상당 바우처 증정</li>
                       </ul>
                     </div>
                     <label className="text-sm font-medium text-text-dark mb-2 block">체험 인원</label>
+                    <span className="inline-block mb-2 text-[11px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                      * 최소 {JOLIB_MIN}명부터 신청 가능
+                    </span>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setExtraGuests((v) => Math.max(1, (v || 1) - 1))}
+                      <button onClick={() => setExtraGuests((v) => (v || 0) <= JOLIB_MIN ? 0 : v - 1)}
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Minus className="w-3.5 h-3.5 text-text-mid" />
                       </button>
-                      <input type="number" min={1} value={Math.max(1, extraGuests || 1)}
+                      <input type="number" min={0} value={extraGuests || 0}
                         onFocus={(e) => e.target.select()}
-                        onChange={(e) => setExtraGuests(Math.max(1, parseInt(e.target.value) || 1))}
+                        onChange={(e) => {
+                          const v = Math.max(0, parseInt(e.target.value) || 0);
+                          setExtraGuests(v > 0 && v < JOLIB_MIN ? JOLIB_MIN : v);
+                        }}
                         className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary" />
-                      <button onClick={() => setExtraGuests((v) => (v || 1) + 1)}
+                      <button onClick={() => setExtraGuests((v) => (v || 0) < JOLIB_MIN ? JOLIB_MIN : v + 1)}
                         className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
                         <Plus className="w-3.5 h-3.5 text-text-mid" />
                       </button>
                       <span className="text-sm text-text-mid">명</span>
                     </div>
-                    {(extraGuests || 0) < 1 && <p className="text-xs text-red-500 mt-2">* 인원을 입력해주세요</p>}
+                    {(extraGuests || 0) < JOLIB_MIN && <p className="text-xs text-red-500 mt-2">* 최소 {JOLIB_MIN}명부터 신청 가능합니다</p>}
                     <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
-                      <span className="text-sm text-text-mid">{Math.max(1, extraGuests || 1)}명 × 30,000원</span>
-                      <span className="text-lg font-bold text-primary">{(30000 * Math.max(1, extraGuests || 1)).toLocaleString()}원</span>
+                      <span className="text-sm text-text-mid">{Math.max(0, extraGuests || 0)}명 × 30,000원</span>
+                      <span className="text-lg font-bold text-primary">{(30000 * Math.max(0, extraGuests || 0)).toLocaleString()}원</span>
                     </div>
                   </div>
                 ) : (
