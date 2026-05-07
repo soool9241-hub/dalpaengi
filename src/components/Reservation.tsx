@@ -6,6 +6,7 @@ import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
 
 const POT_BBQ_MIN = 10;
+const BREAKFAST_MIN = 10;
 
 type ProgramType = "stay" | "half" | "daynight" | "jolib" | "healing";
 
@@ -1364,8 +1365,40 @@ export default function Reservation() {
                       <span className="text-[10px] text-text-light">조식 샌드위치 {breakfastCount}인분 ({formatPrice(breakfastCount * 10000)} 상당)</span>
                     </div>
                   )}
-                  <Counter label="조식 식사" desc={isJiffPromo ? "샌드위치 · JIFF 무료 제공" : "1인 10,000원 (메뉴 선택)"} value={breakfastCount} unitPrice={isJiffPromo ? 0 : 10000}
-                    onDec={() => setBreakfastCount((g) => Math.max(0, g - 1))} onInc={() => setBreakfastCount((g) => g + 1)} onChange={(v) => setBreakfastCount(v)} />
+                  {/* 조식 식사 — 최소 10인분 */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-text-dark text-sm">조식 식사</p>
+                      <p className="text-xs text-text-light">{isJiffPromo ? "샌드위치 · JIFF 무료 제공" : "1인 10,000원 (메뉴 선택)"}</p>
+                      <span className="inline-block mt-1 text-[11px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                        * 최소 {BREAKFAST_MIN}인분부터 주문 가능
+                      </span>
+                      {breakfastCount > 0 && (
+                        <p className="text-xs text-primary font-semibold mt-1">{breakfastCount}인분 = {formatPrice(breakfastCount * (isJiffPromo ? 0 : 10000))}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setBreakfastCount((c) => c <= BREAKFAST_MIN ? 0 : c - 1)}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Minus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                      <input
+                        type="number"
+                        min={0}
+                        value={breakfastCount}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const v = Math.max(0, parseInt(e.target.value) || 0);
+                          setBreakfastCount(v > 0 && v < BREAKFAST_MIN ? BREAKFAST_MIN : v);
+                        }}
+                        className="w-12 text-center font-semibold text-text-dark text-sm border border-border rounded-lg py-1 focus:outline-none focus:border-primary"
+                      />
+                      <button onClick={() => setBreakfastCount((c) => c === 0 ? BREAKFAST_MIN : Math.min(50, c + 1))}
+                        className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-sage transition-colors">
+                        <Plus className="w-3.5 h-3.5 text-text-mid" />
+                      </button>
+                    </div>
+                  </div>
 
                   {breakfastCount > 0 && (
                     <div className="ml-1 -mt-2">
