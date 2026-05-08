@@ -233,6 +233,7 @@ export default function Reservation() {
   const BUS_TYPES = [
     { id: "45", label: "일반 (45인승)", seats: 45 },
     { id: "31", label: "우등 (31인승)", seats: 31 },
+    { id: "25", label: "중형 (25인승) · 50km이내 40만원", seats: 25 },
     { id: "12", label: "스타렉스 (12인승)", seats: 12 },
   ];
   const [busSelections, setBusSelections] = useState<{ typeId: string; count: number }[]>([]);
@@ -565,6 +566,8 @@ export default function Reservation() {
           busStopover: showBusForm && busStopover.length > 0 ? busStopover.filter(s => s.place.trim()) : null,
           // 폼이 화면에 표시한 버스 가격 — busRoutes 테이블 lookup (전북대 60만, 전주대 65만, 원광대 70만, 우석대 65만, 기타 0=별도견적)
           busPrice: busPrice || 0,
+          // 선택된 버스 차종 텍스트 (예: "일반(45인승) 1대 + 스타렉스(12인승) 1대")
+          busVehicles: showBusForm ? busSelections.map(b => { const t = BUS_TYPES.find(bt => bt.id === b.typeId); return t ? `${t.label} ${b.count}대` : ""; }).filter(Boolean).join(" + ") : "",
           selectedTimeSlot: selectedTimeSlots.join(",") || null,
           totalPrice,
           notes,

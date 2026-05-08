@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const {
       guestName, guestPhone, reservationDate, checkoutDate, stayNights,
       totalGuests, extraGuests, programType, bbqGrills, gasRanges, poolCount,
-      dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover, busPrice,
+      dinnerCount, breakfastCount, breakfastMenu, woodcraftCount, potBbqCount, busRequested, busForm, busStopover, busPrice, busVehicles,
       selectedTimeSlot, totalPrice, notes, purpose, purposeRaw,
     } = body;
 
@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
       pot_bbq_count: potBbqCount,
       bus_requested: busRequested,
       bus_fee: busRequested ? (busPrice || 0) : 0,
+      bus_vehicles: busRequested ? (busVehicles || null) : null,
       // total_amount은 폼이 계산한 totalPrice를 그대로 저장
       // (DB trigger가 자동 계산하지 않도록 supabase 대시보드에서 트리거 제거 필요)
       total_amount: totalPrice || 0,
@@ -133,10 +134,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 2차 시도: 새 컬럼이 DB에 없으면 제외하고 재시도
-    if (resErr && (String(resErr.message || "").toLowerCase().includes("breakfast") || String(resErr.message || "").toLowerCase().includes("pool_count"))) {
-      console.warn("새 컬럼 없음(breakfast/pool_count) - 제외 후 재시도");
+    if (resErr && (String(resErr.message || "").toLowerCase().includes("breakfast") || String(resErr.message || "").toLowerCase().includes("pool_count") || String(resErr.message || "").toLowerCase().includes("bus_vehicles"))) {
+      console.warn("새 컬럼 없음(breakfast/pool_count/bus_vehicles) - 제외 후 재시도");
       const fallback = { ...reservationData };
       delete (fallback as Record<string, unknown>).pool_count;
+      delete (fallback as Record<string, unknown>).bus_vehicles;
       const res2 = await supabaseAdmin
         .from("reservations")
         .insert(fallback)
