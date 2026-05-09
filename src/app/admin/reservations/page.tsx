@@ -53,6 +53,21 @@ const BUS_ROUTES: Record<string, number> = {
   "우석대": 650000,
 };
 
+// 25인승 (50km 이내) = 1대당 정액 40만원 (왕복)
+const SEATER_25_PRICE = 400000;
+const is25Seater = (b: { pickup_detail?: string; dropoff_detail?: string }) =>
+  /25\s*인승/.test(b.pickup_detail || "") || /25\s*인승/.test(b.dropoff_detail || "");
+
+function calcBusCost(b: { pickup_detail?: string; dropoff_detail?: string; pickup_place?: string; dropoff_time?: string; dropoff_people?: string }): number {
+  const isRoundtrip = !!(b.dropoff_time || b.dropoff_people);
+  if (is25Seater(b)) {
+    return isRoundtrip ? SEATER_25_PRICE : Math.round(SEATER_25_PRICE * 0.6);
+  }
+  const place = b.pickup_place || "";
+  if (!BUS_ROUTES[place]) return 0;
+  return isRoundtrip ? BUS_ROUTES[place] : Math.round(BUS_ROUTES[place] * 0.6);
+}
+
 const TIME_OPTIONS_PICKUP = Array.from({ length: 25 }, (_, i) => {
   const h = Math.floor(i / 2) + 6;
   const m = i % 2 === 0 ? "00" : "30";
@@ -122,11 +137,34 @@ export default function ReservationsPage() {
   const [busSaving, setBusSaving] = useState(false);
   const pageSize = 20;
 
-  const refreshBusList = async (reservationId: number) => {
+  const refreshBusList = async (reservationId: number): Promise<BusRequest[]> => {
     try {
       const res = await fetch(`/api/admin/reservations?bus_reservation_id=${reservationId}`);
       const json = await res.json();
-      setBusList(json.bus_requests || (json.bus_request ? [json.bus_request] : []));
+      const list: BusRequest[] = json.bus_requests || (json.bus_request ? [json.bus_request] : []);
+      setBusList(list);
+      return list;
+    } catch {
+      return [];
+    }
+  };
+
+  // 버스 변경 후 reservations.bus_fee + total_amount 자동 보정
+  const reconcileBusFee = async (reservationId: number, newList: BusRequest[]) => {
+    if (!detail || detail.id !== reservationId) return;
+    const newBusFee = newList.reduce((sum, b) => sum + calcBusCost(b), 0);
+    const oldBusFee = detail.bus_fee || 0;
+    if (newBusFee === oldBusFee) return;
+    const oldTotal = detail.total_amount || 0;
+    const newTotal = oldTotal - oldBusFee + newBusFee;
+    try {
+      await fetch("/api/admin/reservations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reservationId, bus_fee: newBusFee, total_amount: newTotal }),
+      });
+      setDetail((prev) => prev ? { ...prev, bus_fee: newBusFee, total_amount: newTotal } : prev);
+      fetchData();
     } catch { /* ignore */ }
   };
 
@@ -161,7 +199,8 @@ export default function ReservationsPage() {
       } else {
         setEditingBusId(null);
         setBusEditData({});
-        await refreshBusList(detail.id);
+        const list = await refreshBusList(detail.id);
+        await reconcileBusFee(detail.id, list);
       }
     } catch (e) {
       alert("저장 중 오류: " + String(e));
@@ -179,7 +218,8 @@ export default function ReservationsPage() {
         body: JSON.stringify({ id: busId, reservation_id: detail.id }),
       });
       if (res.ok) {
-        await refreshBusList(detail.id);
+        const list = await refreshBusList(detail.id);
+        await reconcileBusFee(detail.id, list);
       } else {
         alert("삭제 실패");
       }
@@ -1002,6 +1042,18 @@ export default function ReservationsPage() {
                                 <input placeholder="하차 상세 (예: 25인승 1호차 · 후문)" value={busEditData.dropoff_detail || ""}
                                   onChange={(e) => setBusEditData(p => ({ ...p, dropoff_detail: e.target.value }))}
                                   className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+
+                                {(() => {
+                                  const previewCost = calcBusCost(busEditData);
+                                  return previewCost > 0 ? (
+                                    <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded text-[11px]">
+                                      <span className="text-amber-700">
+                                        {is25Seater(busEditData) ? "25인승 (50km 이내)" : busEditData.pickup_place} {(busEditData.dropoff_time || busEditData.dropoff_people) ? "왕복" : "편도"} 견적:
+                                      </span>{" "}
+                                      <span className="font-bold text-amber-900">{previewCost.toLocaleString()}원</span>
+                                    </div>
+                                  ) : null;
+                                })()}
                               </div>
                             );
                           }
@@ -1039,15 +1091,45 @@ export default function ReservationsPage() {
                                   <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 상세 하차지: {b.dropoff_detail || "-"}</div>
                                 </div>
                               )}
+                              {(() => {
+                                const c = calcBusCost(b);
+                                return c > 0 ? (
+                                  <div className="text-[11px] text-gray-500 pt-1 border-t border-gray-200">
+                                    1대 견적 ({is25Seater(b) ? "25인승 50km이내" : b.pickup_place} {isRoundtrip ? "왕복" : "편도"}): <span className="font-bold text-primary">{c.toLocaleString()}원</span>
+                                  </div>
+                                ) : null;
+                              })()}
                             </div>
                           );
                         })}
                       </div>
-                      {detail.bus_fee != null && detail.bus_fee > 0 && (
-                        <p className="mt-2 text-xs text-gray-600">
-                          총 버스비: <span className="font-bold text-primary">{detail.bus_fee.toLocaleString()}원</span>
-                        </p>
-                      )}
+                      {(() => {
+                        const computedTotal = busList.reduce((s, b) => s + calcBusCost(b), 0);
+                        const stored = detail.bus_fee || 0;
+                        const mismatch = computedTotal > 0 && stored !== computedTotal;
+                        return (
+                          <div className="mt-2 text-xs text-gray-600 space-y-1">
+                            {computedTotal > 0 && (
+                              <p>
+                                계산된 합산 ({busList.length}대): <span className="font-bold text-primary">{computedTotal.toLocaleString()}원</span>
+                              </p>
+                            )}
+                            {stored > 0 && (
+                              <p>
+                                저장된 버스비 (DB): <span className={`font-bold ${mismatch ? "text-amber-600" : "text-primary"}`}>{stored.toLocaleString()}원</span>
+                                {mismatch && (
+                                  <button
+                                    onClick={() => reconcileBusFee(detail.id, busList)}
+                                    className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold hover:bg-amber-200"
+                                  >
+                                    자동 보정
+                                  </button>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                   <Row label="채널" value={detail.source || detail.referral_source || "-"} />
