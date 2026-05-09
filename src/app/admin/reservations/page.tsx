@@ -117,7 +117,76 @@ export default function ReservationsPage() {
   const [busLoading, setBusLoading] = useState(false);
   const [busToggle, setBusToggle] = useState(false);
   const [busList, setBusList] = useState<BusRequest[]>([]);
+  const [editingBusId, setEditingBusId] = useState<number | null>(null);
+  const [busEditData, setBusEditData] = useState<Partial<BusRequest>>({});
+  const [busSaving, setBusSaving] = useState(false);
   const pageSize = 20;
+
+  const refreshBusList = async (reservationId: number) => {
+    try {
+      const res = await fetch(`/api/admin/reservations?bus_reservation_id=${reservationId}`);
+      const json = await res.json();
+      setBusList(json.bus_requests || (json.bus_request ? [json.bus_request] : []));
+    } catch { /* ignore */ }
+  };
+
+  const startEditBus = (bus: BusRequest) => {
+    setEditingBusId(bus.id ?? null);
+    setBusEditData({
+      manager_name: bus.manager_name,
+      manager_phone: bus.manager_phone,
+      pickup_place: bus.pickup_place,
+      pickup_people: bus.pickup_people,
+      pickup_time: bus.pickup_time,
+      pickup_detail: bus.pickup_detail || "",
+      dropoff_place: bus.dropoff_place,
+      dropoff_people: bus.dropoff_people,
+      dropoff_time: bus.dropoff_time,
+      dropoff_detail: bus.dropoff_detail || "",
+    });
+  };
+
+  const saveBusEdit = async () => {
+    if (!editingBusId || !detail) return;
+    setBusSaving(true);
+    try {
+      const res = await fetch("/api/admin/bus", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingBusId, ...busEditData }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert("저장 실패: " + (j.error || "unknown"));
+      } else {
+        setEditingBusId(null);
+        setBusEditData({});
+        await refreshBusList(detail.id);
+      }
+    } catch (e) {
+      alert("저장 중 오류: " + String(e));
+    }
+    setBusSaving(false);
+  };
+
+  const deleteBusEntry = async (busId: number) => {
+    if (!detail) return;
+    if (!window.confirm("이 버스 정보를 삭제하시겠습니까?")) return;
+    try {
+      const res = await fetch("/api/admin/bus", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: busId, reservation_id: detail.id }),
+      });
+      if (res.ok) {
+        await refreshBusList(detail.id);
+      } else {
+        alert("삭제 실패");
+      }
+    } catch (e) {
+      alert("삭제 중 오류: " + String(e));
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -137,6 +206,15 @@ export default function ReservationsPage() {
   }, [status, program, search, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // 모달 열려있을 때 윈도우 포커스 시 버스 목록 자동 새로고침 (버스관리 탭과 동기화)
+  useEffect(() => {
+    if (!detail || !detail.bus_requested) return;
+    const onFocus = () => refreshBusList(detail.id);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.id, detail?.bus_requested]);
 
   const openDetail = async (r: ReservationRow) => {
     setDetail(r);
@@ -867,12 +945,81 @@ export default function ReservationsPage() {
                         {busList.map((b, idx) => {
                           const is25 = /25\s*인승/.test(b.pickup_detail || "") || /25\s*인승/.test(b.dropoff_detail || "");
                           const isRoundtrip = !!(b.dropoff_time || b.dropoff_people);
+                          const isEditing = editingBusId === b.id;
+
+                          if (isEditing) {
+                            return (
+                              <div key={b.id ?? idx} className="bg-primary/5 border-2 border-primary rounded-lg p-3 text-xs space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-primary">승차정보 {idx + 1} 수정 중</span>
+                                  <div className="flex gap-1">
+                                    <button onClick={saveBusEdit} disabled={busSaving}
+                                      className="px-2 py-1 bg-primary text-white rounded text-[11px] font-bold disabled:opacity-50">
+                                      {busSaving ? "저장중..." : "저장"}
+                                    </button>
+                                    <button onClick={() => { setEditingBusId(null); setBusEditData({}); }}
+                                      className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">취소</button>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <input placeholder="담당자명" value={busEditData.manager_name || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, manager_name: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                  <input placeholder="담당자 연락처" value={busEditData.manager_phone || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, manager_phone: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                </div>
+
+                                <p className="text-[10px] font-bold text-purple-600 mt-1">🚌 승차 정보</p>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  <input placeholder="승차지" value={busEditData.pickup_place || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, pickup_place: e.target.value, dropoff_place: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                  <input placeholder="인원" value={busEditData.pickup_people || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, pickup_people: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                  <input placeholder="시간" value={busEditData.pickup_time || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, pickup_time: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                </div>
+                                <input placeholder="승차 상세 (예: 25인승 1호차 · 정문 앞)" value={busEditData.pickup_detail || ""}
+                                  onChange={(e) => setBusEditData(p => ({ ...p, pickup_detail: e.target.value }))}
+                                  className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+
+                                <p className="text-[10px] font-bold text-blue-600 mt-1">🚌 하차 정보</p>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  <input placeholder="하차지" value={busEditData.dropoff_place || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, dropoff_place: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                  <input placeholder="인원" value={busEditData.dropoff_people || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, dropoff_people: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                  <input placeholder="시간" value={busEditData.dropoff_time || ""}
+                                    onChange={(e) => setBusEditData(p => ({ ...p, dropoff_time: e.target.value }))}
+                                    className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                </div>
+                                <input placeholder="하차 상세 (예: 25인승 1호차 · 후문)" value={busEditData.dropoff_detail || ""}
+                                  onChange={(e) => setBusEditData(p => ({ ...p, dropoff_detail: e.target.value }))}
+                                  className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                              </div>
+                            );
+                          }
+
                           return (
                             <div key={b.id ?? idx} className="bg-gray-50 rounded-lg p-2.5 text-xs space-y-1.5">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-primary">승차정보 {idx + 1}</span>
-                                {is25 && <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">25인승</span>}
-                                <span className="text-gray-400">· {isRoundtrip ? "왕복" : "편도"}</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-primary">승차정보 {idx + 1}</span>
+                                  {is25 && <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">25인승</span>}
+                                  <span className="text-gray-400">· {isRoundtrip ? "왕복" : "편도"}</span>
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                  <button onClick={() => startEditBus(b)}
+                                    className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold hover:bg-primary/20">수정</button>
+                                  <button onClick={() => b.id && deleteBusEntry(b.id)}
+                                    className="px-2 py-0.5 bg-red-50 text-red-500 rounded text-[10px] font-bold hover:bg-red-100">삭제</button>
+                                </div>
                               </div>
                               {(b.manager_name || b.manager_phone) && (
                                 <div className="text-gray-700">
@@ -883,13 +1030,13 @@ export default function ReservationsPage() {
                               <div className="text-gray-700">
                                 <span className="text-purple-500 font-semibold">🚌 승차</span> {b.pickup_place || "-"}{" "}
                                 {b.pickup_time || "-"} ({b.pickup_people || "-"}명)
-                                {b.pickup_detail && <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 {b.pickup_detail}</div>}
+                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 상세 승차지: {b.pickup_detail || "-"}</div>
                               </div>
                               {isRoundtrip && (
                                 <div className="text-gray-700">
                                   <span className="text-blue-500 font-semibold">🚌 하차</span> {b.dropoff_place || b.pickup_place || "-"}{" "}
                                   {b.dropoff_time || "-"} ({b.dropoff_people || "-"}명)
-                                  {b.dropoff_detail && <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 {b.dropoff_detail}</div>}
+                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 상세 하차지: {b.dropoff_detail || "-"}</div>
                                 </div>
                               )}
                             </div>

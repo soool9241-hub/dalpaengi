@@ -116,6 +116,13 @@ export default function BusManagementPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // 윈도우 포커스 시 자동 refetch (예약관리 탭과 실시간 동기화)
+  useEffect(() => {
+    const onFocus = () => fetchData();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchData]);
+
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(null), 4000);
