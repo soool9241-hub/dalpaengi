@@ -7,6 +7,12 @@ const BUS_ROUTES: Record<string, number> = {
   "전북대": 600000, "전주대": 650000, "원광대": 700000, "우석대": 650000,
 };
 
+// 25인승은 50km 이내 정액 40만원 (왕복 기준)
+const SEATER_25_PRICE = 400000;
+const is25Seater = (bus: { pickup_detail?: string; dropoff_detail?: string }) => {
+  return /25\s*인승/.test(bus.pickup_detail || "") || /25\s*인승/.test(bus.dropoff_detail || "");
+};
+
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending: { label: "대기", color: "bg-yellow-100 text-yellow-800" },
   confirmed: { label: "확정", color: "bg-blue-100 text-blue-800" },
@@ -278,6 +284,10 @@ export default function BusManagementPage() {
   };
 
   const getBusCost = (bus: BusRow) => {
+    if (is25Seater(bus)) {
+      const isRoundtrip = !!(bus.dropoff_time || bus.dropoff_people);
+      return isRoundtrip ? SEATER_25_PRICE : Math.round(SEATER_25_PRICE * 0.6);
+    }
     const place = bus.pickup_place;
     if (!BUS_ROUTES[place]) return 0;
     const isRoundtrip = !!(bus.dropoff_time || bus.dropoff_people);
@@ -571,6 +581,7 @@ export default function BusManagementPage() {
                         <span className="flex items-center gap-1">
                           <MapPin size={13} className="text-purple-400" />
                           {bus.pickup_place} {roundtrip ? "왕복" : "편도"}
+                          {is25Seater(bus) && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">25인승</span>}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock size={13} className="text-blue-400" />
@@ -666,7 +677,7 @@ export default function BusManagementPage() {
                     {cost > 0 && (
                       <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5">
                         <p className="text-xs text-gray-600">
-                          {bus.pickup_place} {roundtrip ? "왕복" : "편도"} 견적: <span className="font-black text-primary text-sm">{cost.toLocaleString()}원</span>
+                          {is25Seater(bus) ? "25인승 (50km 이내)" : bus.pickup_place} {roundtrip ? "왕복" : "편도"} 견적: <span className="font-black text-primary text-sm">{cost.toLocaleString()}원</span>
                         </p>
                       </div>
                     )}

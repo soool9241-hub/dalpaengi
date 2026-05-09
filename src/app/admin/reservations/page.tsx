@@ -12,9 +12,11 @@ interface BusRequest {
   pickup_place: string;
   pickup_people: string;
   pickup_time: string;
+  pickup_detail?: string;
   dropoff_place: string;
   dropoff_people: string;
   dropoff_time: string;
+  dropoff_detail?: string;
   stopover_text?: string;
 }
 
@@ -114,6 +116,7 @@ export default function ReservationsPage() {
   const [busForm, setBusForm] = useState<BusFormData>(EMPTY_BUS_FORM);
   const [busLoading, setBusLoading] = useState(false);
   const [busToggle, setBusToggle] = useState(false);
+  const [busList, setBusList] = useState<BusRequest[]>([]);
   const pageSize = 20;
 
   const fetchData = useCallback(async () => {
@@ -153,16 +156,19 @@ export default function ReservationsPage() {
     });
     setBusForm(EMPTY_BUS_FORM);
     setBusToggle(r.bus_requested);
+    setBusList([]);
     setIsEditing(false);
 
-    // 버스 요청 데이터 fetch
+    // 버스 요청 데이터 fetch (다중 지원)
     if (r.bus_requested) {
       setBusLoading(true);
       try {
         const res = await fetch(`/api/admin/reservations?bus_reservation_id=${r.id}`);
         const json = await res.json();
-        if (json.bus_request) {
-          const b: BusRequest = json.bus_request;
+        const list: BusRequest[] = json.bus_requests || (json.bus_request ? [json.bus_request] : []);
+        setBusList(list);
+        if (list.length > 0) {
+          const b = list[0];
           const knownRoutes = Object.keys(BUS_ROUTES);
           const isCustomPickup = b.pickup_place && !knownRoutes.includes(b.pickup_place);
           setBusForm({
@@ -852,6 +858,51 @@ export default function ReservationsPage() {
                       </div>
                     ) : null}
                   </div>
+                  {detail.bus_requested && busList.length > 0 && (
+                    <div className="py-2.5 border-b border-gray-100">
+                      <p className="text-gray-500 font-medium text-sm flex items-center gap-1.5 mb-2">
+                        <Bus size={14} className="text-primary" /> 버스 상세 ({busList.length}대)
+                      </p>
+                      <div className="space-y-2">
+                        {busList.map((b, idx) => {
+                          const is25 = /25\s*인승/.test(b.pickup_detail || "") || /25\s*인승/.test(b.dropoff_detail || "");
+                          const isRoundtrip = !!(b.dropoff_time || b.dropoff_people);
+                          return (
+                            <div key={b.id ?? idx} className="bg-gray-50 rounded-lg p-2.5 text-xs space-y-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-primary">승차정보 {idx + 1}</span>
+                                {is25 && <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">25인승</span>}
+                                <span className="text-gray-400">· {isRoundtrip ? "왕복" : "편도"}</span>
+                              </div>
+                              {(b.manager_name || b.manager_phone) && (
+                                <div className="text-gray-700">
+                                  <span className="text-gray-400">담당자: </span>
+                                  {b.manager_name || "-"} {b.manager_phone || ""}
+                                </div>
+                              )}
+                              <div className="text-gray-700">
+                                <span className="text-purple-500 font-semibold">🚌 승차</span> {b.pickup_place || "-"}{" "}
+                                {b.pickup_time || "-"} ({b.pickup_people || "-"}명)
+                                {b.pickup_detail && <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 {b.pickup_detail}</div>}
+                              </div>
+                              {isRoundtrip && (
+                                <div className="text-gray-700">
+                                  <span className="text-blue-500 font-semibold">🚌 하차</span> {b.dropoff_place || b.pickup_place || "-"}{" "}
+                                  {b.dropoff_time || "-"} ({b.dropoff_people || "-"}명)
+                                  {b.dropoff_detail && <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 {b.dropoff_detail}</div>}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {detail.bus_fee != null && detail.bus_fee > 0 && (
+                        <p className="mt-2 text-xs text-gray-600">
+                          총 버스비: <span className="font-bold text-primary">{detail.bus_fee.toLocaleString()}원</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <Row label="채널" value={detail.source || detail.referral_source || "-"} />
                   <Row label="메모" value={detail.notes || "-"} />
                   <Row label="상태">

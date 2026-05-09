@@ -20,11 +20,14 @@ interface BusDetail {
   pickupPlace: string;
   pickupPeople: string;
   pickupTime: string;
+  pickupDetail?: string;
   dropoffPlace: string;
   dropoffPeople: string;
   dropoffTime: string;
+  dropoffDetail?: string;
   managerName: string;
   managerPhone: string;
+  vehicleLabel?: string;
   cost: number;
 }
 
@@ -43,6 +46,7 @@ interface NotifyBody {
   potBbqCount: number;
   busRequested: boolean;
   busDetail?: BusDetail;
+  busDetails?: BusDetail[];
   timeSlot: string | null;
   notes: string | null;
   changes: string[];
@@ -56,15 +60,28 @@ function buildChangeMessage(d: NotifyBody): string {
   const changesStr = d.changes.length > 0 ? d.changes.join("\n") : "옵션 변경";
 
   let busSection = "";
-  if (d.busRequested && d.busDetail) {
-    const b = d.busDetail;
-    const modeLabel = b.mode === "roundtrip" ? "왕복" : "편도";
-    busSection = `\n━━ 버스 렌트 (${modeLabel}) ━━
-• 노선: ${b.pickupPlace}${b.cost > 0 ? ` (${fmt(b.cost)})` : ""}
-• 담당자: ${b.managerName} ${b.managerPhone}
-• 승차: ${b.pickupPlace} ${b.pickupTime} (${b.pickupPeople}명)${b.mode === "roundtrip" ? `\n• 하차: ${b.dropoffPlace} ${b.dropoffTime} (${b.dropoffPeople}명)` : ""}
-※ 탑승 시간을 다시 한번 확인 부탁드립니다.
-`;
+  const busList = d.busDetails && d.busDetails.length > 0
+    ? d.busDetails
+    : (d.busDetail ? [d.busDetail] : []);
+
+  if (d.busRequested && busList.length > 0) {
+    const totalCost = busList.reduce((s, b) => s + (b.cost || 0), 0);
+    const headerLabel = busList.length > 1 ? `버스 렌트 (총 ${busList.length}대)` : `버스 렌트 (${busList[0].mode === "roundtrip" ? "왕복" : "편도"})`;
+    const blocks = busList.map((b, idx) => {
+      const modeLabel = b.mode === "roundtrip" ? "왕복" : "편도";
+      const heading = busList.length > 1
+        ? `[${idx + 1}호차${b.vehicleLabel ? ` · ${b.vehicleLabel}` : ""}] ${modeLabel}${b.cost > 0 ? ` (${fmt(b.cost)})` : ""}`
+        : `${b.vehicleLabel ? b.vehicleLabel + " · " : ""}${b.pickupPlace}${b.cost > 0 ? ` (${fmt(b.cost)})` : ""}`;
+      const lines: string[] = [heading];
+      if (b.managerName || b.managerPhone) lines.push(`• 담당자: ${b.managerName || "-"} ${b.managerPhone || ""}`.trim());
+      lines.push(`• 승차: ${b.pickupPlace} ${b.pickupTime || "-"} (${b.pickupPeople || "-"}명)${b.pickupDetail ? ` · ${b.pickupDetail}` : ""}`);
+      if (b.mode === "roundtrip") {
+        lines.push(`• 하차: ${b.dropoffPlace || b.pickupPlace} ${b.dropoffTime || "-"} (${b.dropoffPeople || "-"}명)${b.dropoffDetail ? ` · ${b.dropoffDetail}` : ""}`);
+      }
+      return lines.join("\n");
+    }).join("\n\n");
+
+    busSection = `\n━━ ${headerLabel} ━━\n${blocks}\n${busList.length > 1 && totalCost > 0 ? `• 총 버스비: ${fmt(totalCost)}\n` : ""}※ 탑승 시간을 다시 한번 확인 부탁드립니다.\n`;
   } else if (d.busRequested) {
     busSection = "\n• 버스 렌트: 요청 (상세 미정)\n";
   }

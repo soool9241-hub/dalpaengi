@@ -7,23 +7,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 버스 요청 단건 조회
+  // 버스 요청 조회 (다중 지원: bus_requests 배열로 반환, 호환을 위해 bus_request 단건도 함께)
   const busReservationId = req.nextUrl.searchParams.get("bus_reservation_id");
   if (busReservationId) {
     try {
       const { data: busData, error: busErr } = await supabaseAdmin
         .from("bus_requests")
         .select("*")
-        .eq("reservation_id", parseInt(busReservationId));
+        .eq("reservation_id", parseInt(busReservationId))
+        .order("id", { ascending: true });
 
       if (busErr) {
         console.error("bus_requests 조회 에러:", busErr);
-        return NextResponse.json({ bus_request: null, error: busErr.message });
+        return NextResponse.json({ bus_request: null, bus_requests: [], error: busErr.message });
       }
-      return NextResponse.json({ bus_request: busData && busData.length > 0 ? busData[0] : null });
+      const list = busData || [];
+      return NextResponse.json({
+        bus_request: list.length > 0 ? list[0] : null,
+        bus_requests: list,
+      });
     } catch (e) {
       console.error("bus_requests 조회 예외:", e);
-      return NextResponse.json({ bus_request: null, error: String(e) });
+      return NextResponse.json({ bus_request: null, bus_requests: [], error: String(e) });
     }
   }
 
