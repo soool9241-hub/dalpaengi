@@ -100,6 +100,8 @@ export async function PATCH(req: NextRequest) {
     "pot_bbq_count", "bus_requested", "stay_nights", "reservation_date",
     "checkout_date", "time_slot", "program_type", "guest_name", "guest_phone",
     "bus_fee", "total_amount",
+    "breakfast_count", "breakfast_menu", "pool_count",
+    "purpose", "purpose_raw", "referral_source",
   ];
   const filtered: Record<string, unknown> = {};
   for (const key of allowed) {

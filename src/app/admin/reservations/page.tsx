@@ -95,6 +95,50 @@ const PROGRAM_OPTIONS = [
   { value: "daynight", label: "주/야간" },
 ];
 
+const PROGRAM_TYPE_OPTIONS = [
+  { value: "stay", label: "숙박" },
+  { value: "half", label: "3시간 대여" },
+  { value: "daynight", label: "주/야간 패키지" },
+];
+
+const PURPOSE_OPTIONS = [
+  "가족모임",
+  "친구/지인 모임",
+  "회사 워크숍/MT",
+  "동호회/소모임",
+  "커플/데이트",
+  "생일/기념일",
+  "워케이션/작업",
+  "기타",
+];
+
+const BREAKFAST_MENUS: { name: string; minPeople: number }[] = [
+  { name: "육개장", minPeople: 20 },
+  { name: "김치찌개", minPeople: 0 },
+  { name: "보리밥 비빔밥", minPeople: 0 },
+  { name: "샌드위치", minPeople: 0 },
+];
+
+const REFERRAL_OPTIONS = [
+  "네이버 검색",
+  "인스타그램",
+  "지인 추천",
+  "에어비앤비",
+  "블로그",
+  "재방문",
+  "기타",
+];
+
+// 미니수영장은 7~9월에만 노출 (월: 7,8,9)
+function isPoolSeason(dateStr?: string | null): boolean {
+  if (!dateStr) return true;
+  const m = parseInt(dateStr.slice(5, 7), 10);
+  return [7, 8, 9].includes(m);
+}
+
+// 시간제 프로그램 여부 (시간대 입력 노출용)
+const isTimedProgram = (t?: string) => t === "half" || t === "daynight";
+
 const STATUS_COLORS: Record<string, string> = {
   confirmed: "bg-green-100 text-green-800",
   upcoming: "bg-cyan-100 text-cyan-800",
@@ -106,6 +150,8 @@ const STATUS_COLORS: Record<string, string> = {
 function formatOptions(r: ReservationRow): string {
   const opts: string[] = [];
   if (r.dinner_count > 0) opts.push(`석식${r.dinner_count}`);
+  if ((r.breakfast_count || 0) > 0) opts.push(`조식${r.breakfast_count}${r.breakfast_menu ? `·${r.breakfast_menu}` : ""}`);
+  if ((r.pool_count || 0) > 0) opts.push(`풀${r.pool_count}`);
   if (r.woodcraft_count > 0) opts.push(`목공${r.woodcraft_count}`);
   if (r.pot_bbq_count > 0) opts.push(`항아리${r.pot_bbq_count}`);
   if (r.bus_requested) opts.push("버스");
@@ -260,15 +306,27 @@ export default function ReservationsPage() {
     setDetail(r);
     // guest_count를 총인원으로 사용 (extra_guests는 항상 0)
     setEditData({
+      guest_name: r.guest_name,
+      guest_phone: r.guest_phone,
+      reservation_date: r.reservation_date,
+      checkout_date: r.checkout_date,
+      program_type: r.program_type,
       guest_count: r.guest_count || 0,
       extra_guests: 0,
       bbq_count: r.bbq_count,
       burner_count: r.burner_count,
       dinner_count: r.dinner_count,
+      breakfast_count: r.breakfast_count ?? 0,
+      breakfast_menu: r.breakfast_menu ?? "",
+      pool_count: r.pool_count ?? 0,
       woodcraft_count: r.woodcraft_count,
       pot_bbq_count: r.pot_bbq_count,
       bus_requested: r.bus_requested,
       stay_nights: r.stay_nights,
+      time_slot: r.time_slot,
+      purpose: r.purpose,
+      purpose_raw: r.purpose_raw,
+      referral_source: r.referral_source,
       notes: r.notes,
       status: r.status,
     });
@@ -341,11 +399,35 @@ export default function ReservationsPage() {
     if (editData.bbq_count !== detail.bbq_count) changes.push(`• BBQ 그릴: ${detail.bbq_count}개 → ${editData.bbq_count}개`);
     if (editData.burner_count !== detail.burner_count) changes.push(`• 가스버너: ${detail.burner_count}개 → ${editData.burner_count}개`);
     if (editData.dinner_count !== detail.dinner_count) changes.push(`• 저녁식사: ${detail.dinner_count}명 → ${editData.dinner_count}명`);
+    if ((editData.breakfast_count ?? 0) !== (detail.breakfast_count ?? 0)) {
+      changes.push(`• 조식: ${detail.breakfast_count ?? 0}명 → ${editData.breakfast_count ?? 0}명`);
+    }
+    if ((editData.breakfast_menu ?? "") !== (detail.breakfast_menu ?? "")) {
+      changes.push(`• 조식 메뉴: ${detail.breakfast_menu || "(없음)"} → ${editData.breakfast_menu || "(없음)"}`);
+    }
+    if ((editData.pool_count ?? 0) !== (detail.pool_count ?? 0)) {
+      changes.push(`• 미니수영장: ${detail.pool_count ?? 0}개 → ${editData.pool_count ?? 0}개`);
+    }
     if (editData.woodcraft_count !== detail.woodcraft_count) changes.push(`• 목공키트: ${detail.woodcraft_count}개 → ${editData.woodcraft_count}개`);
     if (editData.pot_bbq_count !== detail.pot_bbq_count) changes.push(`• 항아리BBQ: ${detail.pot_bbq_count}인분 → ${editData.pot_bbq_count}인분`);
     if (editData.bus_requested !== detail.bus_requested) changes.push(`• 버스: ${detail.bus_requested ? "요청" : "없음"} → ${editData.bus_requested ? "요청" : "없음"}`);
     if (editData.stay_nights !== detail.stay_nights) changes.push(`• 숙박: ${detail.stay_nights}박 → ${editData.stay_nights}박`);
-    if (editData.notes !== detail.notes) changes.push(`• 메모: ${editData.notes || "(없음)"}`);
+    if ((editData.reservation_date ?? "") !== (detail.reservation_date ?? "")) {
+      changes.push(`• 체크인: ${detail.reservation_date} → ${editData.reservation_date}`);
+    }
+    if ((editData.checkout_date ?? "") !== (detail.checkout_date ?? "")) {
+      changes.push(`• 체크아웃: ${detail.checkout_date || "(없음)"} → ${editData.checkout_date || "(없음)"}`);
+    }
+    if ((editData.program_type ?? detail.program_type) !== detail.program_type) {
+      changes.push(`• 프로그램: ${PROGRAM_LABELS[detail.program_type]} → ${PROGRAM_LABELS[editData.program_type as string] || editData.program_type}`);
+    }
+    if ((editData.time_slot ?? "") !== (detail.time_slot ?? "")) {
+      changes.push(`• 시간대: ${detail.time_slot || "(없음)"} → ${editData.time_slot || "(없음)"}`);
+    }
+    if ((editData.purpose ?? "") !== (detail.purpose ?? "")) {
+      changes.push(`• 목적: ${detail.purpose || "(없음)"} → ${editData.purpose || "(없음)"}`);
+    }
+    if ((editData.notes ?? "") !== (detail.notes ?? "")) changes.push(`• 메모: ${editData.notes || "(없음)"}`);
     if (editData.status !== detail.status) changes.push(`• 상태: ${STATUS_LABELS[detail.status]} → ${STATUS_LABELS[editData.status as string]}`);
 
     try {
@@ -373,22 +455,25 @@ export default function ReservationsPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              guestName: detail.guest_name,
-              guestPhone: detail.guest_phone,
-              reservationDate: detail.reservation_date,
+              guestName: editData.guest_name ?? detail.guest_name,
+              guestPhone: editData.guest_phone ?? detail.guest_phone,
+              reservationDate: editData.reservation_date ?? detail.reservation_date,
               stayNights: editData.stay_nights ?? detail.stay_nights,
               guestCount: editData.guest_count ?? detail.guest_count,
               extraGuests: editData.extra_guests ?? detail.extra_guests,
-              programType: detail.program_type,
+              programType: editData.program_type ?? detail.program_type,
               bbqCount: editData.bbq_count ?? detail.bbq_count,
               burnerCount: editData.burner_count ?? detail.burner_count,
               dinnerCount: editData.dinner_count ?? detail.dinner_count,
+              breakfastCount: editData.breakfast_count ?? detail.breakfast_count ?? 0,
+              breakfastMenu: editData.breakfast_menu ?? detail.breakfast_menu ?? "",
+              poolCount: editData.pool_count ?? detail.pool_count ?? 0,
               woodcraftCount: editData.woodcraft_count ?? detail.woodcraft_count,
               potBbqCount: editData.pot_bbq_count ?? detail.pot_bbq_count,
               busRequested: editData.bus_requested ?? detail.bus_requested,
-              timeSlot: detail.time_slot,
+              timeSlot: editData.time_slot ?? detail.time_slot,
               notes: editData.notes ?? detail.notes,
-              purpose: detail.purpose,
+              purpose: editData.purpose ?? detail.purpose,
               changes,
             }),
           });
@@ -645,10 +730,55 @@ export default function ReservationsPage() {
             {isEditing ? (
               /* EDIT MODE */
               <div className="space-y-4">
-                {/* 기본 정보 (읽기 전용) */}
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-sm font-bold text-gray-900">{detail.guest_name} <span className="font-normal text-gray-500">{detail.guest_phone}</span></p>
-                  <p className="text-xs text-gray-500 mt-1">{detail.reservation_date} ~ {detail.checkout_date} · {PROGRAM_LABELS[detail.program_type]}</p>
+                {/* 예약자 정보 (편집 가능) */}
+                <div className="bg-gray-50 rounded-xl p-3 space-y-2.5">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">예약자 정보</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">이름</label>
+                      <input type="text" value={ed("guest_name") || ""}
+                        onChange={(e) => setEd("guest_name", e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">전화번호</label>
+                      <input type="text" value={ed("guest_phone") || ""}
+                        onChange={(e) => setEd("guest_phone", e.target.value.replace(/[^0-9-]/g, ""))}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">체크인</label>
+                      <input type="date" value={ed("reservation_date") || ""}
+                        onChange={(e) => setEd("reservation_date", e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">체크아웃</label>
+                      <input type="date" value={ed("checkout_date") || ""}
+                        onChange={(e) => setEd("checkout_date", e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">프로그램</label>
+                      <select value={(ed("program_type") as unknown as string) || detail.program_type}
+                        onChange={(e) => setEd("program_type", e.target.value)}
+                        className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        {PROGRAM_TYPE_OPTIONS.map((p) => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {isTimedProgram((ed("program_type") as unknown as string) || detail.program_type) && (
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-500 mb-1 block">시간대</label>
+                      <input type="text" placeholder="예: 09-12, day, night" value={ed("time_slot") || ""}
+                        onChange={(e) => setEd("time_slot", e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                  )}
                 </div>
 
                 {/* 인원 */}
@@ -711,6 +841,83 @@ export default function ReservationsPage() {
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">항아리BBQ</label>
                     <input type="number" value={ed("pot_bbq_count") || ""} onChange={(e) => setEd("pot_bbq_count", Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                </div>
+
+                {/* 조식 (인원 + 메뉴) */}
+                <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-3 space-y-2">
+                  <p className="text-xs font-bold text-amber-900 flex items-center gap-1">🍱 조식 (1인 10,000원)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-600 mb-1 block">조식 인원</label>
+                      <input type="number" value={ed("breakfast_count") ?? 0}
+                        onChange={(e) => {
+                          const cnt = Math.max(0, parseInt(e.target.value) || 0);
+                          setEditData((prev) => {
+                            const next: Partial<ReservationRow> = { ...prev, breakfast_count: cnt };
+                            if (cnt === 0) next.breakfast_menu = "";
+                            else if (prev.breakfast_menu === "육개장" && cnt < 20) next.breakfast_menu = "";
+                            return next;
+                          });
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-gray-600 mb-1 block">조식 메뉴</label>
+                      <select value={ed("breakfast_menu") || ""}
+                        onChange={(e) => setEd("breakfast_menu", e.target.value)}
+                        disabled={(ed("breakfast_count") ?? 0) === 0}
+                        className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:bg-gray-100 disabled:text-gray-400">
+                        <option value="">메뉴 선택</option>
+                        {BREAKFAST_MENUS.map((m) => {
+                          const cnt = (ed("breakfast_count") ?? 0) as number;
+                          const disabled = m.minPeople > 0 && cnt < m.minPeople;
+                          return (
+                            <option key={m.name} value={m.name} disabled={disabled}>
+                              {m.name}{m.minPeople > 0 ? ` (${m.minPeople}인↑)` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+                  {(ed("breakfast_count") ?? 0) > 0 && !ed("breakfast_menu") && (
+                    <p className="text-[11px] text-amber-700">조식 메뉴를 선택해주세요.</p>
+                  )}
+                </div>
+
+                {/* 미니수영장 + 목적 + 유입경로 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">
+                      미니수영장 <span className="text-[10px] text-gray-400">(7~9월)</span>
+                    </label>
+                    <input type="number" value={ed("pool_count") ?? 0}
+                      onChange={(e) => setEd("pool_count", Math.max(0, parseInt(e.target.value) || 0))}
+                      disabled={!isPoolSeason((ed("reservation_date") as unknown as string) || detail.reservation_date)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-gray-100 disabled:text-gray-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">목적</label>
+                    <select value={ed("purpose") || ""}
+                      onChange={(e) => setEd("purpose", e.target.value)}
+                      className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                      <option value="">선택 없음</option>
+                      {PURPOSE_OPTIONS.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">유입경로</label>
+                    <select value={ed("referral_source") || ""}
+                      onChange={(e) => setEd("referral_source", e.target.value)}
+                      className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                      <option value="">선택 없음</option>
+                      {REFERRAL_OPTIONS.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -867,8 +1074,13 @@ export default function ReservationsPage() {
                   <Row label="BBQ 그릴" value={`${detail.bbq_count}개`} />
                   <Row label="가스버너" value={`${detail.burner_count}개`} />
                   {detail.dinner_count > 0 && <Row label="저녁식사" value={`${detail.dinner_count}명`} />}
+                  {(detail.breakfast_count || 0) > 0 && (
+                    <Row label="조식" value={`${detail.breakfast_count}명${detail.breakfast_menu ? ` · ${detail.breakfast_menu}` : ""}`} />
+                  )}
+                  {(detail.pool_count || 0) > 0 && <Row label="미니수영장" value={`${detail.pool_count}개`} />}
                   {detail.woodcraft_count > 0 && <Row label="목공키트" value={`${detail.woodcraft_count}개`} />}
                   {detail.pot_bbq_count > 0 && <Row label="항아리BBQ" value={`${detail.pot_bbq_count}인분`} />}
+                  {detail.referral_source && <Row label="유입경로" value={detail.referral_source} />}
                   {/* 버스 렌트 - 인라인 편집 */}
                   <div className="py-2.5 border-b border-gray-100">
                     <div className="flex items-center justify-between">
