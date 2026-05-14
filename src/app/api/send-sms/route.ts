@@ -140,7 +140,7 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 1인당: 약 ${formatPrice(perPerson)}
 ${data.busRequested && data.busPickupPlace ? `
 🚌 버스 정보
-${data.busVehicles ? `차종: ${data.busVehicles}\n` : ""}승차: ${data.busPickupPlace}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+${data.busVehicles ? `최종 차량: ${data.busVehicles}\n` : ""}승차: ${data.busPickupPlace}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
 ${data.busStopover ? `경유: ${data.busStopover}\n` : ""}하차: ${data.busDropoffPlace || data.busPickupPlace}${data.busDropoffDetailAddress ? ` (${data.busDropoffDetailAddress})` : ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내드리겠습니다"}
 ` : ""}
@@ -174,7 +174,7 @@ ${data.busRequested && data.busPrice ? `• 버스 렌트 (${data.busPickupPlace
 1인당: 약 ${formatPrice(perPerson)}
 ${data.busRequested && data.busManagerName ? `
 🚌 책임자: ${data.busManagerName} (${data.busManagerPhone || ""})
-${data.busVehicles ? `차종: ${data.busVehicles}\n` : ""}승차: ${data.busPickupPlace || ""}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
+${data.busVehicles ? `최종 차량: ${data.busVehicles}\n` : ""}승차: ${data.busPickupPlace || ""}${data.busPickupDetailAddress ? ` (${data.busPickupDetailAddress})` : ""} / ${data.busPickupPeople || ""}명 / ${data.busPickupTime || ""}
 ${data.busStopover ? `경유: ${data.busStopover}\n` : ""}하차: ${data.busDropoffPlace || data.busPickupPlace || ""}${data.busDropoffDetailAddress ? ` (${data.busDropoffDetailAddress})` : ""} / ${data.busDropoffPeople || ""}명 / ${data.busDropoffTime || ""}
 ${data.busPrice ? `견적: ${formatPrice(data.busPrice)} (왕복)` : "견적: 별도 추후 안내"}` : ""}`;
 }

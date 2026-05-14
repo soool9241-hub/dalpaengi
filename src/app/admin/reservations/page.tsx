@@ -1333,14 +1333,14 @@ export default function ReservationsPage() {
                               <div className="text-gray-700">
                                 <span className="text-purple-500 font-semibold">🚌 승차</span> {b.pickup_place || "-"}{" "}
                                 {b.pickup_time || "-"} ({b.pickup_people || "-"}명)
-                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 차종: {b.pickup_detail || "-"}</div>
+                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 최종 차량: {b.pickup_detail || "-"}</div>
                                 <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 세부 장소: {b.pickup_detail_address || "-"}</div>
                               </div>
                               {isRoundtrip && (
                                 <div className="text-gray-700">
                                   <span className="text-blue-500 font-semibold">🚌 하차</span> {b.dropoff_place || b.pickup_place || "-"}{" "}
                                   {b.dropoff_time || "-"} ({b.dropoff_people || "-"}명)
-                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 차종: {b.dropoff_detail || "-"}</div>
+                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 최종 차량: {b.dropoff_detail || "-"}</div>
                                   <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 세부 장소: {b.dropoff_detail_address || "-"}</div>
                                 </div>
                               )}

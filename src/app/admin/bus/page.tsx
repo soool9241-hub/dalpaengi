@@ -668,7 +668,7 @@ export default function BusManagementPage() {
                           <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.pickup_time || "-"}</p></div>
                         </div>
                         <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">
-                          🚐 차종: <span className={bus.pickup_detail ? "font-semibold text-gray-800" : "text-gray-400 italic"}>{bus.pickup_detail || "미입력 — [수정]에서 입력"}</span>
+                          🚐 최종 차량: <span className={bus.pickup_detail ? "font-semibold text-gray-800" : "text-gray-400 italic"}>{bus.pickup_detail || "미입력 — [수정]에서 입력"}</span>
                         </p>
                         <p className={`mt-1 text-[11px] rounded px-2 py-1 ${bus.pickup_detail_address ? "text-gray-700 bg-purple-50" : "text-gray-400 italic bg-amber-50 border border-amber-200"}`}>
                           📍 세부 장소: {bus.pickup_detail_address || "미입력 — [수정]에서 입력"}
@@ -683,7 +683,7 @@ export default function BusManagementPage() {
                             <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.dropoff_time || "-"}</p></div>
                           </div>
                           <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">
-                            🚐 차종: <span className={bus.dropoff_detail ? "font-semibold text-gray-800" : "text-gray-400 italic"}>{bus.dropoff_detail || "미입력 — [수정]에서 입력"}</span>
+                            🚐 최종 차량: <span className={bus.dropoff_detail ? "font-semibold text-gray-800" : "text-gray-400 italic"}>{bus.dropoff_detail || "미입력 — [수정]에서 입력"}</span>
                           </p>
                           <p className={`mt-1 text-[11px] rounded px-2 py-1 ${bus.dropoff_detail_address ? "text-gray-700 bg-blue-50" : "text-gray-400 italic bg-amber-50 border border-amber-200"}`}>
                             📍 세부 장소: {bus.dropoff_detail_address || "미입력 — [수정]에서 입력"}
