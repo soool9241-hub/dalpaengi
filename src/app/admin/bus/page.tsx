@@ -609,7 +609,7 @@ export default function BusManagementPage() {
                         <span className="flex items-center gap-1">
                           <MapPin size={13} className="text-purple-400" />
                           {bus.pickup_place} {roundtrip ? "왕복" : "편도"}
-                          {is25Seater(bus) && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{seaterLabel(bus)}</span>}
+                          {seaterLabel(bus) && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{seaterLabel(bus)}</span>}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock size={13} className="text-blue-400" />
@@ -619,6 +619,17 @@ export default function BusManagementPage() {
                           <Users size={13} className="text-green-400" />
                           {bus.pickup_people || "-"}명
                         </span>
+                      </div>
+                      {/* 세부 장소 (접힌 상태에서도 항상 표시) */}
+                      <div className="mt-1.5 flex flex-col gap-0.5">
+                        <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 w-fit max-w-full ${bus.pickup_detail_address ? "bg-purple-50 text-purple-800" : "bg-amber-50 text-amber-700 italic"}`}>
+                          📍 승차 세부: <span className="font-semibold truncate">{bus.pickup_detail_address || "미입력"}</span>
+                        </span>
+                        {roundtrip && (
+                          <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 w-fit max-w-full ${bus.dropoff_detail_address ? "bg-blue-50 text-blue-800" : "bg-amber-50 text-amber-700 italic"}`}>
+                            📍 하차 세부: <span className="font-semibold truncate">{bus.dropoff_detail_address || "미입력"}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
