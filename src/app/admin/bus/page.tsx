@@ -566,7 +566,16 @@ export default function BusManagementPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {busList.map(bus => {
+          {[...busList].sort((a, b) => {
+            const order: Record<string, number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 };
+            const oa = order[a.status] ?? 9;
+            const ob = order[b.status] ?? 9;
+            if (oa !== ob) return oa - ob;
+            // 같은 상태 내에서는 예약일 가까운 순
+            const da = a.reservations?.reservation_date || "";
+            const db = b.reservations?.reservation_date || "";
+            return da.localeCompare(db);
+          }).map(bus => {
             const r = bus.reservations;
             const cost = getBusCost(bus);
             const roundtrip = isRoundtrip(bus);
