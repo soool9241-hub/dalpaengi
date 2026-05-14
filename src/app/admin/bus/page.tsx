@@ -620,14 +620,14 @@ export default function BusManagementPage() {
                           {bus.pickup_people || "-"}명
                         </span>
                       </div>
-                      {/* 세부 장소 (접힌 상태에서도 항상 표시) */}
-                      <div className="mt-1.5 flex flex-col gap-0.5">
-                        <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 w-fit max-w-full ${bus.pickup_detail_address ? "bg-purple-50 text-purple-800" : "bg-amber-50 text-amber-700 italic"}`}>
-                          📍 승차 세부: <span className="font-semibold truncate">{bus.pickup_detail_address || "미입력"}</span>
+                      {/* 세부 장소 (접힌 상태에서도 항상 표시, 가로 배치) */}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 max-w-full ${bus.pickup_detail_address ? "bg-purple-50 text-purple-800" : "bg-amber-50 text-amber-700 italic"}`}>
+                          📍 승차: <span className="font-semibold truncate">{bus.pickup_detail_address || "미입력"}</span>
                         </span>
                         {roundtrip && (
-                          <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 w-fit max-w-full ${bus.dropoff_detail_address ? "bg-blue-50 text-blue-800" : "bg-amber-50 text-amber-700 italic"}`}>
-                            📍 하차 세부: <span className="font-semibold truncate">{bus.dropoff_detail_address || "미입력"}</span>
+                          <span className={`text-[11px] sm:text-xs rounded px-2 py-0.5 inline-flex items-center gap-1 max-w-full ${bus.dropoff_detail_address ? "bg-blue-50 text-blue-800" : "bg-amber-50 text-amber-700 italic"}`}>
+                            📍 하차: <span className="font-semibold truncate">{bus.dropoff_detail_address || "미입력"}</span>
                           </span>
                         )}
                       </div>
