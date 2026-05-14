@@ -7,15 +7,17 @@ const BUS_ROUTES: Record<string, number> = {
   "전북대": 600000, "전주대": 650000, "원광대": 700000, "우석대": 650000,
 };
 
-// 25인승·31인승은 50km 이내 정액 40만원 (왕복 기준)
+// 25인승(중형)만 50km 이내 정액 40만원. 31인승(우등)은 45인승(일반)과 동일하게 BUS_ROUTES 기본가.
 const SEATER_25_PRICE = 400000;
 const is25Seater = (bus: { pickup_detail?: string; dropoff_detail?: string }) => {
-  return /(25|31)\s*인승/.test(bus.pickup_detail || "") || /(25|31)\s*인승/.test(bus.dropoff_detail || "");
+  return /25\s*인승/.test(bus.pickup_detail || "") || /25\s*인승/.test(bus.dropoff_detail || "");
 };
 const seaterLabel = (bus: { pickup_detail?: string; dropoff_detail?: string }): string => {
   const src = (bus.pickup_detail || "") + " " + (bus.dropoff_detail || "");
+  if (/45\s*인승/.test(src)) return "45인승";
   if (/31\s*인승/.test(src)) return "31인승";
   if (/25\s*인승/.test(src)) return "25인승";
+  if (/12\s*인승/.test(src)) return "12인승";
   return "";
 };
 

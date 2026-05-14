@@ -55,14 +55,17 @@ const BUS_ROUTES: Record<string, number> = {
   "우석대": 650000,
 };
 
-// 25인승·31인승 (50km 이내) = 1대당 정액 40만원 (왕복)
+// 25인승(중형) 50km 이내 = 1대당 정액 40만원 (왕복)
+// 31인승(우등)은 별도 정액 없음 — 45인승(일반)과 동일하게 BUS_ROUTES 기본가 적용
 const SEATER_25_PRICE = 400000;
 const is25Seater = (b: { pickup_detail?: string; dropoff_detail?: string }) =>
-  /(25|31)\s*인승/.test(b.pickup_detail || "") || /(25|31)\s*인승/.test(b.dropoff_detail || "");
+  /25\s*인승/.test(b.pickup_detail || "") || /25\s*인승/.test(b.dropoff_detail || "");
 const seaterLabel = (b: { pickup_detail?: string; dropoff_detail?: string }): string => {
   const src = (b.pickup_detail || "") + " " + (b.dropoff_detail || "");
+  if (/45\s*인승/.test(src)) return "45인승";
   if (/31\s*인승/.test(src)) return "31인승";
   if (/25\s*인승/.test(src)) return "25인승";
+  if (/12\s*인승/.test(src)) return "12인승";
   return "";
 };
 
