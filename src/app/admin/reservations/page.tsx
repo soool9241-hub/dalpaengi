@@ -53,10 +53,16 @@ const BUS_ROUTES: Record<string, number> = {
   "우석대": 650000,
 };
 
-// 25인승 (50km 이내) = 1대당 정액 40만원 (왕복)
+// 25인승·31인승 (50km 이내) = 1대당 정액 40만원 (왕복)
 const SEATER_25_PRICE = 400000;
 const is25Seater = (b: { pickup_detail?: string; dropoff_detail?: string }) =>
-  /25\s*인승/.test(b.pickup_detail || "") || /25\s*인승/.test(b.dropoff_detail || "");
+  /(25|31)\s*인승/.test(b.pickup_detail || "") || /(25|31)\s*인승/.test(b.dropoff_detail || "");
+const seaterLabel = (b: { pickup_detail?: string; dropoff_detail?: string }): string => {
+  const src = (b.pickup_detail || "") + " " + (b.dropoff_detail || "");
+  if (/31\s*인승/.test(src)) return "31인승";
+  if (/25\s*인승/.test(src)) return "25인승";
+  return "";
+};
 
 function calcBusCost(b: { pickup_detail?: string; dropoff_detail?: string; pickup_place?: string; dropoff_time?: string; dropoff_people?: string }): number {
   const isRoundtrip = !!(b.dropoff_time || b.dropoff_people);
@@ -1260,7 +1266,7 @@ export default function ReservationsPage() {
                                   return previewCost > 0 ? (
                                     <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded text-[11px]">
                                       <span className="text-amber-700">
-                                        {is25Seater(busEditData) ? "25인승 (50km 이내)" : busEditData.pickup_place} {(busEditData.dropoff_time || busEditData.dropoff_people) ? "왕복" : "편도"} 견적:
+                                        {is25Seater(busEditData) ? `${seaterLabel(busEditData)} (50km 이내)` : busEditData.pickup_place} {(busEditData.dropoff_time || busEditData.dropoff_people) ? "왕복" : "편도"} 견적:
                                       </span>{" "}
                                       <span className="font-bold text-amber-900">{previewCost.toLocaleString()}원</span>
                                     </div>
@@ -1307,7 +1313,7 @@ export default function ReservationsPage() {
                                 const c = calcBusCost(b);
                                 return c > 0 ? (
                                   <div className="text-[11px] text-gray-500 pt-1 border-t border-gray-200">
-                                    1대 견적 ({is25Seater(b) ? "25인승 50km이내" : b.pickup_place} {isRoundtrip ? "왕복" : "편도"}): <span className="font-bold text-primary">{c.toLocaleString()}원</span>
+                                    1대 견적 ({is25Seater(b) ? `${seaterLabel(b)} 50km이내` : b.pickup_place} {isRoundtrip ? "왕복" : "편도"}): <span className="font-bold text-primary">{c.toLocaleString()}원</span>
                                   </div>
                                 ) : null;
                               })()}
