@@ -49,6 +49,7 @@ export async function PATCH(req: NextRequest) {
     "pickup_place", "pickup_people", "pickup_time",
     "dropoff_place", "dropoff_people", "dropoff_time",
     "pickup_detail", "dropoff_detail",
+    "pickup_detail_address", "dropoff_detail_address",
     "driver_name", "driver_phone", "bus_number",
   ];
   const filtered: Record<string, unknown> = {};

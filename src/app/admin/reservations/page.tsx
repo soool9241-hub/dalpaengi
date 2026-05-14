@@ -13,10 +13,12 @@ interface BusRequest {
   pickup_people: string;
   pickup_time: string;
   pickup_detail?: string;
+  pickup_detail_address?: string;
   dropoff_place: string;
   dropoff_people: string;
   dropoff_time: string;
   dropoff_detail?: string;
+  dropoff_detail_address?: string;
   stopover_text?: string;
 }
 
@@ -229,10 +231,12 @@ export default function ReservationsPage() {
       pickup_people: bus.pickup_people,
       pickup_time: bus.pickup_time,
       pickup_detail: bus.pickup_detail || "",
+      pickup_detail_address: bus.pickup_detail_address || "",
       dropoff_place: bus.dropoff_place,
       dropoff_people: bus.dropoff_people,
       dropoff_time: bus.dropoff_time,
       dropoff_detail: bus.dropoff_detail || "",
+      dropoff_detail_address: bus.dropoff_detail_address || "",
     });
   };
 
@@ -478,6 +482,23 @@ export default function ReservationsPage() {
               potBbqCount: editData.pot_bbq_count ?? detail.pot_bbq_count,
               busRequested: editData.bus_requested ?? detail.bus_requested,
               busFee: detail.bus_fee ?? 0,
+              busDetails: busList.map((b) => ({
+                mode: (b.dropoff_time || b.dropoff_people) ? "roundtrip" : "oneway",
+                pickupPlace: b.pickup_place || "",
+                pickupPeople: b.pickup_people || "",
+                pickupTime: b.pickup_time || "",
+                pickupDetail: b.pickup_detail || "",
+                pickupDetailAddress: b.pickup_detail_address || "",
+                dropoffPlace: b.dropoff_place || "",
+                dropoffPeople: b.dropoff_people || "",
+                dropoffTime: b.dropoff_time || "",
+                dropoffDetail: b.dropoff_detail || "",
+                dropoffDetailAddress: b.dropoff_detail_address || "",
+                managerName: b.manager_name || "",
+                managerPhone: b.manager_phone || "",
+                vehicleLabel: b.pickup_detail || b.dropoff_detail || "",
+                cost: calcBusCost(b),
+              })),
               originalAmount: detail.total_amount ?? undefined,
               newAmount: detail.total_amount ?? undefined,
               timeSlot: editData.time_slot ?? detail.time_slot,
@@ -1244,8 +1265,11 @@ export default function ReservationsPage() {
                                     onChange={(e) => setBusEditData(p => ({ ...p, pickup_time: e.target.value }))}
                                     className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
                                 </div>
-                                <input placeholder="승차 상세 (예: 25인승 1호차 · 정문 앞)" value={busEditData.pickup_detail || ""}
+                                <input placeholder="차종 (예: 25인승, 31인승, 45인승)" value={busEditData.pickup_detail || ""}
                                   onChange={(e) => setBusEditData(p => ({ ...p, pickup_detail: e.target.value }))}
+                                  className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                <input placeholder="승차지 세부 주소 (예: 전북대학교 의과대학 앞)" value={busEditData.pickup_detail_address || ""}
+                                  onChange={(e) => setBusEditData(p => ({ ...p, pickup_detail_address: e.target.value }))}
                                   className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
 
                                 <p className="text-[10px] font-bold text-blue-600 mt-1">🚌 하차 정보</p>
@@ -1260,8 +1284,11 @@ export default function ReservationsPage() {
                                     onChange={(e) => setBusEditData(p => ({ ...p, dropoff_time: e.target.value }))}
                                     className="px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
                                 </div>
-                                <input placeholder="하차 상세 (예: 25인승 1호차 · 후문)" value={busEditData.dropoff_detail || ""}
+                                <input placeholder="차종 (예: 25인승, 31인승, 45인승)" value={busEditData.dropoff_detail || ""}
                                   onChange={(e) => setBusEditData(p => ({ ...p, dropoff_detail: e.target.value }))}
+                                  className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
+                                <input placeholder="하차지 세부 주소 (예: 전북대학교 의과대학 앞)" value={busEditData.dropoff_detail_address || ""}
+                                  onChange={(e) => setBusEditData(p => ({ ...p, dropoff_detail_address: e.target.value }))}
                                   className="w-full px-2 py-1 rounded border border-gray-200 text-xs bg-white" />
 
                                 {(() => {
@@ -1303,13 +1330,15 @@ export default function ReservationsPage() {
                               <div className="text-gray-700">
                                 <span className="text-purple-500 font-semibold">🚌 승차</span> {b.pickup_place || "-"}{" "}
                                 {b.pickup_time || "-"} ({b.pickup_people || "-"}명)
-                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 상세 승차지: {b.pickup_detail || "-"}</div>
+                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 차종: {b.pickup_detail || "-"}</div>
+                                <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 세부 장소: {b.pickup_detail_address || "-"}</div>
                               </div>
                               {isRoundtrip && (
                                 <div className="text-gray-700">
                                   <span className="text-blue-500 font-semibold">🚌 하차</span> {b.dropoff_place || b.pickup_place || "-"}{" "}
                                   {b.dropoff_time || "-"} ({b.dropoff_people || "-"}명)
-                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 상세 하차지: {b.dropoff_detail || "-"}</div>
+                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">🚐 차종: {b.dropoff_detail || "-"}</div>
+                                  <div className="text-gray-500 text-[11px] mt-0.5 ml-4">📍 세부 장소: {b.dropoff_detail_address || "-"}</div>
                                 </div>
                               )}
                               {(() => {

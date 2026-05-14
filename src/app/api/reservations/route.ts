@@ -171,16 +171,24 @@ export async function POST(req: NextRequest) {
         dropoff_people: busForm.dropoffPeople,
         dropoff_time: busForm.dropoffTime,
       };
-      // 1차: stopover_text 포함
+      const extraBus: Record<string, string> = {};
+      if (busForm.pickupDetailAddress) extraBus.pickup_detail_address = busForm.pickupDetailAddress;
+      if (busForm.dropoffDetailAddress) extraBus.dropoff_detail_address = busForm.dropoffDetailAddress;
+
+      // 1차: stopover_text + detail_address 포함
       let { error: busErr } = await supabaseAdmin.from("bus_requests").insert({
         ...baseBus,
+        ...extraBus,
         stopover_text: stopoverText,
       });
-      // 2차: stopover_text 컬럼 없으면 제외 후 재시도
-      if (busErr && String(busErr.message || "").toLowerCase().includes("stopover")) {
-        console.warn("stopover_text 컬럼 없음 - 제외 후 재시도");
-        const retry = await supabaseAdmin.from("bus_requests").insert(baseBus);
-        busErr = retry.error;
+      // 2차: 새 컬럼(stopover_text/detail_address) 없으면 제외 후 재시도
+      if (busErr) {
+        const m = String(busErr.message || "").toLowerCase();
+        if (m.includes("stopover") || m.includes("detail_address")) {
+          console.warn("새 컬럼 없음 - 제외 후 재시도:", busErr.message);
+          const retry = await supabaseAdmin.from("bus_requests").insert(baseBus);
+          busErr = retry.error;
+        }
       }
       if (busErr) {
         console.error("버스 요청 저장 실패 (예약은 성공):", busErr);

@@ -496,6 +496,7 @@ export default function Reservation() {
       if (!busForm.pickupPeople.trim()) missing.push("승차 인원");
       if (!busForm.pickupTime) missing.push("승차 시간");
       if (!busForm.customDropoff.trim()) missing.push("하차지");
+      if (!busForm.dropoffDetailAddress?.trim()) missing.push("하차지 세부 주소");
       if (!busForm.dropoffPeople.trim()) missing.push("하차 인원");
       if (!busForm.dropoffTime) missing.push("하차 출발시간");
       if (missing.length > 0) {

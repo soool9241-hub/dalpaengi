@@ -58,7 +58,9 @@ interface BusRow {
   dropoff_time: string;
   stopover_text: string;
   pickup_detail: string;
+  pickup_detail_address: string;
   dropoff_detail: string;
+  dropoff_detail_address: string;
   driver_name: string;
   driver_phone: string;
   bus_number: string;
@@ -148,7 +150,9 @@ export default function BusManagementPage() {
       dropoff_people: bus.dropoff_people,
       dropoff_time: bus.dropoff_time,
       pickup_detail: bus.pickup_detail,
+      pickup_detail_address: bus.pickup_detail_address,
       dropoff_detail: bus.dropoff_detail,
+      dropoff_detail_address: bus.dropoff_detail_address,
       driver_name: bus.driver_name,
       driver_phone: bus.driver_phone,
       bus_number: bus.bus_number,
@@ -662,7 +666,10 @@ export default function BusManagementPage() {
                           <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.pickup_time || "-"}</p></div>
                         </div>
                         {bus.pickup_detail && (
-                          <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">📍 {bus.pickup_detail}</p>
+                          <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">🚐 차종: {bus.pickup_detail}</p>
+                        )}
+                        {bus.pickup_detail_address && (
+                          <p className="mt-1 text-[11px] text-gray-600 bg-purple-50 rounded px-2 py-1">📍 세부 장소: {bus.pickup_detail_address}</p>
                         )}
                       </div>
                       {roundtrip && (
@@ -674,7 +681,10 @@ export default function BusManagementPage() {
                             <div><span className="text-gray-400">시간</span><p className="font-semibold">{bus.dropoff_time || "-"}</p></div>
                           </div>
                           {bus.dropoff_detail && (
-                            <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">📍 {bus.dropoff_detail}</p>
+                            <p className="mt-1.5 text-[11px] text-gray-600 bg-gray-50 rounded px-2 py-1">🚐 차종: {bus.dropoff_detail}</p>
+                          )}
+                          {bus.dropoff_detail_address && (
+                            <p className="mt-1 text-[11px] text-gray-600 bg-blue-50 rounded px-2 py-1">📍 세부 장소: {bus.dropoff_detail_address}</p>
                           )}
                         </div>
                       )}
@@ -796,8 +806,11 @@ export default function BusManagementPage() {
                           {TIME_OPTIONS_PICKUP.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
-                      <input placeholder="승차 세부정보 (예: 정문 앞 집합, 건물명 등)" value={editForm.pickup_detail || ""}
+                      <input placeholder="차종 (예: 25인승, 31인승, 45인승)" value={editForm.pickup_detail || ""}
                         onChange={e => setEditForm({ ...editForm, pickup_detail: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+                      <input placeholder="승차지 세부 주소 (예: 전북대학교 의과대학 앞)" value={editForm.pickup_detail_address || ""}
+                        onChange={e => setEditForm({ ...editForm, pickup_detail_address: e.target.value })}
                         className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
                     </div>
 
@@ -816,8 +829,11 @@ export default function BusManagementPage() {
                           {TIME_OPTIONS_DROPOFF.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
-                      <input placeholder="하차 세부정보 (예: 후문 하차, 기숙사 앞 등)" value={editForm.dropoff_detail || ""}
+                      <input placeholder="차종 (예: 25인승, 31인승, 45인승)" value={editForm.dropoff_detail || ""}
                         onChange={e => setEditForm({ ...editForm, dropoff_detail: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
+                      <input placeholder="하차지 세부 주소 (예: 전북대학교 의과대학 앞)" value={editForm.dropoff_detail_address || ""}
+                        onChange={e => setEditForm({ ...editForm, dropoff_detail_address: e.target.value })}
                         className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" />
                     </div>
                   </div>

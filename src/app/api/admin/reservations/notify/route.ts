@@ -21,10 +21,12 @@ interface BusDetail {
   pickupPeople: string;
   pickupTime: string;
   pickupDetail?: string;
+  pickupDetailAddress?: string;
   dropoffPlace: string;
   dropoffPeople: string;
   dropoffTime: string;
   dropoffDetail?: string;
+  dropoffDetailAddress?: string;
   managerName: string;
   managerPhone: string;
   vehicleLabel?: string;
@@ -124,8 +126,10 @@ function buildChangeMessage(d: NotifyBody): string {
       const lines: string[] = [heading];
       if (b.managerName || b.managerPhone) lines.push(`• 담당자: ${b.managerName || "-"} ${b.managerPhone || ""}`.trim());
       lines.push(`• 승차: ${b.pickupPlace} ${b.pickupTime || "-"} (${b.pickupPeople || "-"}명)${b.pickupDetail ? ` · ${b.pickupDetail}` : ""}`);
+      if (b.pickupDetailAddress) lines.push(`  ↳ 세부 장소: ${b.pickupDetailAddress}`);
       if (b.mode === "roundtrip") {
         lines.push(`• 하차: ${b.dropoffPlace || b.pickupPlace} ${b.dropoffTime || "-"} (${b.dropoffPeople || "-"}명)${b.dropoffDetail ? ` · ${b.dropoffDetail}` : ""}`);
+        if (b.dropoffDetailAddress) lines.push(`  ↳ 세부 장소: ${b.dropoffDetailAddress}`);
       }
       return lines.join("\n");
     }).join("\n\n");
@@ -145,15 +149,21 @@ function buildChangeMessage(d: NotifyBody): string {
   const finalTotal = d.newAmount != null ? d.newAmount : optionsTotalFallback;
   const perPerson = d.guestCount > 0 ? Math.round(finalTotal / d.guestCount) : 0;
 
-  // 금액 안내(변경 전/후)
+  // 금액 안내(변경 전/후 + 최종 확정 금액 강조)
   const amountSection = (d.originalAmount != null && d.newAmount != null)
     ? `\n━━ 금액 안내 ━━\n• 변경 전: ${fmt(d.originalAmount)}\n• 변경 후: ${fmt(d.newAmount)}\n${
         d.newAmount < d.originalAmount
-          ? `• 환불 금액: ${fmt(d.originalAmount - d.newAmount)}\n※ 차액분은 입실 1일 전 입금 처리 예정입니다.`
+          ? `• 환불 금액: ${fmt(d.originalAmount - d.newAmount)}`
           : d.newAmount > d.originalAmount
-          ? `• 추가 결제: ${fmt(d.newAmount - d.originalAmount)}\n※ 추가 결제금을 아래 계좌로 입금 부탁드립니다.\n카카오뱅크 3333-06-4749542 임솔`
+          ? `• 추가 결제: ${fmt(d.newAmount - d.originalAmount)}`
           : "• 금액 변동 없음"
-      }\n`
+      }\n━━━━━━━━━━━━\n✅ 최종 확정 금액: ${fmt(d.newAmount)}\n${
+        d.newAmount < d.originalAmount
+          ? "※ 차액분은 입실 1일 전 입금 처리 예정입니다.\n"
+          : d.newAmount > d.originalAmount
+          ? "※ 추가 결제금을 아래 계좌로 입금 부탁드립니다.\n카카오뱅크 3333-06-4749542 임솔\n"
+          : ""
+      }`
     : "";
 
   return `[달팽이아지트] 예약 변경 안내
