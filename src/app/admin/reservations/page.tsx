@@ -815,7 +815,7 @@ export default function ReservationsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1 block">BBQ 그릴</label>
-                    <input type="number" value={ed("bbq_count") || ""} onChange={(e) => setEd("bbq_count", Math.min(6, Math.max(0, parseInt(e.target.value) || 0)))}
+                    <input type="number" value={ed("bbq_count") || ""} onChange={(e) => setEd("bbq_count", Math.min(8, Math.max(0, parseInt(e.target.value) || 0)))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>

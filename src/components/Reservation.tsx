@@ -1280,7 +1280,7 @@ export default function Reservation() {
                             const total = Math.max(BASE_PEOPLE, parsed);
                             const extra = total - BASE_PEOPLE;
                             setExtraGuests(extra);
-                            if (isMTMode) { setBbqGrills(Math.min(6, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
+                            if (isMTMode) { setBbqGrills(Math.min(8, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
                           }
                         }}
                         onBlur={() => {
@@ -1289,7 +1289,7 @@ export default function Reservation() {
                           setTotalGuestsInput(String(total));
                           const extra = total - BASE_PEOPLE;
                           setExtraGuests(extra);
-                          if (isMTMode) { setBbqGrills(Math.min(6, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
+                          if (isMTMode) { setBbqGrills(Math.min(8, Math.ceil(total / 8))); setGasRanges(Math.min(5, Math.ceil(total / 8))); setDinnerCount(total); }
                         }}
                         className="w-16 text-center text-lg font-bold text-primary bg-white border-2 border-primary/30 rounded-xl py-1.5 focus:outline-none focus:border-primary"
                       />
@@ -1311,7 +1311,7 @@ export default function Reservation() {
                     <button
                       type="button"
                       onClick={() => {
-                        setBbqGrills(Math.min(6, Math.ceil(totalGuests / 8)));
+                        setBbqGrills(Math.min(8, Math.ceil(totalGuests / 8)));
                         setGasRanges(Math.min(5, Math.ceil(totalGuests / 8)));
                         setDinnerCount(totalGuests);
                       }}
@@ -1345,9 +1345,9 @@ export default function Reservation() {
                 <h3 className="text-base font-semibold text-text-dark mb-2">추가 옵션</h3>
                 <div className="space-y-4">
                   <Counter label="추가 인원" desc={`기본 ${BASE_PEOPLE}명 포함 / 추가 1인당 ${formatPrice(pricing.extraGuest)}`} value={extraGuests} unitPrice={pricing.extraGuest}
-                    onDec={() => { const v = Math.max(0, extraGuests - 1); setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
-                    onInc={() => { const v = extraGuests + 1; setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
-                    onChange={(v) => { const extra = Math.max(0, v); setExtraGuests(extra); setTotalGuestsInput(String(BASE_PEOPLE + extra)); if (isMTMode) { const t = BASE_PEOPLE + extra; setBbqGrills(Math.min(6, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }} />
+                    onDec={() => { const v = Math.max(0, extraGuests - 1); setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(8, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
+                    onInc={() => { const v = extraGuests + 1; setExtraGuests(v); setTotalGuestsInput(String(BASE_PEOPLE + v)); if (isMTMode) { const t = BASE_PEOPLE + v; setBbqGrills(Math.min(8, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }}
+                    onChange={(v) => { const extra = Math.max(0, v); setExtraGuests(extra); setTotalGuestsInput(String(BASE_PEOPLE + extra)); if (isMTMode) { const t = BASE_PEOPLE + extra; setBbqGrills(Math.min(8, Math.ceil(t / 8))); setGasRanges(Math.min(5, Math.ceil(t / 8))); setDinnerCount(t); } }} />
 
                   <hr className="border-border" />
 
@@ -1363,8 +1363,8 @@ export default function Reservation() {
                       <span className="text-[10px] text-text-light">그릴 {Math.min(bbqGrills, JIFF_FREE_GRILLS)}개 ({formatPrice(Math.min(bbqGrills, JIFF_FREE_GRILLS) * pricing.bbqGrill)} 상당)</span>
                     </div>
                   )}
-                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(pricing.bbqGrill)} (최대 6개)`} value={bbqGrills} unitPrice={(isEventPromo || isJiffPromo) ? 0 : pricing.bbqGrill}
-                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(6, g + 1))} onChange={(v) => setBbqGrills(Math.min(6, v))} />
+                  <Counter label="그릴 대여" desc={`숯+그릴+토치 / 그릴당 ${formatPrice(pricing.bbqGrill)} (최대 8개)`} value={bbqGrills} unitPrice={(isEventPromo || isJiffPromo) ? 0 : pricing.bbqGrill}
+                    onDec={() => setBbqGrills((g) => Math.max(0, g - 1))} onInc={() => setBbqGrills((g) => Math.min(8, g + 1))} onChange={(v) => setBbqGrills(Math.min(8, v))} />
 
                   <hr className="border-border" />
 
