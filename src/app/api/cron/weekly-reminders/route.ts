@@ -141,10 +141,28 @@ function buildMessage(r: Reservation, busList: BusRequest[], today: Date): strin
     }
   }
 
+  // 🕒 픽업/하차 시간 — 상단 prominent 표시
+  let timeBlock = "";
+  if (r.bus_requested && busList.length > 0) {
+    const lines2: string[] = [];
+    for (const b of busList) {
+      if (b.pickup_time) {
+        lines2.push(`🕒 픽업: ${b.pickup_time} · ${b.pickup_place || "-"} (${b.pickup_people || "-"}명)`);
+      }
+      if (b.dropoff_time) {
+        lines2.push(`🕒 하차: ${b.dropoff_time} · ${b.dropoff_place || b.pickup_place || "-"} (${b.dropoff_people || "-"}명)`);
+      }
+    }
+    if (lines2.length > 0) timeBlock = lines2.join("\n") + "\n";
+  } else {
+    // 버스 없으면 펜션 체크인 시간 안내 (CLAUDE.md 기준 15:00 고정)
+    timeBlock = `🕒 체크인 시간: 15:00 (셀프 체크인)\n`;
+  }
+
   return `[달팽이아지트] 🔔 주말 예약 리마인드
 
 📅 체크인: ${dayLabel(r.reservation_date, today)}
-🏠 ${r.stay_nights || 1}박 / 체크아웃 ${r.checkout_date || "-"}
+${timeBlock}🏠 ${r.stay_nights || 1}박 / 체크아웃 ${r.checkout_date || "-"}
 
 ■ 예약자: ${r.guest_name} (${r.guest_phone})
 ■ 인원: ${peopleDesc}
