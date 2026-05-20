@@ -539,7 +539,7 @@ export default function SpringRetreatPage() {
             <span className="text-4xl mb-4">🌱</span>
             <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">4월 18일, 완주 산속에서<br/>나를 리셋하는 1박 2일</h1>
             <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">운동 · 명상 · 목표설계 · 저널링 · 네트워킹</p>
-            <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">5만원 올인원 · 20명 선착순 · 숙박+식사+프로그램 전부 포함</p>
+            <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">20명 선착순 · 숙박+식사+프로그램 전부 포함</p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
@@ -555,11 +555,9 @@ export default function SpringRetreatPage() {
             <p className="text-xs text-white/50 mt-3 flex items-center gap-1"><Train size={12} /> 서울에서 KTX 1시간 30분 · 자차 2시간 30분</p>
             <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
               <div className="flex items-center justify-center gap-3">
-                <span className="text-lg line-through text-white/40">200,000원</span>
-                <span className="text-3xl font-black text-white">50,000원</span>
-                <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-black rounded-full">75% OFF</span>
+                <span className="text-3xl font-black text-white">200,000원</span>
               </div>
-              <p className="text-xs text-white/50 mt-1.5">얼리버드 특가 · 선착순 20명</p>
+              <p className="text-xs text-white/50 mt-1.5">1박 2일 올인원 · 선착순 20명</p>
             </div>
           </div>
         </div>
@@ -670,35 +668,32 @@ export default function SpringRetreatPage() {
           </div>
         </section>
 
-        {/* 가격 임팩트 배너 */}
+        {/* 참가비 배너 */}
         <section className="pb-12 sm:pb-16">
-          <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
+          <div className="bg-gradient-to-r from-primary to-emerald-600 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full opacity-10">
-              <div className="absolute top-4 left-8 text-6xl rotate-12">%</div>
-              <div className="absolute bottom-4 right-8 text-6xl -rotate-12">%</div>
+              <div className="absolute top-4 left-8 text-6xl rotate-12">🌱</div>
+              <div className="absolute bottom-4 right-8 text-6xl -rotate-12">🌱</div>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">Early Bird Special</p>
+              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">참가비</p>
               <div className="flex items-center justify-center gap-3 mt-3">
-                <span className="text-2xl sm:text-3xl line-through text-white/50 font-bold">200,000원</span>
-                <ArrowRight size={24} className="text-white/60" />
-                <span className="text-4xl sm:text-5xl font-black">50,000원</span>
+                <span className="text-4xl sm:text-5xl font-black">200,000원</span>
               </div>
               <div className="inline-block mt-3 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-lg font-black">75% OFF</span>
-                <span className="text-sm ml-2 text-white/80">· 15만원 절약</span>
+                <span className="text-sm">1박 2일 · 식사·프로그램 모두 포함</span>
               </div>
               <p className="text-sm text-white/70 mt-3">20명 선착순</p>
             </div>
           </div>
         </section>
 
-        {/* 5만원에 얻어가는 10가지 혜택 */}
+        {/* 참가비에 포함된 10가지 혜택 */}
         <section className="pb-12 sm:pb-16">
           <div className="text-center mb-8">
-            <p className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2">VALUE PACKAGE</p>
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">VALUE PACKAGE</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              5만원에 얻어가는 <span className="text-primary">10가지 혜택</span>
+              참가비에 포함된 <span className="text-primary">10가지 혜택</span>
             </h2>
             <p className="text-sm text-gray-500 mt-2">이 모든 것이 한 번의 참가비에 포함됩니다</p>
           </div>
@@ -733,9 +728,8 @@ export default function SpringRetreatPage() {
               총 <span className="text-primary">42만원</span> 이상의 가치 <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
             </p>
             <div className="mt-4 space-y-1">
-              <p className="text-base text-gray-500">정가 <span className="line-through font-semibold">20만원</span></p>
-              <p className="text-sm text-gray-500">얼리버드 특가 적용 시</p>
-              <p className="text-4xl font-black text-red-500 mt-1">5만원 !!</p>
+              <p className="text-sm text-gray-500">참가비</p>
+              <p className="text-4xl font-black text-primary mt-1">200,000원</p>
             </div>
             <a href="#apply" className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
               지금 바로 신청하기 <ArrowRight size={14} />
@@ -835,10 +829,9 @@ export default function SpringRetreatPage() {
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">참가비</p>
                   <p className="text-sm font-semibold text-gray-900 mt-1">
-                    <span className="line-through text-gray-400 mr-1">20만원</span>
-                    <span className="text-primary text-lg font-black">5만원</span>
+                    <span className="text-primary text-lg font-black">200,000원</span>
                   </p>
-                  <p className="text-xs text-red-500 font-semibold">75% OFF 얼리버드 특가</p>
+                  <p className="text-xs text-gray-500">1박 2일 올인원</p>
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-4">

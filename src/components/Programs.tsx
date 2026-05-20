@@ -144,14 +144,12 @@ export default function Programs() {
       icon: Leaf,
       title: "완주하다 봄 리트릿",
       duration: "1박 2일 (4.18~19)",
-      price: 50000,
-      priceLabel: "얼리버드 5만원",
-      originalPrice: 200000,
-      perPerson: 50000,
+      price: 200000,
+      perPerson: 200000,
       maxPeople: "20명 한정",
       categories: ["healing", "pension", "mt", "family", "membership"],
-      tags: ["리트릿", "얼리버드", "한정"],
-      tagColors: ["bg-green-100 text-green-600", "bg-amber-100 text-amber-600", "bg-red-100 text-red-600"],
+      tags: ["리트릿", "한정"],
+      tagColors: ["bg-green-100 text-green-600", "bg-red-100 text-red-600"],
       gradient: "from-green-500 to-emerald-500",
       image: "/img/nature-yard.jpg",
       features: [
@@ -452,16 +450,12 @@ export default function Programs() {
                       </>
                     ) : prog.isRetreat ? (
                       <>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
-                          <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">69% OFF</span>
-                        </div>
                         <div className="flex items-baseline gap-1.5 mb-2">
                           <span className="text-3xl font-black text-primary">{prog.price.toLocaleString()}</span>
                           <span className="text-sm text-text-light">원/인</span>
                         </div>
-                        <p className="text-xs font-bold text-red-500 mb-5">
-                          🔥 얼리버드 특가 · 20명 한정!
+                        <p className="text-xs font-bold text-primary mb-5">
+                          🌱 20명 한정 · 1박 2일 올인원
                         </p>
                       </>
                     ) : prog.isVibeCoding ? (
