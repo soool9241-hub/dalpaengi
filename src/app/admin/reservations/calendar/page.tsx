@@ -1,8 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Phone, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, X, Pencil, Save, Loader2 } from "lucide-react";
 import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue } from "@/types/admin";
+
+const STATUS_EDIT_OPTIONS = [
+  { value: "confirmed", label: "예약확정" },
+  { value: "upcoming", label: "방문예정" },
+  { value: "visited", label: "방문완료" },
+  { value: "reviewed", label: "후기남김" },
+  { value: "cancelled", label: "예약취소" },
+];
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: "bg-green-100 text-green-800",
@@ -36,6 +44,9 @@ export default function CalendarPage() {
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [detailRes, setDetailRes] = useState<ReservationRow | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [cEdit, setCEdit] = useState<Partial<ReservationRow>>({});
+  const [cSaving, setCSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchMonth = useCallback(async () => {
@@ -83,6 +94,43 @@ export default function CalendarPage() {
         return selected >= r.reservation_date && selected < end;
       })
     : [];
+
+  const openDetail = (r: ReservationRow) => {
+    setDetailRes(r);
+    setEditing(false);
+    setCEdit({
+      guest_name: r.guest_name,
+      guest_phone: r.guest_phone,
+      reservation_date: r.reservation_date,
+      checkout_date: r.checkout_date,
+      stay_nights: r.stay_nights,
+      guest_count: r.guest_count,
+      status: r.status,
+    });
+  };
+
+  const saveCalendarEdit = async () => {
+    if (!detailRes) return;
+    setCSaving(true);
+    try {
+      const res = await fetch("/api/admin/reservations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: detailRes.id, ...cEdit }),
+      });
+      if (!res.ok) {
+        alert("저장에 실패했습니다.");
+        setCSaving(false);
+        return;
+      }
+      setDetailRes({ ...detailRes, ...cEdit } as ReservationRow);
+      setEditing(false);
+      await fetchMonth();
+    } catch {
+      alert("저장 중 오류가 발생했습니다.");
+    }
+    setCSaving(false);
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -181,7 +229,7 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={r.id}
-                    onClick={() => setDetailRes(r)}
+                    onClick={() => openDetail(r)}
                     className="bg-gray-50 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-gray-100 active:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -227,11 +275,18 @@ export default function CalendarPage() {
       {/* Detail Popup Modal */}
       {detailRes && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setDetailRes(null)} />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setDetailRes(null); setEditing(false); }} />
           <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">예약자 상세정보</h2>
-              <button onClick={() => setDetailRes(null)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors"><X size={20} className="text-gray-400" /></button>
+              <h2 className="text-lg font-bold text-gray-900">{editing ? "예약 수정" : "예약자 상세정보"}</h2>
+              <div className="flex items-center gap-2">
+                {!editing && (
+                  <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
+                    <Pencil size={13} /> 수정
+                  </button>
+                )}
+                <button onClick={() => { setDetailRes(null); setEditing(false); }} className="p-1 rounded-lg hover:bg-gray-100 transition-colors"><X size={20} className="text-gray-400" /></button>
+              </div>
             </div>
 
             {/* 예약자 헤더 */}
@@ -253,46 +308,112 @@ export default function CalendarPage() {
             </div>
 
             {/* 예약 정보 */}
-            <div className="space-y-2.5">
-              <InfoRow label="체크인" value={`${detailRes.reservation_date} (${detailRes.stay_nights}박)`} />
-              <InfoRow label="체크아웃" value={detailRes.checkout_date || "-"} />
-              <InfoRow label="프로그램" value={PROGRAM_LABELS[detailRes.program_type]} />
-              <InfoRow label="인원" value={`${detailRes.guest_count}명`} />
-              {detailRes.time_slot && <InfoRow label="시간대" value={detailRes.time_slot} />}
-              <InfoRow label="목적" value={detailRes.purpose || detailRes.purpose_raw || "-"} />
-            </div>
-
-            {/* 옵션 상세 */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-bold text-gray-900 mb-3">옵션 상세</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <OptionBox label="BBQ 그릴" value={detailRes.bbq_count} unit="개" active={detailRes.bbq_count > 0} />
-                <OptionBox label="가스버너" value={detailRes.burner_count} unit="개" active={detailRes.burner_count > 0} />
-                <OptionBox label="저녁식사" value={detailRes.dinner_count} unit="명" active={detailRes.dinner_count > 0} />
-                <OptionBox label="목공키트" value={detailRes.woodcraft_count} unit="개" active={detailRes.woodcraft_count > 0} />
-                <OptionBox label="항아리BBQ" value={detailRes.pot_bbq_count} unit="인분" active={detailRes.pot_bbq_count > 0} />
-                <OptionBox label="버스 렌트" value={detailRes.bus_requested ? 1 : 0} unit="" active={detailRes.bus_requested} text={detailRes.bus_requested ? "요청" : "없음"} />
+            {editing ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 mb-1 block">체크인</label>
+                    <input type="date" value={(cEdit.reservation_date as string) || ""}
+                      onChange={(e) => setCEdit((p) => ({ ...p, reservation_date: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 mb-1 block">체크아웃</label>
+                    <input type="date" value={(cEdit.checkout_date as string) || ""}
+                      onChange={(e) => setCEdit((p) => ({ ...p, checkout_date: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 mb-1 block">숙박(박)</label>
+                    <input type="number" value={cEdit.stay_nights ?? ""}
+                      onChange={(e) => setCEdit((p) => ({ ...p, stay_nights: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 mb-1 block">인원</label>
+                    <input type="number" value={cEdit.guest_count ?? ""}
+                      onChange={(e) => setCEdit((p) => ({ ...p, guest_count: Math.min(45, Math.max(0, parseInt(e.target.value) || 0)) }))}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 mb-1 block">상태</label>
+                    <select value={(cEdit.status as string) || detailRes.status}
+                      onChange={(e) => setCEdit((p) => ({ ...p, status: e.target.value as ReservationRow["status"] }))}
+                      className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                      {STATUS_EDIT_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  ※ 옵션(BBQ·저녁·버스 등) 상세 변경은 <a href="/admin/reservations" className="text-primary underline">예약 관리</a>에서 하세요. 여기 저장은 <b>변경 알림 SMS를 보내지 않습니다.</b>
+                </p>
               </div>
-            </div>
-
-            {/* 매출 / 메모 */}
-            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">예상 매출</span>
-                <span className="text-lg font-bold text-primary">{formatPrice(calculateRevenue(detailRes))}</span>
+            ) : (
+              <div className="space-y-2.5">
+                <InfoRow label="체크인" value={`${detailRes.reservation_date} (${detailRes.stay_nights}박)`} />
+                <InfoRow label="체크아웃" value={detailRes.checkout_date || "-"} />
+                <InfoRow label="프로그램" value={PROGRAM_LABELS[detailRes.program_type]} />
+                <InfoRow label="인원" value={`${detailRes.guest_count}명`} />
+                {detailRes.time_slot && <InfoRow label="시간대" value={detailRes.time_slot} />}
+                <InfoRow label="목적" value={detailRes.purpose || detailRes.purpose_raw || "-"} />
               </div>
-              {detailRes.notes && <InfoRow label="메모" value={detailRes.notes} />}
-              <InfoRow label="채널" value={detailRes.source || detailRes.referral_source || "-"} />
-            </div>
+            )}
+
+            {!editing && (
+              <>
+                {/* 옵션 상세 */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">옵션 상세</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <OptionBox label="BBQ 그릴" value={detailRes.bbq_count} unit="개" active={detailRes.bbq_count > 0} />
+                    <OptionBox label="가스버너" value={detailRes.burner_count} unit="개" active={detailRes.burner_count > 0} />
+                    <OptionBox label="저녁식사" value={detailRes.dinner_count} unit="명" active={detailRes.dinner_count > 0} />
+                    <OptionBox label="목공키트" value={detailRes.woodcraft_count} unit="개" active={detailRes.woodcraft_count > 0} />
+                    <OptionBox label="항아리BBQ" value={detailRes.pot_bbq_count} unit="인분" active={detailRes.pot_bbq_count > 0} />
+                    <OptionBox label="버스 렌트" value={detailRes.bus_requested ? 1 : 0} unit="" active={detailRes.bus_requested} text={detailRes.bus_requested ? "요청" : "없음"} />
+                  </div>
+                </div>
+
+                {/* 매출 / 메모 */}
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-700">예상 매출</span>
+                    <span className="text-lg font-bold text-primary">{formatPrice(calculateRevenue(detailRes))}</span>
+                  </div>
+                  {detailRes.notes && <InfoRow label="메모" value={detailRes.notes} />}
+                  <InfoRow label="채널" value={detailRes.source || detailRes.referral_source || "-"} />
+                </div>
+              </>
+            )}
 
             {/* 하단 버튼 */}
             <div className="mt-5 pt-4 border-t border-gray-200 flex gap-2">
-              <a href={`/admin/reservations`} className="flex-1 py-2.5 rounded-xl bg-primary/10 text-primary font-semibold text-sm text-center hover:bg-primary/20 transition-colors">
-                예약 관리로 이동
-              </a>
-              <button onClick={() => setDetailRes(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
-                닫기
-              </button>
+              {editing ? (
+                <>
+                  <button onClick={saveCalendarEdit} disabled={cSaving}
+                    className="flex-1 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm text-center hover:bg-primary-light disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    {cSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                    저장
+                  </button>
+                  <button onClick={() => setEditing(false)} disabled={cSaving}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    취소
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a href={`/admin/reservations`} className="flex-1 py-2.5 rounded-xl bg-primary/10 text-primary font-semibold text-sm text-center hover:bg-primary/20 transition-colors">
+                    예약 관리로 이동
+                  </a>
+                  <button onClick={() => { setDetailRes(null); setEditing(false); }} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    닫기
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

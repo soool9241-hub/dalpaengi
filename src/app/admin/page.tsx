@@ -18,6 +18,14 @@ const TIME_OPTIONS_PICKUP = Array.from({ length: 25 }, (_, i) => {
 });
 const TIME_OPTIONS_DROPOFF = ["06:00","06:30","07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30"];
 
+// 조식 메뉴 (예약관리와 동일). 육개장은 20인 이상만 선택 가능
+const BREAKFAST_MENUS: { name: string; minPeople: number }[] = [
+  { name: "육개장", minPeople: 20 },
+  { name: "김치찌개", minPeople: 0 },
+  { name: "보리밥 비빔밥", minPeople: 0 },
+  { name: "샌드위치", minPeople: 0 },
+];
+
 function formatPrice(n: number) {
   if (n >= 10000) return (n / 10000).toFixed(0) + "만원";
   return n.toLocaleString() + "원";
@@ -64,6 +72,7 @@ function formatCheckinOptions(r: any): { label: string; value: string; color: st
   const opts: { label: string; value: string; color: string }[] = [];
   if (r.bbq_count > 0) opts.push({ label: "BBQ 그릴", value: `${r.bbq_count}개`, color: "bg-red-50 text-red-700" });
   if (r.dinner_count > 0) opts.push({ label: "저녁식사", value: `${r.dinner_count}인분`, color: "bg-orange-50 text-orange-700" });
+  if ((r.breakfast_count || 0) > 0) opts.push({ label: "조식", value: `${r.breakfast_count}명${r.breakfast_menu ? `·${r.breakfast_menu}` : ""}`, color: "bg-amber-50 text-amber-700" });
   if (r.woodcraft_count > 0) opts.push({ label: "목공체험", value: `${r.woodcraft_count}명`, color: "bg-amber-50 text-amber-700" });
   if (r.pot_bbq_count > 0) opts.push({ label: "항아리BBQ", value: `${r.pot_bbq_count}개`, color: "bg-rose-50 text-rose-700" });
   if (r.burner_count > 0) opts.push({ label: "가스버너", value: `${r.burner_count}개`, color: "bg-blue-50 text-blue-700" });
@@ -183,11 +192,15 @@ export default function AdminDashboard() {
     setEditForm({
       guest_name: r.guest_name,
       guest_phone: r.guest_phone,
+      reservation_date: r.reservation_date,
+      checkout_date: r.checkout_date,
       guest_count: baseCount,
       extra_guests: extraCount,
       stay_nights: r.stay_nights,
       bbq_count: r.bbq_count,
       dinner_count: r.dinner_count,
+      breakfast_count: r.breakfast_count ?? 0,
+      breakfast_menu: r.breakfast_menu ?? "",
       woodcraft_count: r.woodcraft_count,
       pot_bbq_count: r.pot_bbq_count,
       burner_count: r.burner_count,
@@ -230,11 +243,16 @@ export default function AdminDashboard() {
       if (original) {
         if (editForm.guest_name !== original.guest_name) changes.push(`예약자: ${original.guest_name} → ${editForm.guest_name}`);
         if (editForm.guest_phone !== original.guest_phone) changes.push(`연락처: ${original.guest_phone} → ${editForm.guest_phone}`);
+        if ((editForm.reservation_date ?? original.reservation_date) !== original.reservation_date) changes.push(`체크인: ${original.reservation_date} → ${editForm.reservation_date}`);
+        if ((editForm.checkout_date ?? original.checkout_date) !== original.checkout_date) changes.push(`체크아웃: ${original.checkout_date || "-"} → ${editForm.checkout_date}`);
+        if ((editForm.stay_nights ?? original.stay_nights) !== original.stay_nights) changes.push(`숙박: ${original.stay_nights}박 → ${editForm.stay_nights}박`);
         const origTotal = original.guest_count || 0;
         const newTotal = editForm.guest_count || 0;
         if (origTotal !== newTotal) changes.push(`인원: ${origTotal}명 → ${newTotal}명`);
         if (editForm.bbq_count !== original.bbq_count) changes.push(`BBQ 그릴: ${original.bbq_count}개 → ${editForm.bbq_count}개`);
         if (editForm.dinner_count !== original.dinner_count) changes.push(`저녁식사: ${original.dinner_count}인분 → ${editForm.dinner_count}인분`);
+        if ((editForm.breakfast_count ?? 0) !== (original.breakfast_count ?? 0)) changes.push(`조식: ${original.breakfast_count ?? 0}명 → ${editForm.breakfast_count ?? 0}명`);
+        if ((editForm.breakfast_menu ?? "") !== (original.breakfast_menu ?? "")) changes.push(`조식 메뉴: ${original.breakfast_menu || "(없음)"} → ${editForm.breakfast_menu || "(없음)"}`);
         if (editForm.woodcraft_count !== original.woodcraft_count) changes.push(`목공체험: ${original.woodcraft_count}개 → ${editForm.woodcraft_count}개`);
         if (editForm.pot_bbq_count !== original.pot_bbq_count) changes.push(`항아리BBQ: ${original.pot_bbq_count}개 → ${editForm.pot_bbq_count}개`);
         if (editForm.burner_count !== original.burner_count) changes.push(`가스버너: ${original.burner_count}개 → ${editForm.burner_count}개`);
@@ -288,14 +306,16 @@ export default function AdminDashboard() {
             body: JSON.stringify({
               guestName: editForm.guest_name || original.guest_name,
               guestPhone: editForm.guest_phone || original.guest_phone,
-              reservationDate: original.reservation_date,
-              stayNights: original.stay_nights,
+              reservationDate: editForm.reservation_date ?? original.reservation_date,
+              stayNights: editForm.stay_nights ?? original.stay_nights,
               guestCount: editForm.guest_count ?? original.guest_count,
               extraGuests: editForm.extra_guests ?? original.extra_guests,
               programType: original.program_type,
               bbqCount: editForm.bbq_count ?? original.bbq_count,
               burnerCount: editForm.burner_count ?? original.burner_count,
               dinnerCount: editForm.dinner_count ?? original.dinner_count,
+              breakfastCount: editForm.breakfast_count ?? original.breakfast_count ?? 0,
+              breakfastMenu: editForm.breakfast_menu ?? original.breakfast_menu ?? "",
               woodcraftCount: editForm.woodcraft_count ?? original.woodcraft_count,
               potBbqCount: editForm.pot_bbq_count ?? original.pot_bbq_count,
               busRequested: editForm.bus_requested ?? original.bus_requested,
@@ -513,6 +533,21 @@ export default function AdminDashboard() {
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
                       </div>
+                      {/* 체크인/체크아웃 날짜 변경 */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">체크인</label>
+                          <input type="date" value={editForm.reservation_date ?? ""}
+                            onChange={e => setEditForm({ ...editForm, reservation_date: e.target.value })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-500 font-bold">체크아웃</label>
+                          <input type="date" value={editForm.checkout_date ?? ""}
+                            onChange={e => setEditForm({ ...editForm, checkout_date: e.target.value })}
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
+                        </div>
+                      </div>
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                         <div>
                           <label className="text-[10px] text-gray-500 font-bold">BBQ 그릴</label>
@@ -539,6 +574,48 @@ export default function AdminDashboard() {
                           <input type="number" value={editForm.burner_count || ""} onChange={e => setEditForm({ ...editForm, burner_count: Math.max(0, parseInt(e.target.value) || 0) })}
                             className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none" />
                         </div>
+                      </div>
+
+                      {/* 조식 (인원 + 메뉴) */}
+                      <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-3 space-y-2">
+                        <p className="text-[10px] font-bold text-amber-900 flex items-center gap-1">🍱 조식 (1인 10,000원)</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold">조식 인원</label>
+                            <input type="number" value={editForm.breakfast_count ?? 0}
+                              onChange={e => {
+                                const cnt = Math.max(0, parseInt(e.target.value) || 0);
+                                setEditForm((prev) => {
+                                  const next: Partial<ReservationRow> = { ...prev, breakfast_count: cnt };
+                                  if (cnt === 0) next.breakfast_menu = "";
+                                  else if (prev.breakfast_menu === "육개장" && cnt < 20) next.breakfast_menu = "";
+                                  return next;
+                                });
+                              }}
+                              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-bold">조식 메뉴</label>
+                            <select value={editForm.breakfast_menu || ""}
+                              onChange={e => setEditForm({ ...editForm, breakfast_menu: e.target.value })}
+                              disabled={(editForm.breakfast_count ?? 0) === 0}
+                              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                              <option value="">메뉴 선택</option>
+                              {BREAKFAST_MENUS.map((m) => {
+                                const cnt = (editForm.breakfast_count ?? 0) as number;
+                                const disabled = m.minPeople > 0 && cnt < m.minPeople;
+                                return (
+                                  <option key={m.name} value={m.name} disabled={disabled}>
+                                    {m.name}{m.minPeople > 0 ? ` (${m.minPeople}인↑)` : ""}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+                        </div>
+                        {(editForm.breakfast_count ?? 0) > 0 && !editForm.breakfast_menu && (
+                          <p className="text-[10px] text-amber-700">조식 메뉴를 선택해주세요.</p>
+                        )}
                       </div>
 
                       {/* 버스 렌트 */}
