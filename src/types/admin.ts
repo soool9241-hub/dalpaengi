@@ -1,3 +1,8 @@
+export interface BreakfastItem {
+  menu: string;
+  count: number;
+}
+
 export interface ReservationRow {
   id: number;
   customer_id: number | null;
@@ -128,6 +133,48 @@ export function calculateRevenue(r: ReservationRow, dynamicPricing?: DynamicPric
   total += (r.pool_count || 0) * p.miniPool;
   total += (r.bus_fee || 0);
   return total;
+}
+
+// 조식 메뉴 목록. 육개장은 20인 이상 안내(관리자 화면에서는 하드 차단하지 않고 안내만).
+export const BREAKFAST_MENU_OPTIONS: { name: string; minPeople: number }[] = [
+  { name: "육개장", minPeople: 20 },
+  { name: "김치찌개", minPeople: 0 },
+  { name: "보리밥 비빔밥", minPeople: 0 },
+  { name: "샌드위치", minPeople: 0 },
+];
+
+// 메뉴별 수량 배열의 총 인원
+export function breakfastTotal(items: BreakfastItem[] | null | undefined): number {
+  return (items ?? []).reduce((s, i) => s + (i.count || 0), 0);
+}
+
+// 메뉴별 수량을 breakfast_menu 문자열로 인코딩 (예: "김치찌개10·육개장10").
+// DB 컬럼을 추가하지 않고 기존 breakfast_menu 에 그대로 저장한다.
+export function encodeBreakfastMenu(items: BreakfastItem[] | null | undefined): string {
+  return (items ?? []).filter((i) => (i.count || 0) > 0).map((i) => `${i.menu}${i.count}`).join("·");
+}
+
+// breakfast_menu 문자열을 메뉴별 수량 배열로 파싱.
+// - 신규 인코딩: "김치찌개10·육개장10" → [{김치찌개,10},{육개장,10}]
+// - 레거시 단일메뉴: "김치찌개"(+breakfast_count) → [{김치찌개, count}]
+export function parseBreakfastItems(
+  menu: string | null | undefined,
+  count: number | null | undefined
+): BreakfastItem[] {
+  const m = (menu ?? "").trim();
+  if (!m) return [];
+  const segments = m.split(/[·,]/).map((s) => s.trim()).filter(Boolean);
+  const items: BreakfastItem[] = [];
+  for (const seg of segments) {
+    const match = seg.match(/^(.+?)(\d+)$/);
+    if (match) {
+      items.push({ menu: match[1].trim(), count: parseInt(match[2], 10) });
+    } else {
+      // 숫자가 없는 레거시 단일 메뉴 → 총 인원을 수량으로 사용
+      items.push({ menu: seg, count: count ?? 0 });
+    }
+  }
+  return items.filter((i) => i.count > 0);
 }
 
 export const PROGRAM_LABELS: Record<string, string> = {

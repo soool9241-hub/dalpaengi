@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { CalendarCheck, Users, DollarSign, ArrowUpRight, ArrowDownRight, Pencil, Save, X, Phone, Bus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { DashboardData, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue } from "@/types/admin";
-import type { ReservationRow } from "@/types/admin";
+import { DashboardData, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue, breakfastTotal, encodeBreakfastMenu, parseBreakfastItems } from "@/types/admin";
+import type { ReservationRow, BreakfastItem } from "@/types/admin";
+import { BreakfastEditor } from "@/components/admin/BreakfastEditor";
 
 const COLORS = ["#2d5016", "#4a7c28", "#8B6914", "#c49a2a"];
 
@@ -17,14 +18,6 @@ const TIME_OPTIONS_PICKUP = Array.from({ length: 25 }, (_, i) => {
   return `${String(h).padStart(2, "0")}:${m}`;
 });
 const TIME_OPTIONS_DROPOFF = ["06:00","06:30","07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30"];
-
-// 조식 메뉴 (예약관리와 동일). 육개장은 20인 이상만 선택 가능
-const BREAKFAST_MENUS: { name: string; minPeople: number }[] = [
-  { name: "육개장", minPeople: 20 },
-  { name: "김치찌개", minPeople: 0 },
-  { name: "보리밥 비빔밥", minPeople: 0 },
-  { name: "샌드위치", minPeople: 0 },
-];
 
 function formatPrice(n: number) {
   if (n >= 10000) return (n / 10000).toFixed(0) + "만원";
@@ -121,6 +114,7 @@ export default function AdminDashboard() {
   const [recentLoading, setRecentLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<ReservationRow>>({});
+  const [bfItems, setBfItems] = useState<BreakfastItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [busMode, setBusMode] = useState<"none" | "oneway" | "roundtrip">("none");
   const [busForm, setBusForm] = useState({ pickupPlace: "", customPickup: "", pickupPeople: "", pickupTime: "", dropoffPlace: "", customDropoff: "", dropoffPeople: "", dropoffTime: "", managerName: "", managerPhone: "" });
@@ -207,6 +201,7 @@ export default function AdminDashboard() {
       bus_requested: r.bus_requested,
       notes: r.notes,
     });
+    setBfItems(parseBreakfastItems(r.breakfast_menu, r.breakfast_count));
     setEditingId(r.id);  // 이걸 마지막에 해야 UI가 한번에 렌더링
     setBusLoading(false);
   };
@@ -576,47 +571,18 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      {/* 조식 (인원 + 메뉴) */}
-                      <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-3 space-y-2">
-                        <p className="text-[10px] font-bold text-amber-900 flex items-center gap-1">🍱 조식 (1인 10,000원)</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold">조식 인원</label>
-                            <input type="number" value={editForm.breakfast_count ?? 0}
-                              onChange={e => {
-                                const cnt = Math.max(0, parseInt(e.target.value) || 0);
-                                setEditForm((prev) => {
-                                  const next: Partial<ReservationRow> = { ...prev, breakfast_count: cnt };
-                                  if (cnt === 0) next.breakfast_menu = "";
-                                  else if (prev.breakfast_menu === "육개장" && cnt < 20) next.breakfast_menu = "";
-                                  return next;
-                                });
-                              }}
-                              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none" />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-gray-500 font-bold">조식 메뉴</label>
-                            <select value={editForm.breakfast_menu || ""}
-                              onChange={e => setEditForm({ ...editForm, breakfast_menu: e.target.value })}
-                              disabled={(editForm.breakfast_count ?? 0) === 0}
-                              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400">
-                              <option value="">메뉴 선택</option>
-                              {BREAKFAST_MENUS.map((m) => {
-                                const cnt = (editForm.breakfast_count ?? 0) as number;
-                                const disabled = m.minPeople > 0 && cnt < m.minPeople;
-                                return (
-                                  <option key={m.name} value={m.name} disabled={disabled}>
-                                    {m.name}{m.minPeople > 0 ? ` (${m.minPeople}인↑)` : ""}
-                                  </option>
-                                );
-                              })}
-                            </select>
-                          </div>
-                        </div>
-                        {(editForm.breakfast_count ?? 0) > 0 && !editForm.breakfast_menu && (
-                          <p className="text-[10px] text-amber-700">조식 메뉴를 선택해주세요.</p>
-                        )}
-                      </div>
+                      {/* 조식 (메뉴별 수량) */}
+                      <BreakfastEditor
+                        items={bfItems}
+                        onChange={(items) => {
+                          setBfItems(items);
+                          setEditForm((prev) => ({
+                            ...prev,
+                            breakfast_count: breakfastTotal(items),
+                            breakfast_menu: encodeBreakfastMenu(items),
+                          }));
+                        }}
+                      />
 
                       {/* 버스 렌트 */}
                       <div className="border border-gray-200 rounded-xl p-3 space-y-2.5">

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, ChevronLeft, ChevronRight, CalendarDays, Pencil, Save, Loader2, MessageSquare, Bus } from "lucide-react";
-import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS } from "@/types/admin";
+import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS, breakfastTotal, encodeBreakfastMenu, parseBreakfastItems } from "@/types/admin";
+import type { BreakfastItem } from "@/types/admin";
+import { BreakfastEditor } from "@/components/admin/BreakfastEditor";
 
 interface BusRequest {
   id?: number;
@@ -123,13 +125,6 @@ const PURPOSE_OPTIONS = [
   "기타",
 ];
 
-const BREAKFAST_MENUS: { name: string; minPeople: number }[] = [
-  { name: "육개장", minPeople: 20 },
-  { name: "김치찌개", minPeople: 0 },
-  { name: "보리밥 비빔밥", minPeople: 0 },
-  { name: "샌드위치", minPeople: 0 },
-];
-
 const REFERRAL_OPTIONS = [
   "네이버 검색",
   "인스타그램",
@@ -180,6 +175,7 @@ export default function ReservationsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [detail, setDetail] = useState<ReservationRow | null>(null);
   const [editData, setEditData] = useState<Partial<ReservationRow>>({});
+  const [bfItems, setBfItems] = useState<BreakfastItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
@@ -343,6 +339,7 @@ export default function ReservationsPage() {
       notes: r.notes,
       status: r.status,
     });
+    setBfItems(parseBreakfastItems(r.breakfast_menu, r.breakfast_count));
     setBusForm(EMPTY_BUS_FORM);
     setBusToggle(r.bus_requested);
     setBusList([]);
@@ -877,47 +874,18 @@ export default function ReservationsPage() {
                   </div>
                 </div>
 
-                {/* 조식 (인원 + 메뉴) */}
-                <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-3 space-y-2">
-                  <p className="text-xs font-bold text-amber-900 flex items-center gap-1">🍱 조식 (1인 10,000원)</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] font-semibold text-gray-600 mb-1 block">조식 인원</label>
-                      <input type="number" value={ed("breakfast_count") ?? 0}
-                        onChange={(e) => {
-                          const cnt = Math.max(0, parseInt(e.target.value) || 0);
-                          setEditData((prev) => {
-                            const next: Partial<ReservationRow> = { ...prev, breakfast_count: cnt };
-                            if (cnt === 0) next.breakfast_menu = "";
-                            else if (prev.breakfast_menu === "육개장" && cnt < 20) next.breakfast_menu = "";
-                            return next;
-                          });
-                        }}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300" />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-gray-600 mb-1 block">조식 메뉴</label>
-                      <select value={ed("breakfast_menu") || ""}
-                        onChange={(e) => setEd("breakfast_menu", e.target.value)}
-                        disabled={(ed("breakfast_count") ?? 0) === 0}
-                        className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:bg-gray-100 disabled:text-gray-400">
-                        <option value="">메뉴 선택</option>
-                        {BREAKFAST_MENUS.map((m) => {
-                          const cnt = (ed("breakfast_count") ?? 0) as number;
-                          const disabled = m.minPeople > 0 && cnt < m.minPeople;
-                          return (
-                            <option key={m.name} value={m.name} disabled={disabled}>
-                              {m.name}{m.minPeople > 0 ? ` (${m.minPeople}인↑)` : ""}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                  </div>
-                  {(ed("breakfast_count") ?? 0) > 0 && !ed("breakfast_menu") && (
-                    <p className="text-[11px] text-amber-700">조식 메뉴를 선택해주세요.</p>
-                  )}
-                </div>
+                {/* 조식 (메뉴별 수량) */}
+                <BreakfastEditor
+                  items={bfItems}
+                  onChange={(items) => {
+                    setBfItems(items);
+                    setEditData((prev) => ({
+                      ...prev,
+                      breakfast_count: breakfastTotal(items),
+                      breakfast_menu: encodeBreakfastMenu(items),
+                    }));
+                  }}
+                />
 
                 {/* 미니수영장 + 목적 + 유입경로 */}
                 <div className="grid grid-cols-3 gap-3">
