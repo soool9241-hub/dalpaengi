@@ -65,21 +65,23 @@ function formatCheckinOptions(r: any): { label: string; value: string; color: st
   const opts: { label: string; value: string; color: string }[] = [];
   if (r.bbq_count > 0) opts.push({ label: "BBQ 그릴", value: `${r.bbq_count}개`, color: "bg-red-50 text-red-700" });
   if (r.dinner_count > 0) opts.push({ label: "저녁식사", value: `${r.dinner_count}인분`, color: "bg-orange-50 text-orange-700" });
-  if ((r.breakfast_count || 0) > 0) opts.push({ label: "조식", value: `${r.breakfast_count}명${r.breakfast_menu ? `·${r.breakfast_menu}` : ""}`, color: "bg-amber-50 text-amber-700" });
   if (r.woodcraft_count > 0) opts.push({ label: "목공체험", value: `${r.woodcraft_count}명`, color: "bg-amber-50 text-amber-700" });
   if (r.pot_bbq_count > 0) opts.push({ label: "항아리BBQ", value: `${r.pot_bbq_count}개`, color: "bg-rose-50 text-rose-700" });
   if (r.burner_count > 0) opts.push({ label: "가스버너", value: `${r.burner_count}개`, color: "bg-blue-50 text-blue-700" });
-  if (r.bus_requested) {
-    const bd = r.bus_detail;
-    if (bd && bd.pickup_place) {
-      const isRoundtrip = !!(bd.dropoff_time || bd.dropoff_people);
-      const cost = getBusCost(r);
-      opts.push({ label: `버스 ${isRoundtrip ? "왕복" : "편도"}`, value: `${bd.pickup_place}${cost > 0 ? ` ${formatPrice(cost)}` : ""}`, color: "bg-purple-50 text-purple-700" });
-    } else {
-      opts.push({ label: "버스", value: "요청", color: "bg-purple-50 text-purple-700" });
-    }
-  }
+  // 조식·버스는 유무를 항상 표기하므로 카드에서 별도 배지로 렌더 (여기서는 제외)
   return opts;
+}
+
+// 버스 유무 배지 텍스트 (있을 때 상세 포함)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function busBadgeText(r: any): string {
+  const bd = r.bus_detail;
+  if (bd && bd.pickup_place) {
+    const isRoundtrip = !!(bd.dropoff_time || bd.dropoff_people);
+    const cost = getBusCost(r);
+    return `${isRoundtrip ? "왕복" : "편도"} ${bd.pickup_place}${cost > 0 ? ` ${formatPrice(cost)}` : ""}`;
+  }
+  return "요청";
 }
 
 function getDday(dateStr: string): string {
@@ -709,6 +711,27 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
                       <Phone size={11} className="text-gray-400" />
                       <a href={`tel:${r.guest_phone}`} className="hover:text-primary hover:underline">{formatPhone(r.guest_phone)}</a>
+                    </div>
+                    {/* 조식·버스 유무 (항상 표기) */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {(r.breakfast_count || 0) > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-700">
+                          🍱 조식 {r.breakfast_count}명{r.breakfast_menu ? `·${r.breakfast_menu}` : ""}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gray-100 text-gray-400">
+                          🍱 조식 없음
+                        </span>
+                      )}
+                      {r.bus_requested ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-50 text-purple-700">
+                          🚌 버스 {busBadgeText(r)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gray-100 text-gray-400">
+                          🚌 버스 없음
+                        </span>
+                      )}
                     </div>
                     {opts.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
