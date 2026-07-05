@@ -712,27 +712,21 @@ export default function AdminDashboard() {
                       <Phone size={11} className="text-gray-400" />
                       <a href={`tel:${r.guest_phone}`} className="hover:text-primary hover:underline">{formatPhone(r.guest_phone)}</a>
                     </div>
-                    {/* 조식·버스 유무 (항상 표기) */}
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {(r.breakfast_count || 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-700">
-                          🍱 조식 {r.breakfast_count}명{r.breakfast_menu ? `·${r.breakfast_menu}` : ""}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gray-100 text-gray-400">
-                          🍱 조식 없음
-                        </span>
-                      )}
-                      {r.bus_requested ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-50 text-purple-700">
-                          🚌 버스 {busBadgeText(r)}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gray-100 text-gray-400">
-                          🚌 버스 없음
-                        </span>
-                      )}
-                    </div>
+                    {/* 조식·버스 — 있을 때만 표기 */}
+                    {((r.breakfast_count || 0) > 0 || r.bus_requested) && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {(r.breakfast_count || 0) > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-700">
+                            🍱 조식 {r.breakfast_count}명{r.breakfast_menu ? `·${r.breakfast_menu}` : ""}
+                          </span>
+                        )}
+                        {r.bus_requested && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-50 text-purple-700">
+                            🚌 버스 {busBadgeText(r)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {opts.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {opts.map((opt, i) => (
