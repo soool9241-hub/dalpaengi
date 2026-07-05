@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { calculateRevenue } from "@/types/admin";
+import type { ReservationRow } from "@/types/admin";
 
 export async function GET(req: NextRequest) {
   if (!(await verifyRequest(req))) {
@@ -108,6 +110,24 @@ export async function PATCH(req: NextRequest) {
     if (key in body) filtered[key] = body[key];
   }
   filtered.updated_at = new Date().toISOString();
+
+  // 내용(인원·옵션 등)이 바뀌면 total_amount 자동 재계산.
+  // 단, 관리자가 total_amount 를 직접 보낸 경우엔 그 값을 존중(수기 견적·할인 예외 허용).
+  if (!("total_amount" in body)) {
+    const priceFields = [
+      "guest_count", "stay_nights", "program_type",
+      "bbq_count", "burner_count", "dinner_count", "woodcraft_count",
+      "pot_bbq_count", "pool_count", "breakfast_count", "bus_fee",
+    ];
+    if (priceFields.some((k) => k in body)) {
+      const { data: existing } = await supabaseAdmin
+        .from("reservations").select("*").eq("id", id).single();
+      if (existing) {
+        const merged = { ...existing, ...filtered } as ReservationRow;
+        filtered.total_amount = calculateRevenue(merged);
+      }
+    }
+  }
 
   const { error } = await supabaseAdmin.from("reservations").update(filtered).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
