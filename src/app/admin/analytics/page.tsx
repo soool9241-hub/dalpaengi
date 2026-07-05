@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { TrendingUp, Users, DollarSign, Calendar, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Calendar, Search, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { PROGRAM_LABELS, AnalyticsData } from "@/types/admin";
+import { buildSectionedCsv, downloadCsv, todayStamp, type CsvSection } from "@/lib/csv";
 
 const COLORS = ["#2d5016", "#4a7c28", "#8B6914", "#c49a2a", "#e8ede4"];
 const YEAR_COLORS = ["#2d5016", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
@@ -99,11 +100,68 @@ export default function AnalyticsPage() {
     avgGuests: p.avgGuests,
   }));
 
+  const exportCsv = () => {
+    if (!data) return;
+    const sections: CsvSection[] = [];
+
+    if (data.yearlyStats?.length) {
+      sections.push({
+        title: "연도별 매출",
+        headers: ["연도", "매출", "예약건수", "인원"],
+        rows: data.yearlyStats.map((y) => [`${y.year}년`, y.amount, y.count, y.guests]),
+      });
+    }
+    if (data.monthlyRevenue?.length) {
+      sections.push({
+        title: `월별 매출 (${year}년, ${basis === "booking" ? "신청일" : "이용일"} 기준)`,
+        headers: ["월", "매출", "예약건수", "인원"],
+        rows: data.monthlyRevenue.map((m) => [m.month, m.amount, m.count, m.guests || 0]),
+      });
+    }
+    if (data.programBreakdown?.length) {
+      sections.push({
+        title: "프로그램별",
+        headers: ["프로그램", "건수", "평균인원", "매출"],
+        rows: data.programBreakdown.map((p) => [PROGRAM_LABELS[p.type] || p.type, p.count, p.avgGuests, p.totalRevenue]),
+      });
+    }
+    if (data.purposeBreakdown?.length) {
+      sections.push({
+        title: "목적별",
+        headers: ["목적", "건수"],
+        rows: data.purposeBreakdown.map((p) => [p.purpose, p.count]),
+      });
+    }
+    if (data.guestStats?.distribution?.length) {
+      sections.push({
+        title: "인원 분포",
+        headers: ["구간", "건수"],
+        rows: data.guestStats.distribution.map((d) => [d.range, d.count]),
+      });
+    }
+    if (periodStats?.reservations?.length) {
+      sections.push({
+        title: `기간별 예약상세 (${periodStats.from} ~ ${periodStats.to})`,
+        headers: ["ID", "날짜", "예약자", "프로그램", "인원", "버스비", "매출"],
+        rows: periodStats.reservations.map((r: { id: number; date: string; name: string; program: string; guests: number; busCost: number; revenue: number }) =>
+          [r.id, r.date, r.name, PROGRAM_LABELS[r.program] || r.program, r.guests, r.busCost, r.revenue]),
+      });
+    }
+
+    downloadCsv(`매출지표_${year}${month !== "all" ? "-" + month : ""}_${todayStamp()}.csv`, buildSectionedCsv(sections));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">매출/지표 분석</h1>
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={exportCsv}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 transition-colors"
+          >
+            <Download size={14} /> CSV
+          </button>
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}

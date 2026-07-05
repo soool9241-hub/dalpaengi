@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, Star, Phone, Calendar, Users, DollarSign, ArrowUpDown, ArrowUp, ArrowDown, Flame } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Star, Phone, Calendar, Users, DollarSign, ArrowUpDown, ArrowUp, ArrowDown, Flame, Download } from "lucide-react";
 import { CustomerRow, ReservationRow, PROGRAM_LABELS, STATUS_LABELS, calculateRevenue } from "@/types/admin";
 
 type SortField = "name" | "visit_count" | "last_visit" | "total_guests_brought" | "total_revenue";
@@ -110,7 +110,15 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">고객 관리</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">고객 관리</h1>
+        <a
+          href={`/api/admin/customers/export?${new URLSearchParams({ sort, order, ...(search ? { search } : {}) }).toString()}`}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-semibold hover:bg-emerald-100 transition-colors"
+        >
+          <Download size={14} /> CSV 내보내기
+        </a>
+      </div>
 
       {/* Search */}
       <div className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4">

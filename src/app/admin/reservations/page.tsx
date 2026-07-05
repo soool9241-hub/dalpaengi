@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, CalendarDays, Pencil, Save, Loader2, MessageSquare, Bus } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, CalendarDays, Pencil, Save, Loader2, MessageSquare, Bus, Download } from "lucide-react";
 import { ReservationRow, PROGRAM_LABELS, STATUS_LABELS, breakfastTotal, encodeBreakfastMenu, parseBreakfastItems } from "@/types/admin";
 import type { BreakfastItem } from "@/types/admin";
 import { BreakfastEditor } from "@/components/admin/BreakfastEditor";
@@ -585,9 +585,17 @@ export default function ReservationsPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">예약 관리</h1>
-        <a href="/admin/reservations/calendar" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors">
-          <CalendarDays size={14} /> 달력
-        </a>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <a
+            href={`/api/admin/reservations/export?${new URLSearchParams({ status, program, ...(search ? { search } : {}) }).toString()}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-semibold hover:bg-emerald-100 transition-colors"
+          >
+            <Download size={14} /> CSV
+          </a>
+          <a href="/admin/reservations/calendar" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs sm:text-sm font-semibold hover:bg-primary/20 transition-colors">
+            <CalendarDays size={14} /> 달력
+          </a>
+        </div>
       </div>
 
       {/* Filters */}
