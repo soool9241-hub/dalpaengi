@@ -16,11 +16,13 @@ const ADMIN_SEJIN = "01053140146";  // 리트릿 운영자 임세진
 const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "spring-retreat-2026": { label: "완주하다 봄 리트릿 2026", maxCapacity: 20 },
   "vibe-coding-basic": { label: "바이브코딩 워크숍 기초반", maxCapacity: 20 },
+  "soundwalk-2026": { label: "달팽이 소리산책 리트릿 2026", maxCapacity: 20 },
 };
 
 // 프로그램 식별자에 따라 테이블명 결정
 function getTableName(program?: string | null): string {
   if (program && program.startsWith("vibe-coding")) return "vibecoding_applications";
+  if (program && program.startsWith("soundwalk")) return "soundwalk_applications";
   return "retreat_applications";
 }
 
@@ -30,8 +32,8 @@ export async function GET(req: NextRequest) {
   const program = searchParams.get("program"); // 특정 프로그램 필터 (목록용)
   const search = searchParams.get("search") || "";
 
-  // 통계는 항상 두 테이블 모두에서 집계
-  const tablesForStats = ["retreat_applications", "vibecoding_applications"];
+  // 통계는 항상 모든 신청 테이블에서 집계
+  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications"];
   const allRowsForStats: { program: string; status: string }[] = [];
   for (const t of tablesForStats) {
     const { data: rows } = await supabaseAdmin.from(t).select("program, status");
@@ -204,6 +206,95 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  // [소리산책] 대기자 → 정식 신청(pending) 전환 시: 자리 열림 안내 문자
+  if (status === "pending" && appData?.status === "waitlist" && appData?.phone && tableName === "soundwalk_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+      const msg = `안녕하세요, ${appData.name}님! 🎵
+
+대기해주셔서 감사합니다.
+달팽이 소리산책 리트릿에 자리가 생겼습니다!
+
+━━━━━━━━━━━━
+✨ 정식 신청자로 전환되었습니다
+━━━━━━━━━━━━
+
+■ 프로그램: 달팽이 소리산책 리트릿
+■ 일시: 2026.9.6(일) 12:00~18:00
+■ 장소: 전북 완주군 소양면 해월신왕길 92
+■ 참가비: 99,000원
+
+입금계좌: 카카오뱅크 3333-06-4749542 임솔
+※ 입금 확인 후 최종 확정됩니다.
+
+자리가 생겼으니 빠른 입금 부탁드려요!
+
+문의: 010-8531-9531 (임솔)
+감사합니다 :)`;
+
+      await messageService.sendOne({
+        to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 자리 열림 안내"
+      });
+    } catch (smsErr) {
+      console.error("소리산책 자리 열림 SMS 발송 실패:", smsErr);
+    }
+  }
+
+  // [소리산책] 취소 처리 시 신청자/관리자 안내 문자
+  if (status === "cancelled" && appData?.status !== "cancelled" && appData?.phone && tableName === "soundwalk_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+
+      const applicantMsg = `안녕하세요, ${appData.name}님.
+
+달팽이 소리산책 리트릿 신청이
+취소 처리되었습니다.
+
+━━━━━━━━━━━━
+❎ 신청 취소 완료
+━━━━━━━━━━━━
+
+• 입금하신 금액이 있다면
+  영업일 기준 2~3일 내 환불됩니다.
+• 다음 회차에도 관심 부탁드려요!
+
+문의: 010-8531-9531 (임솔)
+감사합니다 :)`;
+
+      const { count: activeCount } = await supabaseAdmin
+        .from("soundwalk_applications")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["pending", "confirmed"]);
+
+      const { count: wlCount } = await supabaseAdmin
+        .from("soundwalk_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "waitlist");
+
+      const adminMsg = `[소리산책 취소 처리]
+
+■ 이름: ${appData.name}
+■ 연락처: ${appData.phone}
+■ 이전상태: ${appData.status}
+
+━━━━━━━━━━━━
+현재 ${activeCount || 0}/20명
+대기자 ${wlCount || 0}명
+━━━━━━━━━━━━
+
+※ 대기자가 있다면 순번대로
+관리자 페이지에서 "pending"으로
+변경 시 자동 안내 문자가 발송됩니다.`;
+
+      await Promise.allSettled([
+        messageService.sendOne({ to: phone, from: SENDER, text: applicantMsg, type: "LMS", subject: "소리산책 신청 취소 안내" }),
+        messageService.sendOne({ to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: "소리산책 취소 처리" }),
+      ]);
+    } catch (smsErr) {
+      console.error("소리산책 취소 SMS 발송 실패:", smsErr);
+    }
+  }
+
   // 취소 처리 시 신청자/관리자에게 안내 문자
   if (status === "cancelled" && appData?.status !== "cancelled" && appData?.phone && tableName === "retreat_applications") {
     try {
@@ -288,6 +379,40 @@ export async function PATCH(req: NextRequest) {
 
         await messageService.sendOne({
           to: phone, from: SENDER, text: msg, type: "LMS", subject: "바이브코딩 워크숍 참가 확정"
+        });
+      } else if (tableName === "soundwalk_applications") {
+        // 소리산책 리트릿 확정 문자 (입금 완료 + 준비물 재안내)
+        const transport = appData.transport || "";
+        let gatherInfo = "";
+        if (transport === "전주고속터미널") {
+          gatherInfo = `\n■ 집결: 전주고속터미널 11:00 (카니발 차량 픽업)`;
+        } else if (transport === "전주역") {
+          gatherInfo = `\n■ 집결: 전주역 11:20 (카니발 차량 픽업)`;
+        } else if (transport === "자차") {
+          gatherInfo = `\n■ 이동: 자차 11:50 펜션 도착 (무료 주차)`;
+        }
+
+        const msg = `안녕하세요, ${appData.name}님!
+달팽이 소리산책 리트릿 참가가 최종 확정되었습니다 🎵
+
+■ 프로그램: 달팽이 소리산책 리트릿
+■ 일시: 2026.9.6(일) 12:00~18:00
+■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)${gatherInfo}
+■ 참가비: 99,000원 (입금 확인 완료 ✅)
+
+━━ 🎧 당일 준비물 ━━
+• 스마트폰 (Suno 앱 설치 + 무료가입 완료)
+• 편한 운동화 — 숲길을 걷습니다
+• 이어폰 (선택)
+※ 녹음키트·태블릿·스피커는 준비되어 있습니다.
+
+당일 숲에서 뵙겠습니다!
+
+문의: 010-8531-9531 (임솔)
+감사합니다 :)`;
+
+        await messageService.sendOne({
+          to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 리트릿 참가 확정"
         });
       } else {
         // 리트릿 확정 문자

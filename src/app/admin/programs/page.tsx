@@ -99,18 +99,20 @@ export default function AdminProgramsPage() {
 
   const handleSearch = () => fetchData();
 
-  const updateStatus = async (id: number, newStatus: string) => {
+  // program 을 반드시 함께 보낸다 — 서버가 program 으로 대상 테이블을 고르므로
+  // 빠뜨리면 리트릿 테이블의 동일 id 를 잘못 수정/삭제한다.
+  const updateStatus = async (id: number, newStatus: string, program: string) => {
     await fetch("/api/admin/programs", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: newStatus }),
+      body: JSON.stringify({ id, status: newStatus, program }),
     });
     fetchData();
   };
 
-  const deleteApp = async (id: number) => {
+  const deleteApp = async (id: number, program: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
-    await fetch(`/api/admin/programs?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/programs?id=${id}&program=${encodeURIComponent(program)}`, { method: "DELETE" });
     fetchData();
   };
 
@@ -548,7 +550,7 @@ export default function AdminProgramsPage() {
                           return (
                             <button
                               key={opt.value}
-                              onClick={(e) => { e.stopPropagation(); if (!isActive) updateStatus(app.id, opt.value); }}
+                              onClick={(e) => { e.stopPropagation(); if (!isActive) updateStatus(app.id, opt.value, app.program); }}
                               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                                 isActive
                                   ? opt.color + " ring-2 ring-offset-1 ring-current cursor-default"
@@ -563,7 +565,7 @@ export default function AdminProgramsPage() {
                         <div className="w-px h-6 bg-gray-200 mx-1" />
 
                         <button
-                          onClick={(e) => { e.stopPropagation(); deleteApp(app.id); }}
+                          onClick={(e) => { e.stopPropagation(); deleteApp(app.id, app.program); }}
                           className="px-3 py-2 rounded-lg border border-red-200 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-1"
                         >
                           <Trash2 size={12} /> 삭제
