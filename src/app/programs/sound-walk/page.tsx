@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
+  ChevronRight,
   Calendar,
   MapPin,
   Users,
@@ -60,7 +61,16 @@ const BEFORE_AFTER = [
   { before: "여행은 사진만 남음", after: "나만의 음악 + 소리목판이 손에 남음" },
 ];
 
-/* ───── 주요 프로그램 ───── */
+/* ───── 참여 흐름 (신청부터 귀가까지) ───── */
+const JOURNEY = [
+  { step: 1, title: "신청 & 입금", desc: "신청폼 작성 → 안내 문자 수신 → 입금하면 참가 확정", icon: "📝" },
+  { step: 2, title: "사전 준비", desc: "문자 안내대로 스마트폰에 Suno 앱 설치·무료가입만 해두면 끝", icon: "🎧" },
+  { step: 3, title: "숲에서 소리 줍기", desc: "완주 소양 숲길을 걸으며 새소리·계곡·바람을 직접 녹음", icon: "🌿" },
+  { step: 4, title: "내 소리로 내 음악", desc: "채집한 소리를 재료로 AI와 함께 세상에 하나뿐인 곡 완성", icon: "🎵" },
+  { step: 5, title: "함께 듣고, 손에 남기고", desc: "다 함께 감상하고 소리 파형 목판·카드를 받아 돌아갑니다", icon: "🎉" },
+];
+
+/* ───── 주요 프로그램 (카드) ───── */
 const PROGRAMS = [
   {
     num: 1,
@@ -97,6 +107,74 @@ const PROGRAMS = [
     desc: "각자 만든 곡을 다 함께 듣고, 기념품을 받습니다",
     img: IMG.share,
     color: "bg-purple-50 border-purple-200",
+  },
+];
+
+/* ───── 세부 프로그램 (아코디언) ───── */
+const PROGRAM_DETAILS = [
+  {
+    num: 1,
+    title: "웰컴 & 점심",
+    sub: "완주 로컬 밥상으로 하루를 열고, 오늘의 여정을 그려봅니다",
+    leader: "솔",
+    time: "12:00~13:00",
+    img: IMG.lunch,
+    desc: "처음 만난 사람들과 어색함을 풀고, 오늘 우리가 무엇을 하러 왔는지 함께 그려보는 시간. 녹음키트 사용법도 이때 익힙니다.",
+    details: [
+      "체크인 & 가벼운 아이스브레이킹",
+      "완주 로컬 재료로 차린 점심 밥상",
+      "오늘의 여정 소개 — 6시간을 어떻게 보내는지",
+      "녹음키트 사용법 익히기 (처음이어도 3분이면 됩니다)",
+      "소리산책 카드 배부 — 오늘의 기록장",
+    ],
+  },
+  {
+    num: 2,
+    title: "소리 자연채집",
+    sub: "완주 소양 숲을 걸으며 귀로 풍경을 담습니다",
+    leader: "소리채집 가이드",
+    time: "13:00~15:00",
+    img: IMG.forest,
+    desc: "눈을 감으면 그때부터 들리기 시작합니다. 숲길을 천천히 걸으며 새소리·계곡물·바람·발밑 낙엽까지, 평소 흘려보내던 소리를 하나씩 골라 녹음합니다.",
+    details: [
+      "귀 열기 — 눈 감고 1분 동안 듣기만 하기",
+      "완주 소양 숲길 사운드워킹 (천천히, 말 없이)",
+      "새소리 · 계곡물 · 바람 · 발밑 소리 녹음",
+      "“가장 마음에 남은 소리” 고르기",
+      "채집한 소리 다시 들으며 정리",
+    ],
+  },
+  {
+    num: 3,
+    title: "소리로 음악 만들기",
+    sub: "내가 주운 소리가 재료가 되어 내 곡이 됩니다",
+    leader: "솔",
+    time: "15:20~17:00",
+    img: IMG.create,
+    desc: "악기도 악보도 필요 없습니다. 채집한 소리와 오늘의 감각을 말로 풀어내면, AI가 그것을 음악으로 만들어줍니다. 프롬프트를 어떻게 쓰는지부터 같이 해봅니다.",
+    details: [
+      "소리 정리 — 오늘 채집한 소리 골라내기 (15분)",
+      "프롬프트 워크샵 — 느낌을 말로 옮기는 연습 (20분)",
+      "AI 생성 · 비교 — 여러 버전 만들어 고르기 (30분)",
+      "완성 · 공유 준비 — 제목 붙이고 마무리 (20분)",
+      "만든 곡은 각자 계정에 남아 본인 소유가 됩니다",
+    ],
+  },
+  {
+    num: 4,
+    title: "결과물 공유회",
+    sub: "각자의 숲이 어떤 소리였는지 함께 듣습니다",
+    leader: "솔",
+    time: "17:00~18:00",
+    img: IMG.share,
+    desc: "같은 숲을 걸었는데 완성된 곡은 스무 개가 다 다릅니다. 어떤 소리를 왜 골랐는지 나누다 보면, 오늘 하루가 한 번 더 남습니다.",
+    details: [
+      "한 사람씩 자기 곡 감상",
+      "어떤 소리를 왜 골랐는지 이야기 나눔",
+      "소리 파형 목판 기념품 전달 (CNC 각인)",
+      "소리산책 카드에 오늘의 기록 마무리",
+      "플레이리스트에 내 곡을 담고 귀가",
+    ],
   },
 ];
 
@@ -178,7 +256,7 @@ const LEADERS = [
     color: "bg-emerald-50 border-emerald-200",
     tagColor: "bg-emerald-100 text-emerald-800",
     desc: "달팽이아지트 대표. AI로 서비스 5개+ 만들어 운영하고 있습니다. “소리로 창작하는 새로운 경험을 안내합니다.”",
-    programs: ["AI 음악창작", "결과물 공유회"],
+    programs: ["웰컴 & 점심", "AI 음악창작", "결과물 공유회"],
   },
   {
     name: "소리채집 가이드",
@@ -188,6 +266,33 @@ const LEADERS = [
     tagColor: "bg-blue-100 text-blue-800",
     desc: "완주 지역 사운드워커 또는 생태 해설사와 함께 숲의 소리를 읽는 시간을 준비하고 있습니다. (협업 검토 중)",
     programs: ["소리 자연채집"],
+  },
+];
+
+/* ───── 후기
+   ⚠️ 소리산책은 2026.9.6 베타 1회차 = 아직 후기 없음.
+   달팽이아지트에서 진행한 「완주하다 봄 리트릿」(2026.4) 실제 후기를 사용하며,
+   섹션 제목·주석으로 어느 프로그램 후기인지 명확히 밝힌다. ───── */
+const REVIEWS = [
+  {
+    name: "머리 빗는 네오",
+    text: "살짜기 금빛 들판에 석양을 바라보며 서울로 올라갑니다. 행사 기획부터 진행까지 수고해주신 기획자 분들께 깊이 감사드립니다. 참여하기를 잘 했다는 저만의 생각입니다.",
+  },
+  {
+    name: "눈빛 예고 어피치",
+    text: "각자의 인생에 대해 들을 수 있어서 좋았어요~ 무엇보다 새벽까지 수다 떤 게 오랜만이라 좋았어요 ♥ 이런 좋은 프로그램 기획해주신 달팽이님들께 감사해용~^^",
+  },
+  {
+    name: "피스메이커 프로도",
+    text: "불편함 없이 너무 잘 쉬다 돌아갑니다. 애써주신 분들 챙겨주신 분들 전해주신 마음 모두 감사합니다. 일상으로 돌아가서도 나눠주신 에너지로 잘 살아가 볼게요 ♥",
+  },
+  {
+    name: "불나게 일하는 네오",
+    text: "좋은 프로그램 마련해주시고 함께 해주셔서 감사합니다. 명상 요가 산책 맛있는 식사 정말 힐링 그 자체였어요. 일상으로 돌아가서 신선한 마음 간직하며 하루하루 즐겁게 생활하도록 하겠습니다^^",
+  },
+  {
+    name: "씩씩거리는 무지",
+    text: "완주를 벗어나니 바로 현실이더라고요? 힐링캠프가 벌써 아련하게 느껴집니다. 혼자 갔지만 혼자일 틈이 없게 만들어주신 모든 분들 진심으로 감사했습니다.",
   },
 ];
 
@@ -202,6 +307,92 @@ const FAQS = [
   { q: "아이도 참가할 수 있나요?", a: "초등학생 이상 가족 참가 가능합니다." },
   { q: "주차 가능한가요?", a: "네, 펜션 내 무료 주차 가능합니다." },
 ];
+
+/* ───── 세부 프로그램 아코디언 ───── */
+function ProgramAccordion({ p }: { p: typeof PROGRAM_DETAILS[0] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
+      <button onClick={() => setOpen(!open)} className="w-full text-left px-5 sm:px-6 py-5 flex items-center gap-4">
+        <span className="flex-shrink-0 w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base">
+          {p.num}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-900 text-lg">{p.title}</p>
+          <p className={`text-sm sm:text-base text-gray-500 ${open ? "" : "line-clamp-2"}`}>{p.sub}</p>
+        </div>
+        <span className="text-sm text-primary font-semibold whitespace-nowrap hidden sm:block">{p.leader}</span>
+        {open ? <ChevronUp size={20} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={20} className="text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-5 sm:px-6 pb-6 border-t border-gray-100 pt-5">
+          <div className="rounded-xl overflow-hidden mb-4">
+            <img src={p.img} alt={p.title} className="w-full h-48 sm:h-56 object-cover" />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+            <Clock size={14} /> {p.time}
+            <span className="ml-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold text-sm">{p.leader}</span>
+          </div>
+          <p className="text-base text-gray-700 mb-4 leading-relaxed">{p.desc}</p>
+          <ul className="space-y-2.5">
+            {p.details.map((d, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-base text-gray-600">
+                <span className="text-primary mt-0.5">&#x2022;</span> {d}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───── 후기 슬라이더 ───── */
+function ReviewSlider() {
+  const [current, setCurrent] = useState(0);
+  const total = REVIEWS.length;
+  const touchStart = useRef(0);
+
+  const next = () => setCurrent((c) => (c + 1) % total);
+  const prev = () => setCurrent((c) => (c === 0 ? total - 1 : c - 1));
+
+  return (
+    <section className="pb-14 sm:pb-16">
+      <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">달팽이아지트 리트릿 후기</h2>
+      <p className="text-sm text-gray-500 text-center mb-1">같은 공간, 같은 호스트가 진행한 리트릿에 참가한 분들의 실제 후기입니다</p>
+      <p className="text-xs text-gray-400 text-center mb-8">※ 「완주하다 봄 리트릿」(2026.4) 참가자 후기 · 소리산책은 9.6 첫 회차입니다</p>
+      <div
+        className="relative"
+        onTouchStart={(e) => { touchStart.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const diff = touchStart.current - e.changedTouches[0].clientX;
+          if (diff > 50) next();
+          else if (diff < -50) prev();
+        }}
+      >
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 min-h-[200px] flex flex-col justify-between shadow-sm">
+          <p className="text-base sm:text-lg text-gray-700 leading-relaxed">&ldquo;{REVIEWS[current].text}&rdquo;</p>
+          <p className="text-sm font-bold text-primary mt-4">— {REVIEWS[current].name}</p>
+        </div>
+        <button onClick={prev} aria-label="이전 후기"
+          className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
+          <ChevronLeft size={16} className="text-gray-700" />
+        </button>
+        <button onClick={next} aria-label="다음 후기"
+          className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors">
+          <ChevronRight size={16} className="text-gray-700" />
+        </button>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          {Array.from({ length: total }).map((_, i) => (
+            <button key={i} onClick={() => setCurrent(i)} aria-label={`${i + 1}번째 후기`}
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-gray-300"}`} />
+          ))}
+        </div>
+        <p className="text-center text-xs text-gray-400 mt-2">{current + 1} / {total}</p>
+      </div>
+    </section>
+  );
+}
 
 /* ───── FAQ 아코디언 ───── */
 function FaqItem({ faq }: { faq: { q: string; a: string } }) {
@@ -556,6 +747,9 @@ export default function SoundWalkPage() {
           <p className="text-lg sm:text-xl text-primary font-bold mt-6 leading-relaxed">
             완주의 숲이 들려주는 소리를 모아,<br />세상에 하나뿐인 나의 음악으로.
           </p>
+          <p className="text-sm text-gray-500 mt-6 max-w-md mx-auto">
+            천천히 걷고, 귀 기울이고, 만들어보는<br />소리채집 · AI 음악창작 리트릿
+          </p>
         </section>
 
         {/* ─── 3. 이런 분께 추천 ─── */}
@@ -604,7 +798,32 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 5. 주요 프로그램 ─── */}
+        {/* ─── 5. 참여 흐름 (세로 타임라인) ─── */}
+        <section className="pb-14 sm:pb-16">
+          <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">HOW IT WORKS</p>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-10">신청부터 귀가까지</h2>
+          <div className="relative">
+            <div className="absolute left-5 sm:left-6 top-2 bottom-2 w-0.5 bg-sage" />
+            <div className="space-y-5">
+              {JOURNEY.map((j) => (
+                <div key={j.step} className="relative flex items-start gap-4">
+                  <div className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span className="text-lg">{j.icon}</span>
+                  </div>
+                  <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-4 sm:p-5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-primary tracking-widest">STEP {j.step}</span>
+                    </div>
+                    <p className="font-black text-gray-900 text-base mt-1">{j.title}</p>
+                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">{j.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 6. 주요 프로그램 ─── */}
         <section className="pb-14 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">주요 프로그램</h2>
           <div className="space-y-4">
@@ -635,7 +854,101 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 6. 타임테이블 ─── */}
+        {/* ─── 7. 이끄미 ─── */}
+        <section className="pb-14 sm:pb-16">
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">이 시간을 함께 여는 이끄미</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">소리와 창작, 두 갈래를 함께 안내합니다</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {LEADERS.map((l, i) => (
+              <div key={i} className={`rounded-2xl border p-5 ${l.color}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+                    <span className="text-3xl">{l.emoji}</span>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-gray-900">
+                      {l.name} <span className="text-sm font-medium text-gray-500">이끄미</span>
+                    </p>
+                    <p className="text-xs font-semibold text-gray-500">{l.role}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed mb-3">{l.desc}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {l.programs.map((prog) => (
+                    <span key={prog} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${l.tagColor}`}>{prog}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── 8. 참가비 배너 ─── */}
+        <section className="pb-14 sm:pb-16">
+          <div className="bg-gradient-to-r from-primary to-emerald-600 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full opacity-10">
+              <div className="absolute top-4 left-8 text-6xl rotate-12">🎵</div>
+              <div className="absolute bottom-4 right-8 text-6xl -rotate-12">🌿</div>
+            </div>
+            <div className="relative z-10">
+              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">참가비</p>
+              <div className="flex items-center justify-center gap-3 mt-3">
+                <span className="text-4xl sm:text-5xl font-black">{fee}원</span>
+              </div>
+              <div className="inline-block mt-3 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
+                <span className="text-sm">6시간 · 점심·프로그램·기념품 모두 포함</span>
+              </div>
+              <p className="text-sm text-white/70 mt-3">{MAX_CAPACITY}명 선착순 · 최소 {MIN_CAPACITY}명 개최</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 9. VALUE PACKAGE ─── */}
+        <section className="pb-14 sm:pb-16">
+          <div className="text-center mb-8">
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">VALUE PACKAGE</p>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">
+              참가비에 포함된 <span className="text-primary">8가지 혜택</span>
+            </h2>
+            <p className="text-sm text-gray-500 mt-2">이 모든 것이 한 번의 참가비에 포함됩니다</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {BENEFITS.map((b, i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all hover:-translate-y-0.5">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl flex-shrink-0">{b.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 text-sm">{b.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{b.desc}</p>
+                    <p className="text-xs font-bold text-primary mt-1">{b.value}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 text-center border border-primary/20">
+            <p className="text-sm text-gray-600">혜택을 환산하면</p>
+            <p className="text-2xl font-black text-gray-900 mt-1">
+              총 <span className="text-primary">11.5만원</span> 이상의 가치{" "}
+              <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
+            </p>
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">참가비</p>
+              <p className="text-4xl font-black text-primary mt-1">{fee}원</p>
+            </div>
+            <div className="mt-5 pt-5 border-t border-primary/20">
+              <p className="text-base sm:text-lg font-bold text-gray-800 leading-relaxed">
+                자연에 귀 기울여 보는 경험은<br />
+                <span className="text-primary">그 어떤 가치로도 환산할 수 없습니다.</span>
+              </p>
+            </div>
+            <a href="#apply" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
+              지금 바로 신청하기 <ArrowRight size={14} />
+            </a>
+          </div>
+        </section>
+
+        {/* ─── 10. 타임테이블 ─── */}
         <section className="pb-14 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">하루 타임테이블</h2>
           <p className="text-sm text-gray-500 text-center mb-6">2026.9.6(일) · 12:00~18:00</p>
@@ -676,46 +989,51 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 7. VALUE PACKAGE ─── */}
+        {/* ─── 11. 세부 프로그램 (아코디언) ─── */}
         <section className="pb-14 sm:pb-16">
-          <div className="text-center mb-8">
-            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">VALUE PACKAGE</p>
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              참가비에 포함된 <span className="text-primary">8가지 혜택</span>
-            </h2>
-            <p className="text-sm text-gray-500 mt-2">이 모든 것이 한 번의 참가비에 포함됩니다</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {BENEFITS.map((b, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all hover:-translate-y-0.5">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl flex-shrink-0">{b.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm">{b.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{b.desc}</p>
-                    <p className="text-xs font-bold text-primary mt-1">{b.value}</p>
-                  </div>
-                </div>
-              </div>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">세부 프로그램</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">각 블록에서 실제로 무엇을 하는지 눌러서 확인하세요</p>
+          <div className="space-y-4">
+            {PROGRAM_DETAILS.map((p) => (
+              <ProgramAccordion key={p.num} p={p} />
             ))}
-          </div>
-          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 text-center border border-primary/20">
-            <p className="text-sm text-gray-600">혜택을 환산하면</p>
-            <p className="text-2xl font-black text-gray-900 mt-1">
-              총 <span className="text-primary">11.5만원</span> 이상의 가치{" "}
-              <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
-            </p>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">참가비</p>
-              <p className="text-4xl font-black text-primary mt-1">{fee}원</p>
-            </div>
-            <a href="#apply" className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
-              지금 바로 신청하기 <ArrowRight size={14} />
-            </a>
           </div>
         </section>
 
-        {/* ─── 8. 가격 안내 ─── */}
+        {/* ─── 12. 준비물 안내 ─── */}
+        <section className="pb-14 sm:pb-16">
+          <div className="text-center mb-8">
+            <Headphones size={28} className="mx-auto text-primary" />
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-3">준비물 안내</h2>
+            <p className="text-sm text-gray-500 mt-2">Suno 앱만 미리 설치해오시면 끝!</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PREP.map((p, i) => (
+              <div key={i} className={`rounded-2xl border p-5 ${p.tone}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">{p.icon}</span>
+                  <p className="font-black text-gray-900 text-sm">{p.who}</p>
+                </div>
+                <ul className="space-y-2">
+                  {p.items.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                      <Check size={14} className="text-primary flex-shrink-0 mt-0.5" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-5">
+            <p className="text-sm font-bold text-gray-900 mb-2">💡 Suno 결제, 꼭 해야 하나요?</p>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              무료 체험으로도 곡을 만들 수 있습니다. 만든 곡을 소장·활용하려면 Pro(월 약 1.3만원) 결제가 필요하고,
+              이건 각자 선택입니다. <span className="font-semibold text-primary">어떤 경우든 만든 곡의 권리는 본인 소유</span>입니다.
+            </p>
+          </div>
+        </section>
+
+        {/* ─── 13. 가격 안내 ─── */}
         <section className="pb-14 sm:pb-16">
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">PRICING</p>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">가격 안내</h2>
@@ -763,40 +1081,7 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 9. 준비물 안내 ─── */}
-        <section className="pb-14 sm:pb-16">
-          <div className="text-center mb-8">
-            <Headphones size={28} className="mx-auto text-primary" />
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-3">준비물 안내</h2>
-            <p className="text-sm text-gray-500 mt-2">Suno 앱만 미리 설치해오시면 끝!</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {PREP.map((p, i) => (
-              <div key={i} className={`rounded-2xl border p-5 ${p.tone}`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xl">{p.icon}</span>
-                  <p className="font-black text-gray-900 text-sm">{p.who}</p>
-                </div>
-                <ul className="space-y-2">
-                  {p.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                      <Check size={14} className="text-primary flex-shrink-0 mt-0.5" /> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-5">
-            <p className="text-sm font-bold text-gray-900 mb-2">💡 Suno 결제, 꼭 해야 하나요?</p>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              무료 체험으로도 곡을 만들 수 있습니다. 만든 곡을 소장·활용하려면 Pro(월 약 1.3만원) 결제가 필요하고,
-              이건 각자 선택입니다. <span className="font-semibold text-primary">어떤 경우든 만든 곡의 권리는 본인 소유</span>입니다.
-            </p>
-          </div>
-        </section>
-
-        {/* ─── 10. 왜 달팽이아지트인가 ─── */}
+        {/* ─── 14. 왜 달팽이아지트인가 ─── */}
         <section className="pb-14 sm:pb-16">
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">VENUE</p>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">왜 달팽이아지트인가?</h2>
@@ -813,36 +1098,7 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 11. 이끄미 ─── */}
-        <section className="pb-14 sm:pb-16">
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-3">이 시간을 함께 여는 이끄미</h2>
-          <p className="text-sm text-gray-500 text-center mb-8">소리와 창작, 두 갈래를 함께 안내합니다</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {LEADERS.map((l, i) => (
-              <div key={i} className={`rounded-2xl border p-5 ${l.color}`}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
-                    <span className="text-3xl">{l.emoji}</span>
-                  </div>
-                  <div>
-                    <p className="text-lg font-black text-gray-900">
-                      {l.name} <span className="text-sm font-medium text-gray-500">이끄미</span>
-                    </p>
-                    <p className="text-xs font-semibold text-gray-500">{l.role}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 leading-relaxed mb-3">{l.desc}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {l.programs.map((prog) => (
-                    <span key={prog} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${l.tagColor}`}>{prog}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ─── 12. 참가 안내 + 신청폼 ─── */}
+        {/* ─── 15. 참가 안내 + 교통 + 신청폼 ─── */}
         <section className="pb-14 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">참가 안내</h2>
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
@@ -920,7 +1176,12 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 13. FAQ ─── */}
+        {/* ─── 16. 후기 슬라이더 ─── */}
+        <div id="reviews" className="scroll-mt-20">
+          <ReviewSlider />
+        </div>
+
+        {/* ─── 17. FAQ ─── */}
         <section className="pb-14 sm:pb-16">
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">FAQ</p>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">자주 묻는 질문</h2>
@@ -931,7 +1192,7 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 14. 클로징 CTA ─── */}
+        {/* ─── 18. 클로징 CTA ─── */}
         <section className="pb-12 sm:pb-16">
           <div className="rounded-2xl p-8 text-white text-center relative overflow-hidden">
             <img src={IMG.closing} alt="완주 숲 풍경" className="absolute inset-0 w-full h-full object-cover" />
