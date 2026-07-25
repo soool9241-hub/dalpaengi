@@ -18,11 +18,11 @@ const categories = [
 // programs 배열 인덱스 → 예약 폼의 programType 매핑
 // 별도 페이지로 빠지는 프로그램(바이브/멤버십/리트릿/JIFF)은 사용 안 됨 (placeholder)
 const PROGRAM_IDS = [
-  "stay",     // 0: 대학생 MT 패키지
-  "stay",     // 1: 바이브코딩 (별도 페이지)
-  "stay",     // 2: 멤버십 스터디 (별도 페이지)
-  "jolib",    // 3: 나만의 아지트 만들기 (목공체험) ⭐
-  "stay",     // 4: 달팽이 소리산책 리트릿 (별도 페이지)
+  "stay",     // 0: 달팽이 소리산책 리트릿 — 시그니처 (별도 페이지)
+  "stay",     // 1: 대학생 MT 패키지
+  "stay",     // 2: 바이브코딩 (별도 페이지)
+  "stay",     // 3: 멤버십 스터디 (별도 페이지)
+  "jolib",    // 4: 나만의 아지트 만들기 (목공체험) ⭐
   "stay",     // 5: 완주하다 봄 리트릿 (별도 페이지)
   "stay",     // 6: 숙박 패키지
   "half",     // 7: 3시간 대여
@@ -35,6 +35,31 @@ export default function Programs() {
   const { pricing } = usePricing();
 
   const programs = useMemo(() => [
+    {
+      icon: Music,
+      title: "달팽이 소리산책 리트릿",
+      duration: "6시간 (9.6 12:00~18:00)",
+      price: 99000,
+      originalPrice: 200000,
+      perPerson: 99000,
+      maxPeople: "20명 한정",
+      categories: ["healing", "pension", "family", "mt", "membership"],
+      tags: ["NEW", "사전예약 50%", "선착순 20명"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-red-100 text-red-600", "bg-amber-100 text-amber-700"],
+      gradient: "from-teal-500 to-emerald-500",
+      image: "/img/retreat-spring-bg.jpg",
+      features: [
+        "완주 숲 소리채집 (녹음키트 대여)",
+        "AI로 나만의 음악 만들기 (Suno)",
+        "완주 로컬 점심 + 간식 제공",
+        "소리 파형 CNC 목판 기념품",
+        "결과물 공유회 · 20명 한정",
+      ],
+      extras: [],
+      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 재료로 AI와 함께 세상에 하나뿐인 내 음악을 만드는 6시간. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
+      highlight: true,
+      isSoundwalk: true,
+    },
     {
       icon: GraduationCap,
       title: "대학생 MT 패키지 (60명 수용가능)",
@@ -140,31 +165,6 @@ export default function Programs() {
       description: "나만의 아지트를 직접 만들어보는 목공 체험입니다. 정밀 커팅된 나무 조각을 끼워 맞춰 상자, 집, 자동차 등을 만들어볼 수 있습니다. 도구 없이도 단단하게 조립되는 탭앤슬롯 방식으로, 어린이도 안전하게 참여 가능합니다. 체험 후 50,000원 상당 무료 체험 바우처를 드립니다! 1인 30,000원",
       highlight: false,
       isEvent: false,
-    },
-    {
-      icon: Music,
-      title: "달팽이 소리산책 리트릿",
-      duration: "6시간 (9.6 12:00~18:00)",
-      price: 99000,
-      originalPrice: 200000,
-      perPerson: 99000,
-      maxPeople: "20명 한정",
-      categories: ["healing", "pension", "family", "mt", "membership"],
-      tags: ["NEW", "사전예약 50%", "선착순 20명"],
-      tagColors: ["bg-teal-100 text-teal-600", "bg-red-100 text-red-600", "bg-amber-100 text-amber-700"],
-      gradient: "from-teal-500 to-emerald-500",
-      image: "/img/retreat-spring-bg.jpg",
-      features: [
-        "완주 숲 소리채집 (녹음키트 대여)",
-        "AI로 나만의 음악 만들기 (Suno)",
-        "완주 로컬 점심 + 간식 제공",
-        "소리 파형 CNC 목판 기념품",
-        "결과물 공유회 · 20명 한정",
-      ],
-      extras: [],
-      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 재료로 AI와 함께 세상에 하나뿐인 내 음악을 만드는 6시간. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
-      highlight: true,
-      isSoundwalk: true,
     },
     {
       icon: Leaf,
@@ -368,21 +368,45 @@ export default function Programs() {
                 <div
                   key={originalIndex}
                   className={`group rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
-                    prog.isRetreat
+                    prog.isSoundwalk
+                      ? "bg-gradient-to-b from-teal-50 to-white ring-4 ring-teal-500 shadow-xl hover:shadow-2xl md:col-span-2 lg:col-span-3"
+                      : prog.isRetreat
                       ? "bg-gradient-to-b from-green-50 to-white ring-2 ring-primary shadow-lg hover:shadow-2xl md:col-span-2 lg:col-span-1"
                       : "bg-white border border-border hover:shadow-xl"
                   }`}
                 >
                   {/* Image Area */}
-                  <div className={`relative overflow-hidden flex items-center justify-center ${prog.isRetreat ? "h-56" : "h-48"}`}>
+                  <div className={`relative overflow-hidden flex items-center justify-center ${
+                    prog.isSoundwalk ? "h-64 sm:h-72" : prog.isRetreat ? "h-56" : "h-48"
+                  }`}>
                     <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                    <div className={`absolute inset-0 ${prog.isRetreat ? "bg-gradient-to-b from-primary/60 to-black/50" : "bg-black/40"}`} />
-                    <div className="relative text-center text-white z-10">
+                    <div className={`absolute inset-0 ${
+                      prog.isSoundwalk
+                        ? "bg-gradient-to-b from-teal-900/50 via-black/40 to-black/70"
+                        : prog.isRetreat
+                        ? "bg-gradient-to-b from-primary/60 to-black/50"
+                        : "bg-black/40"
+                    }`} />
+                    <div className="relative text-center text-white z-10 px-4">
+                      {prog.isSoundwalk && <span className="text-5xl block mb-2">🎵</span>}
                       {prog.isRetreat && <span className="text-4xl block mb-2">🌱</span>}
-                      {!prog.isRetreat && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
-                      <p className={`font-bold ${prog.isRetreat ? "text-xl" : "text-lg"}`}>{prog.title}</p>
+                      {!prog.isRetreat && !prog.isSoundwalk && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
+                      <p className={`font-bold ${prog.isSoundwalk ? "text-2xl sm:text-3xl" : prog.isRetreat ? "text-xl" : "text-lg"}`}>
+                        {prog.title}
+                      </p>
+                      {prog.isSoundwalk && (
+                        <>
+                          <p className="text-white/80 text-sm sm:text-base mt-2">완주 숲의 소리로 나만의 음악을 만드는 하루</p>
+                          <p className="text-amber-300 text-xs sm:text-sm font-bold mt-1.5">소리채집 · AI 음악창작 · 공유회</p>
+                        </>
+                      )}
                       {prog.isRetreat && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
                     </div>
+                    {prog.isSoundwalk && (
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-teal-700 text-[11px] font-black px-3 py-1 rounded-full tracking-widest">
+                        SIGNATURE PROGRAM
+                      </div>
+                    )}
                     {prog.isJiff && (
                       <div className="absolute top-3 left-3 bg-yellow-500 text-black text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
                         🎬 영화제 특가
@@ -453,9 +477,9 @@ export default function Programs() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className={prog.isSoundwalk ? "p-6 lg:max-w-2xl lg:mx-auto lg:text-center" : "p-6"}>
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-1.5 mb-4">
+                    <div className={`flex flex-wrap gap-1.5 mb-4 ${prog.isSoundwalk ? "lg:justify-center" : ""}`}>
                       {prog.tags.map((tag, j) => (
                         <span
                           key={j}
@@ -465,6 +489,17 @@ export default function Programs() {
                         </span>
                       ))}
                     </div>
+
+                    {/* 시그니처 카드는 폭이 넓으니 포함 내역을 함께 노출 */}
+                    {prog.isSoundwalk && (
+                      <div className="flex flex-wrap gap-2 justify-start lg:justify-center mb-4">
+                        {prog.features.map((f) => (
+                          <span key={f} className="text-xs bg-white border border-teal-200 text-teal-800 px-3 py-1.5 rounded-full font-medium">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     <h3 className="text-lg font-bold text-text-dark mb-1">
                       {prog.title}
@@ -508,12 +543,12 @@ export default function Programs() {
                       </>
                     ) : prog.isSoundwalk ? (
                       <>
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 lg:justify-center">
                           <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
                           <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">50% OFF</span>
                         </div>
-                        <div className="flex items-baseline gap-1.5 mb-2">
-                          <span className="text-3xl font-black text-teal-600">{prog.price.toLocaleString()}</span>
+                        <div className="flex items-baseline gap-1.5 mb-2 lg:justify-center">
+                          <span className="text-4xl font-black text-teal-600">{prog.price.toLocaleString()}</span>
                           <span className="text-sm text-text-light">원/인</span>
                         </div>
                         <p className="text-xs font-bold text-red-500 mb-5">
