@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film, Music } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -22,12 +22,13 @@ const PROGRAM_IDS = [
   "stay",     // 1: 바이브코딩 (별도 페이지)
   "stay",     // 2: 멤버십 스터디 (별도 페이지)
   "jolib",    // 3: 나만의 아지트 만들기 (목공체험) ⭐
-  "stay",     // 4: 완주하다 봄 리트릿 (별도 페이지)
-  "stay",     // 5: 숙박 패키지
-  "half",     // 6: 3시간 대여
-  "daynight", // 7: 주/야간 패키지
-  "healing",  // 8: 힐링캠프
-  "stay",     // 9: JIFF STAY (별도 페이지)
+  "stay",     // 4: 달팽이 소리산책 리트릿 (별도 페이지)
+  "stay",     // 5: 완주하다 봄 리트릿 (별도 페이지)
+  "stay",     // 6: 숙박 패키지
+  "half",     // 7: 3시간 대여
+  "daynight", // 8: 주/야간 패키지
+  "healing",  // 9: 힐링캠프
+  "stay",     // 10: JIFF STAY (별도 페이지)
 ] as const;
 
 export default function Programs() {
@@ -139,6 +140,30 @@ export default function Programs() {
       description: "나만의 아지트를 직접 만들어보는 목공 체험입니다. 정밀 커팅된 나무 조각을 끼워 맞춰 상자, 집, 자동차 등을 만들어볼 수 있습니다. 도구 없이도 단단하게 조립되는 탭앤슬롯 방식으로, 어린이도 안전하게 참여 가능합니다. 체험 후 50,000원 상당 무료 체험 바우처를 드립니다! 1인 30,000원",
       highlight: false,
       isEvent: false,
+    },
+    {
+      icon: Music,
+      title: "달팽이 소리산책 리트릿",
+      duration: "6시간 (9.6 12:00~18:00)",
+      price: 99000,
+      perPerson: 99000,
+      maxPeople: "20명 한정",
+      categories: ["healing", "pension", "family", "mt", "membership"],
+      tags: ["NEW", "소리산책", "모집중"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-emerald-100 text-emerald-600", "bg-green-100 text-green-600"],
+      gradient: "from-teal-500 to-emerald-500",
+      image: "/img/retreat-spring-bg.jpg",
+      features: [
+        "완주 숲 소리채집 (녹음키트 대여)",
+        "AI로 나만의 음악 만들기 (Suno)",
+        "완주 로컬 점심 + 간식 제공",
+        "소리 파형 CNC 목판 기념품",
+        "결과물 공유회 · 20명 한정",
+      ],
+      extras: [],
+      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 재료로 AI와 함께 세상에 하나뿐인 내 음악을 만드는 6시간. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
+      highlight: true,
+      isSoundwalk: true,
     },
     {
       icon: Leaf,
@@ -372,6 +397,11 @@ export default function Programs() {
                         💻 NEW 프로그램
                       </div>
                     )}
+                    {prog.isSoundwalk && (
+                      <div className="absolute top-3 left-3 bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
+                        🎵 NEW 프로그램
+                      </div>
+                    )}
                     {prog.isMembership && (
                       <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                         📚 멤버십
@@ -382,7 +412,9 @@ export default function Programs() {
                         <span className="bg-red-600 text-white text-lg font-black px-6 py-2 rounded-full -rotate-12 shadow-xl">SOLD OUT</span>
                       </div>
                     )}
-                    {prog.highlight && !prog.isRetreat && (
+                    {/* BEST 배지는 top-3 left-3 위치를 전용 배지들과 공유하므로,
+                        전용 배지가 있는 카드에서는 겹치지 않게 제외한다. */}
+                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
                       </div>
@@ -405,6 +437,11 @@ export default function Programs() {
                     {prog.isVibeCoding && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         일정 추후 공지
+                      </div>
+                    )}
+                    {prog.isSoundwalk && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        9.6(일)
                       </div>
                     )}
                     {prog.isMembership && (
@@ -466,6 +503,16 @@ export default function Programs() {
                         </div>
                         <p className="text-xs text-text-light mb-5">
                           6시간 · 20명 한정
+                        </p>
+                      </>
+                    ) : prog.isSoundwalk ? (
+                      <>
+                        <div className="flex items-baseline gap-1.5 mb-2">
+                          <span className="text-3xl font-black text-teal-600">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원/인</span>
+                        </div>
+                        <p className="text-xs font-bold text-teal-600 mb-5">
+                          🎵 20명 한정 · 점심+기념품 올인원
                         </p>
                       </>
                     ) : prog.isMembership ? (
@@ -539,6 +586,13 @@ export default function Programs() {
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white text-center"
                       >
                         추가혜택 확인 →
+                      </Link>
+                    ) : prog.isSoundwalk ? (
+                      <Link
+                        href="/programs/sound-walk"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-teal-500/10 text-teal-700 hover:bg-teal-600 hover:text-white text-center"
+                      >
+                        🎵 소리산책 자세히 보기 →
                       </Link>
                     ) : prog.isVibeCoding ? (
                       <Link
