@@ -31,6 +31,8 @@ const MAX_CAPACITY = 20;
 const MIN_CAPACITY = 10;
 const EVENT_DATE = "2026-09-06T12:00:00+09:00";
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
+// AI 음악창작에 사용하는 서비스. 참가자가 사전에 가입해와야 한다.
+const SUNO_URL = "https://suno.com/me";
 
 /* ───── 이미지
    TODO(sol): 소리산책 촬영 후 /img/soundwalk-*.jpg 로 교체.
@@ -100,8 +102,8 @@ const PROGRAMS = [
     num: 3,
     emoji: "🎵",
     title: "소리로 음악 만들기",
-    tag: "AI 음악창작",
-    desc: "채집한 소리를 재료로 나만의 곡을 창작합니다",
+    tag: "채집한 소리를 원소스로 · Suno AI",
+    desc: "내가 녹음한 숲의 소리를 원소스로 넣고, Suno로 나만의 곡을 만듭니다",
     img: IMG.create,
     color: "bg-blue-50 border-blue-200",
   },
@@ -153,17 +155,18 @@ const PROGRAM_DETAILS = [
   {
     num: 3,
     title: "소리로 음악 만들기",
-    sub: "내가 주운 소리가 재료가 되어 내 곡이 됩니다",
+    sub: "내가 주운 소리를 원소스로 넣어 내 곡을 만듭니다",
     leader: "솔",
     time: "15:20~17:00",
     img: IMG.create,
-    desc: "악기도 악보도 필요 없습니다. 채집한 소리와 오늘의 감각을 말로 풀어내면, AI가 그것을 음악으로 만들어줍니다. 프롬프트를 어떻게 쓰는지부터 같이 해봅니다.",
+    desc: "악기도 악보도 필요 없습니다. 숲에서 채집한 소리를 그대로 원소스(원재료)로 올리고, 오늘의 감각을 말로 풀어 프롬프트를 쓰면 Suno가 그것을 한 곡으로 완성해줍니다. 프롬프트를 어떻게 쓰는지부터 같이 해봅니다.",
     details: [
-      "소리 정리 — 오늘 채집한 소리 골라내기 (15분)",
+      "소리 정리 — 오늘 채집한 소리 중 원소스로 쓸 것 골라내기 (15분)",
+      "Suno에 내 소리 업로드 — 새소리·계곡·바람이 곡의 재료가 됩니다",
       "프롬프트 워크샵 — 느낌을 말로 옮기는 연습 (20분)",
       "AI 생성 · 비교 — 여러 버전 만들어 고르기 (30분)",
       "완성 · 공유 준비 — 제목 붙이고 마무리 (20분)",
-      "만든 곡은 각자 계정에 남아 본인 소유가 됩니다",
+      "만든 곡은 각자 Suno 계정에 남아 본인 소유가 됩니다",
     ],
   },
   {
@@ -191,6 +194,14 @@ const TIMETABLE = [
   { time: "15:00~15:20", label: "쉬는 시간 + 간식", icon: "☕" },
   { time: "15:20~17:00", label: "소리로 음악 만들기 (AI 음악창작)", icon: "🎵", tag: "1시간 40분", color: "bg-blue-100 text-blue-800" },
   { time: "17:00~18:00", label: "결과물 공유회 (감상·나눔 + 기념품)", icon: "🎉" },
+];
+
+/* ───── 원소스 → 음악 흐름 (채집한 소리가 곡의 재료가 되는 과정) ───── */
+const SOURCE_FLOW = [
+  { icon: "🌿", title: "숲에서 채집", desc: "새소리·계곡·바람을 직접 녹음" },
+  { icon: "📤", title: "원소스로 업로드", desc: "내가 녹음한 소리를 Suno에 올림" },
+  { icon: "✍️", title: "프롬프트 작성", desc: "오늘의 감각을 말로 옮김" },
+  { icon: "🎧", title: "내 곡 완성", desc: "세상에 하나뿐인 음악이 됩니다" },
 ];
 
 /* ───── 음악창작 블록 세부 ───── */
@@ -256,7 +267,7 @@ const PREP = [
     who: "참가자가 준비해주세요",
     icon: "🎒",
     tone: "bg-amber-50 border-amber-200",
-    items: ["스마트폰 (Suno 앱 설치·무료가입 완료)", "편한 운동화", "이어폰 (선택)"],
+    items: ["스마트폰 (suno.com 무료가입 완료)", "편한 운동화", "이어폰 (선택)"],
   },
 ];
 
@@ -322,8 +333,8 @@ const FAQS = [
   { q: "왜 이렇게 저렴한가요?", a: `소리산책은 이번이 첫 회차입니다. 함께 만들어주시는 분들께 정가 ${ORIGINAL_FEE.toLocaleString("ko-KR")}원의 절반으로 드리고, 선착순 ${MAX_CAPACITY}명이 채워지면 특가는 종료됩니다.` },
   { q: "사전예약 후 취소하면 환불되나요?", a: "입금 전이면 문자로 알려주시면 바로 취소됩니다. 입금 후 취소는 문의(010-8531-9531)로 연락 주시면 안내드립니다." },
   { q: "음악을 전혀 못 만들어도 참가할 수 있나요?", a: "네, AI가 도와주니 누구나 가능합니다. 악기도 악보도 필요 없어요." },
-  { q: "스마트폰만 있으면 되나요?", a: "네. Suno 앱 설치·무료가입만 미리 해오시면 됩니다. 녹음키트와 태블릿은 저희가 준비합니다." },
-  { q: "만든 곡은 제가 갖나요?", a: "네, 각자 본인 계정으로 만들기 때문에 곡의 권리는 본인 소유입니다." },
+  { q: "스마트폰만 있으면 되나요?", a: "네. suno.com 무료가입만 미리 해오시면 됩니다(1분). 녹음키트와 태블릿은 저희가 준비합니다." },
+  { q: "만든 곡은 제가 갖나요?", a: "네, 각자 본인 Suno 계정으로 만들기 때문에 곡의 권리는 본인 소유입니다. 채집한 소리도 본인이 녹음한 것이라 그대로 쓰실 수 있어요." },
   { q: "Suno 유료 결제를 해야 하나요?", a: "무료 체험으로도 충분히 만들 수 있습니다. 곡을 소장·상업적으로 활용하려면 Pro(월 약 1.3만원) 결제가 필요하고, 이건 각자 선택입니다." },
   { q: "비가 오면 어떻게 되나요?", a: "실내 소리채집과 대체 프로그램으로 진행합니다. 비 오는 날의 소리도 좋은 재료가 됩니다." },
   { q: "점심이 포함되나요?", a: "네, 완주 로컬 점심이 참가비에 포함되어 있습니다." },
@@ -696,7 +707,7 @@ export default function SoundWalkPage() {
             <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
               9월 6일, 완주 숲의 소리로<br />나만의 음악을 만드는 하루
             </h1>
-            <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">소리채집 · AI 음악창작 · 공유회</p>
+            <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">숲의 소리를 원소스로 · AI 음악창작 · 공유회</p>
             <div className="mt-3 inline-flex items-center gap-2 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg animate-pulse">
               🎉 사전예약 특가 {DISCOUNT_PERCENT}% · {MAX_CAPACITY}명 한정
             </div>
@@ -779,7 +790,8 @@ export default function SoundWalkPage() {
             완주의 숲이 들려주는 소리를 모아,<br />세상에 하나뿐인 나의 음악으로.
           </p>
           <p className="text-sm text-gray-500 mt-6 max-w-md mx-auto">
-            천천히 걷고, 귀 기울이고, 만들어보는<br />소리채집 · AI 음악창작 리트릿
+            천천히 걷고, 귀 기울이고, 만들어보는<br />
+            채집한 소리를 <span className="font-bold text-primary">원소스</span>로 쓰는 AI 음악창작 리트릿
           </p>
         </section>
 
@@ -1026,6 +1038,34 @@ export default function SoundWalkPage() {
               ))}
             </div>
           </div>
+
+          {/* 원소스 → 음악 흐름 */}
+          <div className="mt-5 bg-white rounded-2xl border-2 border-primary/20 p-5 sm:p-6">
+            <p className="text-xs font-bold text-primary text-center tracking-widest mb-1">ONE SOURCE</p>
+            <p className="text-base sm:text-lg font-black text-gray-900 text-center mb-5">
+              내가 주운 소리가 <span className="text-primary">곡의 원소스</span>가 됩니다
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch justify-center gap-2 sm:gap-3">
+              {SOURCE_FLOW.map((f, i) => (
+                <div key={f.title} className="flex-1 flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                  <div className="flex-1 w-full bg-sage/40 rounded-xl p-4 text-center border border-primary/10">
+                    <span className="text-2xl block">{f.icon}</span>
+                    <p className="text-sm font-black text-gray-900 mt-1.5">{f.title}</p>
+                    <p className="text-[11px] text-gray-600 mt-1 leading-snug">{f.desc}</p>
+                  </div>
+                  {i < SOURCE_FLOW.length - 1 && (
+                    <span className="text-primary font-black text-lg rotate-90 sm:rotate-0 flex-shrink-0">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center mt-5">
+              녹음키트는 저희가 준비합니다 ·{" "}
+              <a href={SUNO_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline hover:no-underline">
+                Suno 가입만 미리 해오세요
+              </a>
+            </p>
+          </div>
         </section>
 
         {/* ─── 11. 세부 프로그램 (아코디언) ─── */}
@@ -1063,6 +1103,24 @@ export default function SoundWalkPage() {
               </div>
             ))}
           </div>
+          {/* Suno 가입 바로가기 */}
+          <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-5 text-center">
+            <p className="text-sm font-black text-gray-900">🎼 지금 Suno 가입해두세요</p>
+            <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
+              당일 <span className="font-bold text-blue-700">채집한 소리를 원소스로 업로드</span>해서 곡을 만듭니다.<br />
+              가입만 미리 해두시면 현장에서 바로 시작할 수 있어요. (1분, 무료)
+            </p>
+            <a
+              href={SUNO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-colors"
+            >
+              suno.com 무료 가입하기 <ArrowRight size={14} />
+            </a>
+            <p className="text-[11px] text-gray-400 mt-2">{SUNO_URL.replace("https://", "")}</p>
+          </div>
+
           <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-5">
             <p className="text-sm font-bold text-gray-900 mb-2">💡 Suno 결제, 꼭 해야 하나요?</p>
             <p className="text-xs text-gray-600 leading-relaxed">

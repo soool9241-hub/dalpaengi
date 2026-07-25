@@ -50,13 +50,13 @@ export default function Programs() {
       image: "/img/retreat-spring-bg.jpg",
       features: [
         "완주 숲 소리채집 (녹음키트 대여)",
-        "AI로 나만의 음악 만들기 (Suno)",
+        "채집한 소리를 원소스로 AI 작곡 (Suno)",
         "완주 로컬 점심 + 간식 제공",
         "소리 파형 CNC 목판 기념품",
         "결과물 공유회 · 20명 한정",
       ],
       extras: [],
-      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 재료로 AI와 함께 세상에 하나뿐인 내 음악을 만드는 6시간. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
+      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 원소스로 Suno에 올려 세상에 하나뿐인 내 음악을 만드는 6시간. 악기도 악보도 필요 없습니다. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
       highlight: true,
       isSoundwalk: true,
     },
@@ -396,8 +396,8 @@ export default function Programs() {
                       </p>
                       {prog.isSoundwalk && (
                         <>
-                          <p className="text-white/80 text-sm sm:text-base mt-2">완주 숲의 소리로 나만의 음악을 만드는 하루</p>
-                          <p className="text-amber-300 text-xs sm:text-sm font-bold mt-1.5">소리채집 · AI 음악창작 · 공유회</p>
+                          <p className="text-white/80 text-sm sm:text-base mt-2">채집한 소리를 원소스로, 나만의 음악을 만드는 하루</p>
+                          <p className="text-amber-300 text-xs sm:text-sm font-bold mt-1.5">숲 소리채집 · Suno AI 작곡 · 공유회</p>
                         </>
                       )}
                       {prog.isRetreat && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
