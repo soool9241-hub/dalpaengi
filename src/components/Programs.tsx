@@ -146,11 +146,12 @@ export default function Programs() {
       title: "달팽이 소리산책 리트릿",
       duration: "6시간 (9.6 12:00~18:00)",
       price: 99000,
+      originalPrice: 200000,
       perPerson: 99000,
       maxPeople: "20명 한정",
       categories: ["healing", "pension", "family", "mt", "membership"],
-      tags: ["NEW", "소리산책", "모집중"],
-      tagColors: ["bg-teal-100 text-teal-600", "bg-emerald-100 text-emerald-600", "bg-green-100 text-green-600"],
+      tags: ["NEW", "사전예약 50%", "선착순 20명"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-red-100 text-red-600", "bg-amber-100 text-amber-700"],
       gradient: "from-teal-500 to-emerald-500",
       image: "/img/retreat-spring-bg.jpg",
       features: [
@@ -398,8 +399,8 @@ export default function Programs() {
                       </div>
                     )}
                     {prog.isSoundwalk && (
-                      <div className="absolute top-3 left-3 bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
-                        🎵 NEW 프로그램
+                      <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
+                        🎉 사전예약 50%
                       </div>
                     )}
                     {prog.isMembership && (
@@ -507,12 +508,16 @@ export default function Programs() {
                       </>
                     ) : prog.isSoundwalk ? (
                       <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
+                          <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">50% OFF</span>
+                        </div>
                         <div className="flex items-baseline gap-1.5 mb-2">
                           <span className="text-3xl font-black text-teal-600">{prog.price.toLocaleString()}</span>
                           <span className="text-sm text-text-light">원/인</span>
                         </div>
-                        <p className="text-xs font-bold text-teal-600 mb-5">
-                          🎵 20명 한정 · 점심+기념품 올인원
+                        <p className="text-xs font-bold text-red-500 mb-5">
+                          🎉 사전예약 특가 · 선착순 20명 한정
                         </p>
                       </>
                     ) : prog.isMembership ? (
@@ -592,7 +597,7 @@ export default function Programs() {
                         href="/programs/sound-walk"
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-teal-500/10 text-teal-700 hover:bg-teal-600 hover:text-white text-center"
                       >
-                        🎵 소리산책 자세히 보기 →
+                        🎵 사전예약 특가 보기 →
                       </Link>
                     ) : prog.isVibeCoding ? (
                       <Link

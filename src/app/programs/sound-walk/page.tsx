@@ -19,8 +19,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-/* ───── 프로그램 고정값 ───── */
+/* ───── 프로그램 고정값 ─────
+   1기(베타 1회차) 한정 특가: 정가 200,000원 → 50% 할인 → 99,000원.
+   20명 정원이 차면 특가 종료. */
+const ORIGINAL_FEE = 200_000;
 const FEE = 99_000;
+// 표기 할인율. 실제로는 50.5% 할인(200,000→99,000)이지만 광고 표기는 "50%"로 고정한다.
+// 계산값을 그대로 쓰면 반올림으로 51%가 되어 안내 문자·홈카드 표기와 어긋난다.
+const DISCOUNT_PERCENT = 50;
 const MAX_CAPACITY = 20;
 const MIN_CAPACITY = 10;
 const EVENT_DATE = "2026-09-06T12:00:00+09:00";
@@ -61,9 +67,9 @@ const BEFORE_AFTER = [
   { before: "여행은 사진만 남음", after: "나만의 음악 + 소리목판이 손에 남음" },
 ];
 
-/* ───── 참여 흐름 (신청부터 귀가까지) ───── */
+/* ───── 참여 흐름 (사전예약부터 귀가까지) ───── */
 const JOURNEY = [
-  { step: 1, title: "신청 & 입금", desc: "신청폼 작성 → 안내 문자 수신 → 입금하면 참가 확정", icon: "📝" },
+  { step: 1, title: "사전예약 & 입금", desc: "사전예약 폼 작성 → 특가 안내 문자 수신 → 입금하면 참가 확정", icon: "📝" },
   { step: 2, title: "사전 준비", desc: "문자 안내대로 스마트폰에 Suno 앱 설치·무료가입만 해두면 끝", icon: "🎧" },
   { step: 3, title: "숲에서 소리 줍기", desc: "완주 소양 숲길을 걸으며 새소리·계곡·바람을 직접 녹음", icon: "🌿" },
   { step: 4, title: "내 소리로 내 음악", desc: "채집한 소리를 재료로 AI와 함께 세상에 하나뿐인 곡 완성", icon: "🎵" },
@@ -217,11 +223,25 @@ const INCLUDED = [
   "결과물 공유회",
 ];
 
-const DISCOUNTS = [
-  { rate: "20%", cond: "얼리버드 (2주 전)" },
-  { rate: "15%", cond: "2인 이상 동반" },
-  { rate: "20%", cond: "달팽이아지트 숙박 이용자" },
-  { rate: "특별", cond: "봄 리트릿 참가자 우대" },
+/* ───── 사전예약 특가 근거
+   기존 할인 그리드(얼리버드/동반/숙박)는 50% 특가와 중복돼 혼선을 주므로 제거하고,
+   "왜 이 가격인가"를 설명하는 구조로 대체. ───── */
+const PRICE_NOTES = [
+  {
+    icon: "🌱",
+    title: "첫 회차 사전예약 특가",
+    desc: "소리산책은 이번이 첫 회차입니다. 함께 만들어주시는 분들께 정가의 절반으로 드립니다.",
+  },
+  {
+    icon: "👥",
+    title: "선착순 20명까지만",
+    desc: "20명이 채워지면 특가는 종료되고, 이후 회차는 정가로 진행됩니다.",
+  },
+  {
+    icon: "📸",
+    title: "후기·사진 협조 부탁",
+    desc: "첫 회차라 후기와 현장 사진을 남겨주시면 큰 도움이 됩니다. (강제 아님)",
+  },
 ];
 
 /* ───── 준비물 ───── */
@@ -298,6 +318,9 @@ const REVIEWS = [
 
 /* ───── FAQ ───── */
 const FAQS = [
+  { q: "사전예약 특가는 어떻게 받나요?", a: `아래 사전예약 폼을 작성하시면 특가 ${FEE.toLocaleString("ko-KR")}원 기준으로 안내 문자가 발송됩니다. 입금이 확인되면 확정입니다. 별도 쿠폰이나 코드는 없습니다.` },
+  { q: "왜 이렇게 저렴한가요?", a: `소리산책은 이번이 첫 회차입니다. 함께 만들어주시는 분들께 정가 ${ORIGINAL_FEE.toLocaleString("ko-KR")}원의 절반으로 드리고, 선착순 ${MAX_CAPACITY}명이 채워지면 특가는 종료됩니다.` },
+  { q: "사전예약 후 취소하면 환불되나요?", a: "입금 전이면 문자로 알려주시면 바로 취소됩니다. 입금 후 취소는 문의(010-8531-9531)로 연락 주시면 안내드립니다." },
   { q: "음악을 전혀 못 만들어도 참가할 수 있나요?", a: "네, AI가 도와주니 누구나 가능합니다. 악기도 악보도 필요 없어요." },
   { q: "스마트폰만 있으면 되나요?", a: "네. Suno 앱 설치·무료가입만 미리 해오시면 됩니다. 녹음키트와 태블릿은 저희가 준비합니다." },
   { q: "만든 곡은 제가 갖나요?", a: "네, 각자 본인 계정으로 만들기 때문에 곡의 권리는 본인 소유입니다." },
@@ -413,7 +436,7 @@ function FaqItem({ faq }: { faq: { q: string; a: string } }) {
   );
 }
 
-/* ───── 신청 폼 ───── */
+/* ───── 사전예약 폼 ───── */
 function ApplyForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -457,10 +480,10 @@ function ApplyForm() {
           setWaitlistModal({ show: true, number: num });
           setResult({ ok: true, msg: `🎵 아쉽게도 마감되었습니다! 대기자 ${num}번으로 등록되었어요.` });
         } else {
-          setResult({ ok: true, msg: "신청이 완료되었습니다! 결제·준비물 안내 문자가 발송됩니다." });
+          setResult({ ok: true, msg: "사전예약이 완료되었습니다! 특가 결제·준비물 안내 문자가 발송됩니다." });
         }
       } else {
-        setResult({ ok: false, msg: data.error || "신청 실패" });
+        setResult({ ok: false, msg: data.error || "사전예약 실패" });
       }
     } catch {
       setResult({ ok: false, msg: "네트워크 오류" });
@@ -479,8 +502,8 @@ function ApplyForm() {
             <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white px-6 py-8 text-center">
               <div className="text-5xl mb-3">🎵</div>
               <p className="text-xs font-bold tracking-widest opacity-90 mb-1">SOLD OUT</p>
-              <h3 className="text-2xl font-black">아쉽게도 마감되었어요</h3>
-              <p className="text-sm text-white/90 mt-2">{MAX_CAPACITY}명 선착순이 이미 채워졌습니다</p>
+              <h3 className="text-2xl font-black">사전예약이 마감되었어요</h3>
+              <p className="text-sm text-white/90 mt-2">사전예약 특가 {MAX_CAPACITY}명이 이미 채워졌습니다</p>
             </div>
             <div className="p-6 space-y-4">
               <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-5 text-center">
@@ -601,7 +624,7 @@ function ApplyForm() {
         </div>
         <button onClick={submit} disabled={loading}
           className="w-full py-3.5 rounded-xl text-white font-bold text-base transition-colors disabled:opacity-50 bg-primary hover:bg-primary-light">
-          {loading ? "신청 중..." : "소리산책 리트릿 신청하기"}
+          {loading ? "사전예약 중..." : `사전예약 특가 ${FEE.toLocaleString("ko-KR")}원으로 신청하기`}
         </button>
         {result && (
           <p className={`text-center text-sm font-semibold ${result.ok ? "text-green-600" : "text-red-500"}`}>
@@ -640,6 +663,7 @@ export default function SoundWalkPage() {
   useEffect(() => setDday(getDday()), []);
 
   const fee = FEE.toLocaleString("ko-KR");
+  const originalFee = ORIGINAL_FEE.toLocaleString("ko-KR");
 
   return (
     <div className="min-h-screen bg-background">
@@ -656,7 +680,7 @@ export default function SoundWalkPage() {
               <MessageCircle size={12} /> 카톡문의
             </a>
             <a href="#apply" className="bg-primary text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary-light transition-all">
-              신청하기
+              사전예약
             </a>
           </div>
         </div>
@@ -673,8 +697,11 @@ export default function SoundWalkPage() {
               9월 6일, 완주 숲의 소리로<br />나만의 음악을 만드는 하루
             </h1>
             <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">소리채집 · AI 음악창작 · 공유회</p>
+            <div className="mt-3 inline-flex items-center gap-2 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg animate-pulse">
+              🎉 사전예약 특가 {DISCOUNT_PERCENT}% · {MAX_CAPACITY}명 한정
+            </div>
             <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">
-              {MAX_CAPACITY}명 한정 · 점심+프로그램+기념품 전부 포함
+              점심+프로그램+기념품 전부 포함
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
@@ -693,16 +720,20 @@ export default function SoundWalkPage() {
             </p>
 
             <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
-              <span className="text-3xl font-black text-white">{fee}원</span>
-              <p className="text-xs text-white/50 mt-1.5">6시간 올인원 · 선착순 {MAX_CAPACITY}명</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg text-white/50 line-through">{originalFee}원</span>
+                <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-black">{DISCOUNT_PERCENT}% OFF</span>
+              </div>
+              <p className="text-4xl font-black text-white mt-1">{fee}원</p>
+              <p className="text-xs text-amber-300 font-bold mt-1.5">사전예약 특가 · 선착순 {MAX_CAPACITY}명</p>
               {dday !== null && dday > 0 && (
-                <p className="text-xs font-bold text-amber-300 mt-2">D-{dday}</p>
+                <p className="text-xs font-bold text-white/60 mt-2">D-{dday}</p>
               )}
             </div>
 
             <div className="flex items-center gap-2 mt-6">
               <a href="#apply" className="px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
-                신청하기
+                사전예약하기
               </a>
               <a href={KAKAO_URL} target="_blank" rel="noopener noreferrer"
                 className="px-6 py-3 bg-[#FEE500] text-[#3C1E1E] rounded-full font-bold text-sm hover:brightness-95 transition-all">
@@ -725,14 +756,14 @@ export default function SoundWalkPage() {
               </div>
             ))}
           </div>
-          {!status.closed && status.remaining < MAX_CAPACITY && (
+          {!status.closed && (
             <p className="text-center text-xs font-bold text-amber-600 mt-6">
-              🎧 현재 {status.current}명 신청 · 남은 자리 {status.remaining}석
+              🎧 사전예약 {status.current}명 · <span className="text-red-600">특가 남은 자리 {status.remaining}석</span>
             </p>
           )}
           {status.closed && (
             <p className="text-center text-xs font-bold text-rose-600 mt-6">
-              🎵 선착순 {MAX_CAPACITY}명 마감 — 지금 신청하시면 대기자로 등록됩니다
+              🎵 사전예약 특가 {MAX_CAPACITY}명 마감 — 지금 신청하시면 대기자로 등록됩니다
             </p>
           )}
         </div>
@@ -801,7 +832,7 @@ export default function SoundWalkPage() {
         {/* ─── 5. 참여 흐름 (세로 타임라인) ─── */}
         <section className="pb-14 sm:pb-16">
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">HOW IT WORKS</p>
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-10">신청부터 귀가까지</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-10">사전예약부터 귀가까지</h2>
           <div className="relative">
             <div className="absolute left-5 sm:left-6 top-2 bottom-2 w-0.5 bg-sage" />
             <div className="space-y-5">
@@ -891,14 +922,18 @@ export default function SoundWalkPage() {
               <div className="absolute bottom-4 right-8 text-6xl -rotate-12">🌿</div>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">참가비</p>
-              <div className="flex items-center justify-center gap-3 mt-3">
+              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">사전예약 특가</p>
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <span className="text-xl sm:text-2xl text-white/50 line-through">{originalFee}원</span>
+                <span className="text-xs bg-red-500 text-white px-2.5 py-1 rounded-full font-black">{DISCOUNT_PERCENT}% OFF</span>
+              </div>
+              <div className="flex items-center justify-center gap-3 mt-1">
                 <span className="text-4xl sm:text-5xl font-black">{fee}원</span>
               </div>
               <div className="inline-block mt-3 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
                 <span className="text-sm">6시간 · 점심·프로그램·기념품 모두 포함</span>
               </div>
-              <p className="text-sm text-white/70 mt-3">{MAX_CAPACITY}명 선착순 · 최소 {MIN_CAPACITY}명 개최</p>
+              <p className="text-sm text-white/70 mt-3">사전예약 {MAX_CAPACITY}명까지만 특가 · 최소 {MIN_CAPACITY}명 개최</p>
             </div>
           </div>
         </section>
@@ -933,7 +968,11 @@ export default function SoundWalkPage() {
               <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
             </p>
             <div className="mt-4">
-              <p className="text-sm text-gray-500">참가비</p>
+              <p className="text-sm text-gray-500">정가</p>
+              <p className="text-xl font-bold text-gray-400 line-through">{originalFee}원</p>
+              <p className="text-sm text-gray-500 mt-3">
+                사전예약 특가 <span className="text-red-500 font-black">{DISCOUNT_PERCENT}% OFF</span>
+              </p>
               <p className="text-4xl font-black text-primary mt-1">{fee}원</p>
             </div>
             <div className="mt-5 pt-5 border-t border-primary/20">
@@ -943,7 +982,7 @@ export default function SoundWalkPage() {
               </p>
             </div>
             <a href="#apply" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
-              지금 바로 신청하기 <ArrowRight size={14} />
+              사전예약 특가로 신청하기 <ArrowRight size={14} />
             </a>
           </div>
         </section>
@@ -1036,13 +1075,18 @@ export default function SoundWalkPage() {
         {/* ─── 13. 가격 안내 ─── */}
         <section className="pb-14 sm:pb-16">
           <p className="text-xs font-bold text-primary text-center tracking-widest mb-2">PRICING</p>
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">가격 안내</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">사전예약 특가 안내</h2>
+          <p className="text-sm text-gray-500 text-center mb-8">첫 회차 사전예약 {MAX_CAPACITY}명에게만 드리는 가격입니다</p>
 
           <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl border-2 border-primary-light overflow-hidden shadow-lg">
-              <div className="bg-primary text-white px-6 py-6 text-center">
+              <div className="bg-primary text-white px-6 py-6 text-center relative">
+                <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full">
+                  {DISCOUNT_PERCENT}% OFF
+                </div>
                 <p className="text-sm font-bold text-emerald-200">달팽이 소리산책 리트릿</p>
-                <p className="text-4xl font-black mt-2">{fee}<span className="text-lg font-bold">원</span></p>
+                <p className="text-lg text-white/50 line-through mt-2">{originalFee}원</p>
+                <p className="text-4xl font-black">{fee}<span className="text-lg font-bold">원</span></p>
                 <div className="flex items-center justify-center gap-1.5 mt-3 bg-white/20 px-4 py-1.5 rounded-full text-sm mx-auto w-fit">
                   <Clock size={14} /> 12:00~18:00 (6시간)
                 </div>
@@ -1058,25 +1102,28 @@ export default function SoundWalkPage() {
                   ))}
                 </div>
                 <a href="#apply" className="mt-6 w-full inline-flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-light transition-colors">
-                  리트릿 신청하기 <ArrowRight size={14} />
+                  사전예약하기 <ArrowRight size={14} />
                 </a>
               </div>
             </div>
           </div>
 
-          {/* 할인 안내 */}
-          <div className="mt-8 bg-gray-50 rounded-2xl p-6 border border-gray-100 max-w-md mx-auto">
-            <p className="text-sm font-black text-gray-900 mb-4 text-center">할인 혜택</p>
-            <div className="grid grid-cols-2 gap-3 text-center">
-              {DISCOUNTS.map((d, i) => (
-                <div key={i} className="bg-white rounded-xl p-3 border border-gray-100">
-                  <p className="text-2xl font-black text-primary">{d.rate}</p>
-                  <p className="text-xs text-gray-500 mt-1">{d.cond}</p>
+          {/* 사전예약 특가 조건 안내 */}
+          <div className="mt-8 bg-red-50 rounded-2xl p-6 border-2 border-red-200 max-w-md mx-auto">
+            <p className="text-sm font-black text-gray-900 mb-4 text-center">🎉 왜 이 가격인가요?</p>
+            <div className="space-y-3">
+              {PRICE_NOTES.map((n, i) => (
+                <div key={i} className="flex items-start gap-2.5 bg-white rounded-xl p-3.5 border border-red-100">
+                  <span className="text-lg flex-shrink-0">{n.icon}</span>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{n.title}</p>
+                    <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{n.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-center text-gray-400 font-semibold mt-4">
-              할인은 중복 적용되지 않으며, 신청 후 문자로 안내드립니다
+            <p className="text-[11px] text-center text-red-500 font-bold mt-4">
+              {MAX_CAPACITY}명 마감 시 특가 종료 · 이후 회차는 정가 {originalFee}원
             </p>
           </div>
         </section>
@@ -1098,7 +1145,7 @@ export default function SoundWalkPage() {
           </div>
         </section>
 
-        {/* ─── 15. 참가 안내 + 교통 + 신청폼 ─── */}
+        {/* ─── 15. 참가 안내 + 교통 + 사전예약 폼 ─── */}
         <section className="pb-14 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-8">참가 안내</h2>
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
@@ -1116,14 +1163,15 @@ export default function SoundWalkPage() {
               <div>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">인원</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1">{MAX_CAPACITY}명 한정</p>
-                <p className="text-xs text-gray-500">선착순 마감 · 최소 {MIN_CAPACITY}명 개최</p>
+                <p className="text-xs text-gray-500">사전예약 선착순 · 최소 {MIN_CAPACITY}명 개최</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">참가비</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
+                <p className="text-sm font-semibold mt-1">
+                  <span className="text-gray-400 line-through text-xs">{originalFee}원</span>{" "}
                   <span className="text-primary text-lg font-black">{fee}원</span>
                 </p>
-                <p className="text-xs text-gray-500">6시간 올인원</p>
+                <p className="text-xs text-red-500 font-bold">사전예약 특가 {DISCOUNT_PERCENT}% OFF</p>
               </div>
             </div>
             <div className="border-t border-gray-100 pt-4">
@@ -1218,14 +1266,18 @@ export default function SoundWalkPage() {
                 </div>
                 <div className="w-px h-12 bg-white/20" />
                 <div className="text-center">
-                  <p className="text-3xl font-black text-white">6시간</p>
-                  <p className="text-xs text-white/50 mt-1">올인원</p>
+                  <p className="text-3xl font-black text-white">{DISCOUNT_PERCENT}%</p>
+                  <p className="text-xs text-white/50 mt-1">사전예약 특가</p>
                 </div>
               </div>
-              <a href="#apply" className="inline-flex items-center gap-2 mt-8 px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-black text-lg hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/30">
-                함께 시작하기 <ArrowRight size={18} />
+              <p className="mt-6 text-sm text-white/70">
+                <span className="line-through text-white/40">{originalFee}원</span>{" "}
+                <span className="text-amber-400 font-black text-lg">{fee}원</span>
+              </p>
+              <a href="#apply" className="inline-flex items-center gap-2 mt-4 px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-black text-lg hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/30">
+                사전예약하기 <ArrowRight size={18} />
               </a>
-              <p className="text-xs text-white/40 mt-3">신청 후 안내 문자가 발송됩니다</p>
+              <p className="text-xs text-white/40 mt-3">사전예약 후 특가 안내 문자가 발송됩니다</p>
             </div>
           </div>
         </section>

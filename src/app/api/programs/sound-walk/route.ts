@@ -15,6 +15,8 @@ const ADMIN_SOL = "01085319531";
 const TABLE = "soundwalk_applications";
 const PROGRAM = "soundwalk-2026";
 const MAX_CAPACITY = 20;
+// 사전예약 특가: 정가 200,000원 → 50% 할인 → 99,000원 (선착순 20명)
+const ORIGINAL_FEE_TEXT = "200,000원";
 const FEE_TEXT = "99,000원";
 const ACCOUNT = "카카오뱅크 3333-06-4749542 임솔";
 const VENUE = "달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)";
@@ -124,8 +126,8 @@ export async function POST(req: NextRequest) {
     const applicantMsg = isWaitlist
       ? `안녕하세요, ${name}님!
 
-아쉽게도 달팽이 소리산책 리트릿이
-${MAX_CAPACITY}명 선착순 마감되었습니다 🎵
+아쉽게도 달팽이 소리산책 리트릿
+사전예약 특가 ${MAX_CAPACITY}명이 마감되었습니다 🎵
 
 대기자 명단에 등록되었습니다.
 ━━━━━━━━━━━
@@ -138,18 +140,22 @@ ${MAX_CAPACITY}명 선착순 마감되었습니다 🎵
 문의: 010-8531-9531 (임솔)
 관심 가져주셔서 진심으로 감사합니다 :)`
       : `안녕하세요, ${name}님!
-달팽이 소리산책 리트릿에 신청해주셔서 감사합니다 🎵
+달팽이 소리산책 리트릿 사전예약이 접수되었습니다 🎵
 
 ■ 프로그램: 달팽이 소리산책 리트릿
 ■ 일시: 2026.9.6(일) 12:00~18:00 (6시간)
 ■ 장소: ${VENUE}${gatherInfo}
-■ 참가비: ${FEE_TEXT}
+
+━━ 🎉 사전예약 특가 ━━
+정가 ${ORIGINAL_FEE_TEXT} → 50% 할인
+▶ 참가비 ${FEE_TEXT}
+※ 첫 회차 선착순 ${MAX_CAPACITY}명 한정가입니다.
 
 ━━ 💳 결제 안내 ━━
 입금계좌: ${ACCOUNT}
 입금금액: ${FEE_TEXT}
 입금자명: ${name}
-※ 입금해주시면 참가가 최종 확정됩니다.
+※ 입금해주시면 사전예약이 최종 확정됩니다.
 
 ━━ 🎧 미리 준비해주세요 ━━
 1) 스마트폰에 Suno 앱 설치 + 무료 가입
@@ -162,7 +168,7 @@ ${MAX_CAPACITY}명 선착순 마감되었습니다 🎵
 감사합니다 :)`;
 
     // 2. 관리자(임솔) 알림
-    const adminMsg = `[소리산책 ${isWaitlist ? "대기자" : "새"} 신청]
+    const adminMsg = `[소리산책 ${isWaitlist ? "대기자" : "새 사전예약"}]
 
 ■ 이름: ${name}
 ■ 연락처: ${phone}
@@ -177,8 +183,8 @@ ${MAX_CAPACITY}명 선착순 마감되었습니다 🎵
 ${isWaitlist ? `⭐ 대기자 ${waitlistNumber}번 등록` : `현재 ${newCount}/${MAX_CAPACITY}명`}
 ⏳ 입금 대기 (${ACCOUNT})`;
 
-    const applicantSubject = isWaitlist ? "소리산책 대기자 등록 안내" : "소리산책 신청 확인";
-    const adminSubject = isWaitlist ? "소리산책 대기자 신청" : "소리산책 새 신청";
+    const applicantSubject = isWaitlist ? "소리산책 대기자 등록 안내" : "소리산책 사전예약 특가 안내";
+    const adminSubject = isWaitlist ? "소리산책 대기자 신청" : "소리산책 새 사전예약";
 
     await Promise.allSettled([
       messageService.sendOne({ to: applicantPhone, from: SENDER, text: applicantMsg, type: "LMS", subject: applicantSubject }),
