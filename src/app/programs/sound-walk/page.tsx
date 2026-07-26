@@ -222,16 +222,27 @@ const CREATE_STEPS = [
   { step: "완성 · 공유", min: "20분" },
 ];
 
-/* ───── VALUE PACKAGE ───── */
+/* ───── VALUE PACKAGE
+   금액 환산(“N만원 상당”)은 쓰지 않는다. 돈으로 값을 매기는 순간
+   "그 정도면 딴 데서도" 로 비교되기 때문. 대신 다른 데서는
+   돈 주고도 하기 어렵다는 점을 각 항목에 적는다. ───── */
 const BENEFITS = [
-  { icon: "🍽", title: "완주 로컬 점심", desc: "건강한 한 끼", value: "1.5만원 상당" },
-  { icon: "🌿", title: "소리채집 프로그램", desc: "숲 소리산책 가이드", value: "3만원 상당" },
-  { icon: "🎵", title: "AI 음악창작 워크샵", desc: "나만의 곡 만들기", value: "5만원 상당" },
-  { icon: "🪵", title: "소리 파형 목판", desc: "CNC 각인 기념품", value: "2만원 상당" },
-  { icon: "🎴", title: "소리산책 카드", desc: "그날의 기록", value: "정성 가득" },
-  { icon: "🎧", title: "녹음키트 대여", desc: "전문 장비 제공", value: "덤!" },
-  { icon: "🌲", title: "자연 힐링", desc: "완주 숲 치유", value: "측정불가!" },
-  { icon: "🤝", title: "네트워킹", desc: "같은 취향 동료", value: "측정불가!" },
+  { icon: "🌿", title: "숲 소리채집", desc: "내 귀로 고르고 내 손으로 녹음", value: "여기서만 가능" },
+  { icon: "🎵", title: "내 소리로 만든 내 곡", desc: "채집한 소리가 원소스가 됩니다", value: "생애 첫 경험" },
+  { icon: "🪵", title: "소리 파형 목판", desc: "내 곡의 파형을 CNC로 각인", value: "세상에 하나뿐" },
+  { icon: "🎧", title: "녹음키트 대여", desc: "전문 장비 · 다룰 줄 몰라도 OK", value: "준비 부담 0" },
+  { icon: "🍽", title: "완주 로컬 점심", desc: "숲에서 먹는 제철 한 끼", value: "그날의 공기까지" },
+  { icon: "🎴", title: "소리산책 카드", desc: "그날 무엇을 들었는지 남기는 기록", value: "다시 안 오는 하루" },
+  { icon: "🎉", title: "스무 개의 숲 감상회", desc: "같은 숲, 스무 개의 다른 곡", value: "두 번 없는 자리" },
+  { icon: "🤝", title: "같은 취향의 동료", desc: "소리에 귀 기울이는 사람들", value: "돈으로 못 사는 것" },
+];
+
+/* ───── 돈으로 살 수 없는 것들 (환산 블록 대체) ───── */
+const PRICELESS = [
+  "완주 숲에서 내 손으로 소리를 줍는 일",
+  "그 소리가 내 음악으로 완성되는 순간",
+  "내 곡의 파형이 나무에 새겨져 손에 남는 것",
+  "같은 숲을 걷고 각자 다른 곡을 만든 사람들과의 하루",
 ];
 
 const INCLUDED = [
@@ -991,11 +1002,11 @@ export default function SoundWalkPage() {
         {/* ─── 9. VALUE PACKAGE ─── */}
         <section className="pb-14 sm:pb-16">
           <div className="text-center mb-8">
-            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">VALUE PACKAGE</p>
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">WHAT YOU GET</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              참가비에 포함된 <span className="text-primary">8가지 혜택</span>
+              하루에 담긴 <span className="text-primary">8가지 경험</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-2">이 모든 것이 한 번의 참가비에 포함됩니다</p>
+            <p className="text-sm text-gray-500 mt-2">따로 값을 매기지 않았습니다. 전부 포함이에요</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {BENEFITS.map((b, i) => (
@@ -1011,28 +1022,36 @@ export default function SoundWalkPage() {
               </div>
             ))}
           </div>
-          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 text-center border border-primary/20">
-            <p className="text-sm text-gray-600">혜택을 환산하면</p>
-            <p className="text-2xl font-black text-gray-900 mt-1">
-              총 <span className="text-primary">11.5만원</span> 이상의 가치{" "}
-              <span className="text-sm text-gray-500">+ 측정불가 혜택</span>
+          <div className="mt-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 sm:p-8 text-center border border-primary/20">
+            <p className="text-xs font-bold text-primary tracking-widest">PRICELESS</p>
+            <p className="text-lg sm:text-2xl font-black text-gray-900 mt-2 leading-snug">
+              돈을 낸다고<br className="sm:hidden" /> 어디서나 할 수 있는 게<br />
+              <span className="text-primary">아닙니다</span>
             </p>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">정가</p>
-              <p className="text-xl font-bold text-gray-400 line-through">{originalFee}원</p>
-              <p className="text-sm text-gray-500 mt-3">
-                사전예약 특가 <span className="text-red-500 font-black">{DISCOUNT_PERCENT}% OFF</span>
-              </p>
-              <p className="text-4xl font-black text-primary mt-1">{fee}원</p>
-            </div>
-            <div className="mt-5 pt-5 border-t border-primary/20">
+
+            <ul className="mt-5 space-y-2.5 text-left max-w-md mx-auto">
+              {PRICELESS.map((p) => (
+                <li key={p} className="flex items-start gap-2.5 bg-white/70 rounded-xl px-4 py-3">
+                  <Check size={15} className="text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-800 font-medium leading-snug">{p}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-sm text-gray-600 mt-5 leading-relaxed">
+              완주 숲 · 120평 CNC 공방 · AI 창작 노하우가<br />
+              한자리에 있어야 가능한 하루입니다.
+            </p>
+
+            <div className="mt-6 pt-6 border-t border-primary/20">
               <p className="text-base sm:text-lg font-bold text-gray-800 leading-relaxed">
                 자연에 귀 기울여 보는 경험은<br />
                 <span className="text-primary">그 어떤 가치로도 환산할 수 없습니다.</span>
               </p>
             </div>
-            <a href="#apply" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
-              사전예약 특가로 신청하기 <ArrowRight size={14} />
+
+            <a href="#apply" className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-light transition-colors">
+              사전예약하기 <ArrowRight size={14} />
             </a>
           </div>
         </section>
