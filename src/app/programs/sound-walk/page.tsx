@@ -46,6 +46,16 @@ const IMG = {
   closing: "/img/retreat-cta-bg.jpg",
 };
 
+/* ───── 히어로 3키워드 — 이 워크샵이 주는 경험 3가지
+   ① 자연의 소리를 직접 들어보는 경험
+   ② 그 소리로 나만의 음악을 만들어보는 경험
+   ③ 만든 것을 함께 나누는 경험 ───── */
+const KEYWORDS = [
+  { word: "채집", icon: "🌿", desc: "새소리·계곡·바람\n직접 녹음" },
+  { word: "창작", icon: "🎵", desc: "내 소리를 원소스로\nAI 작곡" },
+  { word: "공유", icon: "🎉", desc: "스무 개의 숲을\n다 함께 감상" },
+];
+
 /* ───── 숫자로 보는 리트릿 ───── */
 const STATS = [
   { num: "6시간", label: "올인원 리트릿", sub: "점심부터 공유회까지" },
@@ -699,21 +709,42 @@ export default function SoundWalkPage() {
 
       {/* ─── 1. 히어로 ─── */}
       <section className="relative pt-14">
-        <div className="relative h-[74vh] min-h-[520px] overflow-hidden">
+        {/* 3키워드 블록이 들어가 높이가 늘어나므로 고정 높이 대신 min-height + 패딩으로
+            내용이 잘리지 않게 한다. */}
+        <div className="relative min-h-[80vh] overflow-hidden">
           <img src={IMG.hero} alt="완주 숲 소리산책" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/45 to-black/75" />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-            <span className="text-4xl mb-4">🎵</span>
-            <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
-              9월 6일, 완주 숲의 소리로<br />나만의 음악을 만드는 하루
+          <div className="relative z-10 min-h-[80vh] flex flex-col items-center justify-center text-center px-4 py-14 sm:py-16">
+            <span className="text-4xl mb-3">🎵</span>
+
+            {/* 3키워드 — 이 워크샵이 주는 경험 3가지 */}
+            <p className="text-xl sm:text-3xl font-black text-white tracking-[0.15em]">
+              {KEYWORDS.map((k, i) => (
+                <span key={k.word}>
+                  {i > 0 && <span className="text-white/40 font-normal mx-1.5">·</span>}
+                  {k.word}
+                </span>
+              ))}
+            </p>
+
+            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight mt-3">
+              완주 숲의 소리로<br />나만의 음악을 만드는 하루
             </h1>
-            <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">숲의 소리를 원소스로 · AI 음악창작 · 공유회</p>
-            <div className="mt-3 inline-flex items-center gap-2 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg animate-pulse">
+
+            {/* 키워드별 한 줄 설명 */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5 w-full max-w-lg">
+              {KEYWORDS.map((k) => (
+                <div key={k.word} className="bg-white/10 backdrop-blur-sm rounded-xl px-2 py-3 border border-white/20">
+                  <span className="text-xl block">{k.icon}</span>
+                  <p className="text-sm font-black text-white mt-1">{k.word}</p>
+                  <p className="text-[10px] sm:text-xs text-white/60 mt-0.5 leading-snug whitespace-pre-line">{k.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 inline-flex items-center gap-2 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg animate-pulse">
               🎉 사전예약 특가 {DISCOUNT_PERCENT}% · {MAX_CAPACITY}명 한정
             </div>
-            <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">
-              점심+프로그램+기념품 전부 포함
-            </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
