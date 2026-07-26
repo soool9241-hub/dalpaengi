@@ -715,6 +715,13 @@ export default function SoundWalkPage() {
           <img src={IMG.hero} alt="완주 숲 소리산책" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/45 to-black/75" />
           <div className="relative z-10 min-h-[80vh] flex flex-col items-center justify-center text-center px-4 py-14 sm:py-16">
+            {/* 얼굴 문구 — 3키워드보다 먼저 읽히는 은은한 도입 한 줄 */}
+            <p className="flex items-center gap-2.5 text-xs sm:text-sm text-white/55 tracking-[0.2em] mb-5">
+              <span className="w-6 sm:w-10 h-px bg-white/25" />
+              자연에 귀 기울여보세요
+              <span className="w-6 sm:w-10 h-px bg-white/25" />
+            </p>
+
             <span className="text-4xl mb-3">🎵</span>
 
             {/* 3키워드 — 이 워크샵이 주는 경험 3가지 */}
