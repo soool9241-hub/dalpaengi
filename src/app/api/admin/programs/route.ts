@@ -17,12 +17,15 @@ const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "spring-retreat-2026": { label: "완주하다 봄 리트릿 2026", maxCapacity: 20 },
   "vibe-coding-basic": { label: "바이브코딩 워크숍 기초반", maxCapacity: 20 },
   "soundwalk-2026": { label: "달팽이 소리산책 리트릿 2026", maxCapacity: 20 },
+  // 항아리 바베큐는 월 1회 정기 모임이라 회차마다 키가 하나씩 늘어난다.
+  "bbq-2026-09": { label: "항아리 바베큐 모임 0회 (9월)", maxCapacity: 6 },
 };
 
 // 프로그램 식별자에 따라 테이블명 결정
 function getTableName(program?: string | null): string {
   if (program && program.startsWith("vibe-coding")) return "vibecoding_applications";
   if (program && program.startsWith("soundwalk")) return "soundwalk_applications";
+  if (program && program.startsWith("bbq")) return "bbq_applications";
   return "retreat_applications";
 }
 
@@ -33,7 +36,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || "";
 
   // 통계는 항상 모든 신청 테이블에서 집계
-  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications"];
+  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications", "bbq_applications"];
   const allRowsForStats: { program: string; status: string }[] = [];
   for (const t of tablesForStats) {
     const { data: rows } = await supabaseAdmin.from(t).select("program, status");
@@ -295,6 +298,101 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  // [항아리BBQ] 대기자 → 정식 신청(pending) 전환 시: 자리 열림 안내 문자
+  if (status === "pending" && appData?.status === "waitlist" && appData?.phone && tableName === "bbq_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+      const msg = `안녕하세요, ${appData.name}님! 🍖
+
+대기해주셔서 감사합니다.
+항아리 바베큐 모임에 자리가 생겼습니다!
+
+━━━━━━━━━━━━
+✨ 정식 신청자로 전환되었습니다
+━━━━━━━━━━━━
+
+■ 모임: 항아리 바베큐 + AI 자동수익
+■ 일시: 2026.9.8(화) 19:00~22:00
+■ 장소: 전북 완주군 소양면 해월신왕길 92
+■ 회비: 30,000원 (얼리버드)
+
+입금계좌: 카카오뱅크 3333-06-4749542 임솔
+※ 입금 확인 후 최종 확정됩니다.
+
+6명 한정이라 자리가 금방 나갑니다.
+빠른 입금 부탁드려요!
+
+문의: 010-8531-9531 (임솔)`;
+
+      await messageService.sendOne({
+        to: phone, from: SENDER, text: msg, type: "LMS", subject: "항아리BBQ 자리 열림 안내"
+      });
+    } catch (smsErr) {
+      console.error("항아리BBQ 자리 열림 SMS 발송 실패:", smsErr);
+    }
+  }
+
+  // [항아리BBQ] 취소 처리 시 신청자/관리자 안내 문자
+  if (status === "cancelled" && appData?.status !== "cancelled" && appData?.phone && tableName === "bbq_applications") {
+    try {
+      const phone = appData.phone.replace(/[^0-9]/g, "");
+
+      const applicantMsg = `안녕하세요, ${appData.name}님.
+
+항아리 바베큐 모임 신청이
+취소 처리되었습니다.
+
+━━━━━━━━━━━━
+❎ 신청 취소 완료
+━━━━━━━━━━━━
+
+• 입금하신 금액이 있다면
+  영업일 기준 2~3일 내 환불됩니다.
+• 월 1회 정기 모임이니
+  다음 회차에도 관심 부탁드려요!
+
+문의: 010-8531-9531 (임솔)
+감사합니다 :)`;
+
+      // 취소된 회차의 잔여석만 세야 하므로 program 으로 한정한다.
+      const roundProgram = appData.program as string;
+      const { count: activeCount } = await supabaseAdmin
+        .from("bbq_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("program", roundProgram)
+        .in("status", ["pending", "confirmed"]);
+
+      const { count: wlCount } = await supabaseAdmin
+        .from("bbq_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("program", roundProgram)
+        .eq("status", "waitlist");
+
+      const adminMsg = `[항아리BBQ 취소 처리]
+
+■ 이름: ${appData.name}
+■ 연락처: ${appData.phone}
+■ 이전상태: ${appData.status}
+■ 회차: ${roundProgram}
+
+━━━━━━━━━━━━
+현재 ${activeCount || 0}/6명
+대기자 ${wlCount || 0}명
+━━━━━━━━━━━━
+
+※ 대기자가 있다면 순번대로
+관리자 페이지에서 "pending"으로
+변경 시 자동 안내 문자가 발송됩니다.`;
+
+      await Promise.allSettled([
+        messageService.sendOne({ to: phone, from: SENDER, text: applicantMsg, type: "LMS", subject: "항아리BBQ 신청 취소 안내" }),
+        messageService.sendOne({ to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: "항아리BBQ 취소 처리" }),
+      ]);
+    } catch (smsErr) {
+      console.error("항아리BBQ 취소 SMS 발송 실패:", smsErr);
+    }
+  }
+
   // 취소 처리 시 신청자/관리자에게 안내 문자
   if (status === "cancelled" && appData?.status !== "cancelled" && appData?.phone && tableName === "retreat_applications") {
     try {
@@ -413,6 +511,42 @@ export async function PATCH(req: NextRequest) {
 
         await messageService.sendOne({
           to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 리트릿 참가 확정"
+        });
+      } else if (tableName === "bbq_applications") {
+        // 항아리 바베큐 확정 문자 (입금 완료 + 집결 안내)
+        const transport = appData.transport || "";
+        let gatherInfo = "";
+        if (transport === "전주고속터미널") {
+          gatherInfo = `\n■ 집결: 전주고속터미널 18:10 (카니발 차량 픽업)`;
+        } else if (transport === "전주역") {
+          gatherInfo = `\n■ 집결: 전주역 18:30 (카니발 차량 픽업)`;
+        } else if (transport === "자차") {
+          gatherInfo = `\n■ 이동: 자차 18:50 펜션 도착 (무료 주차)`;
+        }
+
+        const msg = `안녕하세요, ${appData.name}님!
+항아리 바베큐 모임 참가가 최종 확정되었습니다 🍖
+
+■ 모임: 항아리 바베큐 + AI 자동수익
+■ 일시: 2026.9.8(화) 19:00~22:00
+■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)${gatherInfo}
+■ 회비: 30,000원 (입금 확인 완료 ✅)
+
+━━ ⏰ 타임테이블 ━━
+1교시 19:00~20:00 항아리 바베큐
+2교시 20:00~22:00 자동 수익 시스템 만들기
+
+━━ 🎒 준비물 ━━
+• 노트북 또는 태블릿 (2교시용 · 선택)
+• 그 외 준비물 없습니다 — 고기·술 다 준비되어 있어요
+
+당일 뵙겠습니다!
+
+문의: 010-8531-9531 (임솔)
+감사합니다 :)`;
+
+        await messageService.sendOne({
+          to: phone, from: SENDER, text: msg, type: "LMS", subject: "항아리BBQ 참가 확정"
         });
       } else {
         // 리트릿 확정 문자

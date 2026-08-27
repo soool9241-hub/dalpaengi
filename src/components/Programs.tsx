@@ -19,16 +19,17 @@ const categories = [
 // 별도 페이지로 빠지는 프로그램(바이브/멤버십/리트릿/JIFF)은 사용 안 됨 (placeholder)
 const PROGRAM_IDS = [
   "stay",     // 0: 달팽이 소리산책 리트릿 — 시그니처 (별도 페이지)
-  "stay",     // 1: 대학생 MT 패키지
-  "stay",     // 2: 바이브코딩 (별도 페이지)
-  "stay",     // 3: 멤버십 스터디 (별도 페이지)
-  "jolib",    // 4: 나만의 아지트 만들기 (목공체험) ⭐
-  "stay",     // 5: 완주하다 봄 리트릿 (별도 페이지)
-  "stay",     // 6: 숙박 패키지
-  "half",     // 7: 3시간 대여
-  "daynight", // 8: 주/야간 패키지
-  "healing",  // 9: 힐링캠프
-  "stay",     // 10: JIFF STAY (별도 페이지)
+  "stay",     // 1: 항아리 바베큐 모임 (별도 페이지)
+  "stay",     // 2: 대학생 MT 패키지
+  "stay",     // 3: 바이브코딩 (별도 페이지)
+  "stay",     // 4: 멤버십 스터디 (별도 페이지)
+  "jolib",    // 5: 나만의 아지트 만들기 (목공체험) ⭐
+  "stay",     // 6: 완주하다 봄 리트릿 (별도 페이지)
+  "stay",     // 7: 숙박 패키지
+  "half",     // 8: 3시간 대여
+  "daynight", // 9: 주/야간 패키지
+  "healing",  // 10: 힐링캠프
+  "stay",     // 11: JIFF STAY (별도 페이지)
 ] as const;
 
 export default function Programs() {
@@ -59,6 +60,31 @@ export default function Programs() {
       description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 원소스로 Suno에 올려 세상에 하나뿐인 내 음악을 만드는 6시간. 악기도 악보도 필요 없습니다. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
       highlight: true,
       isSoundwalk: true,
+    },
+    {
+      icon: Utensils,
+      title: "항아리 바베큐 모임",
+      duration: "3시간 (9.8 19:00~22:00)",
+      price: 30000,
+      originalPrice: 60000,
+      perPerson: 30000,
+      maxPeople: "6명 한정",
+      categories: ["healing", "pension", "membership"],
+      tags: ["NEW", "얼리버드 50%", "선착순 6명"],
+      tagColors: ["bg-amber-100 text-amber-700", "bg-red-100 text-red-600", "bg-orange-100 text-orange-700"],
+      gradient: "from-amber-500 to-orange-600",
+      image: "/img/bbq-night.jpg",
+      features: [
+        "항아리 훈연 바베큐 (고기 배부르게)",
+        "주류 & 음료 포함 (추가금 없음)",
+        "펜션 통째 대관",
+        "2교시 AI 자동수익 워크숍",
+        "전주역·터미널 카니발 픽업",
+      ],
+      extras: [],
+      description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 고기·술·대관료 전부 포함, 딱 6명만.",
+      highlight: true,
+      isBbq: true,
     },
     {
       icon: GraduationCap,
@@ -427,6 +453,11 @@ export default function Programs() {
                         🎉 사전예약 50%
                       </div>
                     )}
+                    {prog.isBbq && (
+                      <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse shadow-md">
+                        🔥 얼리버드 50%
+                      </div>
+                    )}
                     {prog.isMembership && (
                       <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                         📚 멤버십
@@ -439,7 +470,7 @@ export default function Programs() {
                     )}
                     {/* BEST 배지는 top-3 left-3 위치를 전용 배지들과 공유하므로,
                         전용 배지가 있는 카드에서는 겹치지 않게 제외한다. */}
-                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && (
+                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && !prog.isBbq && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
                       </div>
@@ -467,6 +498,11 @@ export default function Programs() {
                     {prog.isSoundwalk && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         9.6(일)
+                      </div>
+                    )}
+                    {prog.isBbq && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        9.8(화) 저녁
                       </div>
                     )}
                     {prog.isMembership && (
@@ -555,6 +591,20 @@ export default function Programs() {
                           🎉 사전예약 특가 · 선착순 20명 한정
                         </p>
                       </>
+                    ) : prog.isBbq ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm text-gray-400 line-through">{(prog.originalPrice ?? 0).toLocaleString()}원</span>
+                          <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">50% OFF</span>
+                        </div>
+                        <div className="flex items-baseline gap-1.5 mb-2">
+                          <span className="text-3xl font-black text-amber-600">{prog.price.toLocaleString()}</span>
+                          <span className="text-sm text-text-light">원/인</span>
+                        </div>
+                        <p className="text-xs font-bold text-red-500 mb-5">
+                          🔥 얼리버드 특가 · 선착순 6명 한정
+                        </p>
+                      </>
                     ) : prog.isMembership ? (
                       <>
                         <div className="flex items-center gap-2 mb-1">
@@ -633,6 +683,13 @@ export default function Programs() {
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-teal-500/10 text-teal-700 hover:bg-teal-600 hover:text-white text-center"
                       >
                         🎵 사전예약 특가 보기 →
+                      </Link>
+                    ) : prog.isBbq ? (
+                      <Link
+                        href="/programs/bbq"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-amber-500/10 text-amber-700 hover:bg-amber-600 hover:text-white text-center"
+                      >
+                        🍖 얼리버드 특가 보기 →
                       </Link>
                     ) : prog.isVibeCoding ? (
                       <Link
