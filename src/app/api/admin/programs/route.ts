@@ -513,32 +513,53 @@ export async function PATCH(req: NextRequest) {
           to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 리트릿 참가 확정"
         });
       } else if (tableName === "bbq_applications") {
-        // 항아리 바베큐 확정 문자 (입금 완료 + 집결 안내)
+        // 항아리 바베큐 확정 문자 — 신청한 코스에 따라 시간·금액·준비물이 달라진다.
+        // 코스 정의는 app/api/programs/bbq/route.ts 와 같은 값을 유지한다.
+        const BBQ_COURSES: Record<string, { label: string; fee: string; time: string; sessions: string; late: boolean; laptop: boolean }> = {
+          bbq: {
+            label: "항아리 바베큐만", fee: "30,000원", time: "19:00~20:00",
+            sessions: "1교시 19:00~20:00 항아리 바베큐",
+            late: false, laptop: false,
+          },
+          full: {
+            label: "항아리 바베큐 + AI 스터디", fee: "60,000원", time: "19:00~22:00",
+            sessions: "1교시 19:00~20:00 항아리 바베큐\n2교시 20:00~22:00 자동 수익 시스템 만들기",
+            late: false, laptop: true,
+          },
+          study: {
+            label: "AI 스터디만", fee: "30,000원", time: "20:00~22:00",
+            sessions: "2교시 20:00~22:00 자동 수익 시스템 만들기",
+            late: true, laptop: true,
+          },
+        };
+        const c = BBQ_COURSES[appData.course as string] || BBQ_COURSES.full;
+
+        // 스터디만 참가하면 시작이 1시간 늦으므로 픽업 시각도 1시간 뒤로 민다.
         const transport = appData.transport || "";
         let gatherInfo = "";
         if (transport === "전주고속터미널") {
-          gatherInfo = `\n■ 집결: 전주고속터미널 18:10 (카니발 차량 픽업)`;
+          gatherInfo = `\n■ 집결: 전주고속터미널 ${c.late ? "19:10" : "18:10"} (카니발 차량 픽업)`;
         } else if (transport === "전주역") {
-          gatherInfo = `\n■ 집결: 전주역 18:30 (카니발 차량 픽업)`;
+          gatherInfo = `\n■ 집결: 전주역 ${c.late ? "19:30" : "18:30"} (카니발 차량 픽업)`;
         } else if (transport === "자차") {
-          gatherInfo = `\n■ 이동: 자차 18:50 펜션 도착 (무료 주차)`;
+          gatherInfo = `\n■ 이동: 자차 ${c.late ? "19:50" : "18:50"} 펜션 도착 (무료 주차)`;
         }
 
         const msg = `안녕하세요, ${appData.name}님!
 항아리 바베큐 모임 참가가 최종 확정되었습니다 🍖
 
-■ 모임: 항아리 바베큐 + AI 자동수익
-■ 일시: 2026.9.8(화) 19:00~22:00
+■ 코스: ${c.label}
+■ 일시: 2026.9.8(화) ${c.time}
 ■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)${gatherInfo}
-■ 회비: 30,000원 (입금 확인 완료 ✅)
+■ 회비: ${c.fee} (입금 확인 완료 ✅)
 
-━━ ⏰ 타임테이블 ━━
-1교시 19:00~20:00 항아리 바베큐
-2교시 20:00~22:00 자동 수익 시스템 만들기
+━━ ⏰ 참여하시는 시간 ━━
+${c.sessions}
 
 ━━ 🎒 준비물 ━━
-• 노트북 또는 태블릿 (2교시용 · 선택)
-• 그 외 준비물 없습니다 — 고기·술 다 준비되어 있어요
+${c.laptop
+  ? "• 노트북 또는 태블릿 (스터디용 · 선택)\n• 그 외 준비물 없습니다"
+  : "• 준비물 없습니다 — 고기·술 다 준비되어 있어요"}
 
 당일 뵙겠습니다!
 

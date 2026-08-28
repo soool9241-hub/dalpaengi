@@ -24,10 +24,54 @@ const EVENT_DATE = "2026-09-08T19:00:00+09:00";
 const EVENT_TEXT = "2026.9.8(화)";
 const EVENT_TIME = "19:00~22:00";
 
-const ORIGINAL_FEE = 60_000;
-const FEE = 30_000;
-const DISCOUNT_PERCENT = 50;
 const MAX_CAPACITY = 6;
+
+/* ───── 참가 코스 3종 ─────
+   1교시(바베큐)와 2교시(스터디)를 따로 신청할 수 있게 쪼갰다.
+   full 은 두 코스를 합친 금액이라 묶음 할인은 없다 — 대신 "다 하는 쪽"으로
+   자연스럽게 기울도록 추천 배지만 단다.
+   가격을 바꿀 땐 api/programs/bbq/route.ts 의 COURSES 도 같이 고친다. */
+const COURSES = [
+  {
+    key: "bbq",
+    emoji: "🍖",
+    label: "항아리 바베큐만",
+    sub: "1교시",
+    time: "19:00~20:00",
+    duration: "1시간",
+    fee: 30_000,
+    desc: "훈연 고기와 술 한잔, 딱 그것만",
+    includes: ["항아리 훈연 바베큐", "주류 & 음료", "펜션 대관료"],
+    recommended: false,
+  },
+  {
+    key: "full",
+    emoji: "🍖🤖",
+    label: "바베큐 + AI 스터디",
+    sub: "1교시 + 2교시",
+    time: "19:00~22:00",
+    duration: "3시간",
+    fee: 60_000,
+    desc: "먹고, 배우고, 만들어보는 풀코스",
+    includes: ["항아리 훈연 바베큐", "주류 & 음료", "펜션 대관료", "AI 자동수익 워크숍"],
+    recommended: true,
+  },
+  {
+    key: "study",
+    emoji: "🤖",
+    label: "AI 스터디만",
+    sub: "2교시",
+    time: "20:00~22:00",
+    duration: "2시간",
+    fee: 30_000,
+    desc: "저녁 먹고 와서 공부만",
+    includes: ["AI 자동수익 워크숍", "음료 & 다과", "펜션 대관료"],
+    recommended: false,
+  },
+] as const;
+
+const MIN_FEE = 30_000;
+const MAX_FEE = 60_000;
 
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 const VENUE_ADDR = "전북 완주군 소양면 해월신왕길 92";
@@ -122,11 +166,14 @@ function ApplyForm() {
   const [photoConsent, setPhotoConsent] = useState(false);
   const [transport, setTransport] = useState("");
   const [region, setRegion] = useState("");
+  // 대부분 풀코스를 고르므로 기본 선택으로 열어둔다.
+  const [course, setCourse] = useState<string>("full");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [waitlistModal, setWaitlistModal] = useState<{ show: boolean; number: number }>({ show: false, number: 0 });
 
   const submit = async () => {
+    if (!course) { setResult({ ok: false, msg: "참가 코스를 선택해주세요." }); return; }
     if (!name.trim()) { setResult({ ok: false, msg: "이름을 입력해주세요." }); return; }
     if (!phone.trim()) { setResult({ ok: false, msg: "연락처를 입력해주세요." }); return; }
     if (!age.trim()) { setResult({ ok: false, msg: "나이를 입력해주세요." }); return; }
@@ -142,12 +189,12 @@ function ApplyForm() {
       const res = await fetch("/api/programs/bbq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, age, gender, occupation, reason, photoConsent, transport, region }),
+        body: JSON.stringify({ name, phone, age, gender, occupation, reason, photoConsent, transport, region, course }),
       });
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion("");
+        setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion(""); setCourse("full");
         if (data.waitlisted === true) {
           const num = Number(data.waitlistNumber) || 1;
           setWaitlistModal({ show: true, number: num });
@@ -165,6 +212,7 @@ function ApplyForm() {
   };
 
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20";
+  const selectedCourse = COURSES.find((c) => c.key === course) ?? COURSES[1];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -203,6 +251,40 @@ function ApplyForm() {
         </div>
       )}
       <div className="p-6 space-y-4">
+        {/* 코스 선택 — 금액이 여기서 정해지므로 폼 맨 위에 둔다 */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 block mb-2">참가 코스 <span className="text-red-500">*</span></label>
+          <div className="flex flex-col gap-2">
+            {COURSES.map((c) => (
+              <button key={c.key} type="button" onClick={() => setCourse(c.key)}
+                className={`w-full rounded-xl border-2 transition-all text-left px-4 py-3 ${
+                  course === c.key ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-gray-300"
+                }`}>
+                <div className="flex items-center gap-3">
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    course === c.key ? "border-amber-500 bg-amber-500" : "border-gray-300"
+                  }`}>
+                    {course === c.key && <span className="w-2 h-2 rounded-full bg-white" />}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-sm font-bold ${course === c.key ? "text-amber-700" : "text-gray-700"}`}>
+                        {c.emoji} {c.label}
+                      </span>
+                      {c.recommended && (
+                        <span className="px-1.5 py-0.5 bg-gray-900 text-white rounded text-[10px] font-black">추천</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{c.sub} · {c.time} ({c.duration})</p>
+                  </div>
+                  <span className={`text-base font-black flex-shrink-0 ${course === c.key ? "text-amber-600" : "text-gray-400"}`}>
+                    {c.fee.toLocaleString("ko-KR")}원
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-1">이름 <span className="text-red-500">*</span></label>
@@ -248,9 +330,9 @@ function ApplyForm() {
           <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 <span className="text-red-500">*</span></label>
           <div className="flex flex-col gap-2">
             {[
-              { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: "18:10", pickup: true },
-              { value: "전주역", label: "뚜벅이전용 — 전주역", time: "18:30", pickup: true },
-              { value: "자차", label: "개별이동 — 자차이용", time: "18:50", pickup: false },
+              { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: course === "study" ? "19:10" : "18:10", pickup: true },
+              { value: "전주역", label: "뚜벅이전용 — 전주역", time: course === "study" ? "19:30" : "18:30", pickup: true },
+              { value: "자차", label: "개별이동 — 자차이용", time: course === "study" ? "19:50" : "18:50", pickup: false },
             ].map((t) => (
               <button key={t.value} type="button" onClick={() => setTransport(t.value)}
                 className={`w-full rounded-xl border-2 transition-all text-left overflow-hidden ${
@@ -280,7 +362,11 @@ function ApplyForm() {
               <p className="text-sm font-black text-amber-700">🚐 카니발로 친절히 모시러 갑니다!</p>
               <p className="text-xs text-gray-600 mt-1">
                 <span className="font-bold text-amber-600">{transport}</span>에서{" "}
-                <span className="font-bold text-amber-600">{transport === "전주고속터미널" ? "18:10" : "18:30"}</span>에 집결 — 확정 후 상세 안내 드립니다
+                <span className="font-bold text-amber-600">
+                  {transport === "전주고속터미널"
+                    ? (course === "study" ? "19:10" : "18:10")
+                    : (course === "study" ? "19:30" : "18:30")}
+                </span>에 집결 — 확정 후 상세 안내 드립니다
               </p>
             </div>
           )}
@@ -296,7 +382,9 @@ function ApplyForm() {
         </div>
         <button onClick={submit} disabled={loading}
           className="w-full py-3.5 rounded-xl text-white font-bold text-base transition-opacity disabled:opacity-50 bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-90">
-          {loading ? "신청 중..." : `🍖 얼리버드 ${FEE.toLocaleString("ko-KR")}원으로 신청하기`}
+          {loading
+            ? "신청 중..."
+            : `${selectedCourse.emoji} ${selectedCourse.fee.toLocaleString("ko-KR")}원으로 신청하기`}
         </button>
         {result && (
           <p className={`text-center text-sm font-semibold ${result.ok ? "text-green-600" : "text-red-500"}`}>
@@ -370,18 +458,27 @@ export default function BbqPage() {
               <MapPin size={12} /> 소양 달팽이아지트 · 전주역/터미널 픽업 있음
             </p>
 
-            {/* 얼리버드 가격 박스 */}
-            <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-5 border border-white/20">
+            {/* 코스 가격 요약 — 원하는 만큼만 골라 오세요 */}
+            <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-5 border border-white/20">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full mb-3">
                 <Flame size={12} className="text-white" />
-                <span className="text-[11px] font-black text-white tracking-wide">{ROUND_LABEL} 얼리버드 특가</span>
+                <span className="text-[11px] font-black text-white tracking-wide">{ROUND_LABEL} · 원하는 코스만 골라서</span>
               </div>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-lg text-white/40 line-through">{ORIGINAL_FEE.toLocaleString("ko-KR")}원</span>
-                <span className="px-2 py-0.5 bg-amber-400 text-amber-950 rounded text-xs font-black">{DISCOUNT_PERCENT}% OFF</span>
+              <div className="grid grid-cols-3 gap-2">
+                {COURSES.map((c) => (
+                  <div key={c.key} className={`rounded-xl px-2 py-3 border ${
+                    c.recommended ? "bg-amber-500/25 border-amber-300/60" : "bg-white/5 border-white/15"
+                  }`}>
+                    <p className="text-base leading-none">{c.emoji}</p>
+                    <p className="text-[11px] text-white/70 mt-1.5 leading-tight">{c.sub}</p>
+                    <p className="text-lg font-black text-white mt-0.5 whitespace-nowrap">
+                      {(c.fee / 10_000).toLocaleString("ko-KR")}<span className="text-xs font-bold">만원</span>
+                    </p>
+                    <p className="text-[10px] text-white/50 mt-0.5">{c.duration}</p>
+                  </div>
+                ))}
               </div>
-              <p className="text-4xl font-black text-white mt-1">{FEE.toLocaleString("ko-KR")}원</p>
-              <p className="text-xs text-white/50 mt-2">
+              <p className="text-xs text-white/50 mt-3">
                 선착순 {MAX_CAPACITY}명 한정{dday > 0 ? <> · <span className="text-amber-300 font-bold">D-{dday}</span></> : null}
               </p>
             </div>
@@ -433,6 +530,7 @@ export default function BbqPage() {
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">TIMETABLE</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">3시간, <span className="text-amber-600">두 개의 교시</span></h2>
             <p className="text-sm text-gray-500 mt-2">먼저 배부르게 먹고, 그다음 머리를 채웁니다</p>
+            <p className="text-xs text-amber-600 font-bold mt-2">💡 두 교시 중 원하는 것만 신청하셔도 됩니다</p>
           </div>
           <div className="space-y-4">
             {SESSIONS.map((s, i) => (
@@ -467,28 +565,52 @@ export default function BbqPage() {
           </div>
         </section>
 
-        {/* 참가비 배너 */}
+        {/* 참가비 — 코스 3종 */}
         <section className="pb-12 sm:pb-16">
-          <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full opacity-10">
-              <div className="absolute top-4 left-8 text-6xl rotate-12">🍖</div>
-              <div className="absolute bottom-4 right-8 text-6xl -rotate-12">🔥</div>
-            </div>
-            <div className="relative z-10">
-              <p className="text-sm font-bold text-white/80 uppercase tracking-wider">{ROUND_LABEL} 얼리버드 회비</p>
-              <div className="flex items-center justify-center gap-3 mt-3">
-                <span className="text-xl text-white/50 line-through">{ORIGINAL_FEE.toLocaleString("ko-KR")}원</span>
-                <span className="px-2.5 py-1 bg-white text-orange-600 rounded-lg text-sm font-black">{DISCOUNT_PERCENT}% OFF</span>
-              </div>
-              <p className="text-4xl sm:text-5xl font-black mt-2">{FEE.toLocaleString("ko-KR")}원</p>
-              <div className="inline-block mt-3 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
-                <span className="text-sm">고기 · 주류 · 대관료 · 워크숍 모두 포함</span>
-              </div>
-              <p className="text-sm text-white/70 mt-3">
-                선착순 {MAX_CAPACITY}명 · 현재 <span className="font-black text-white">{status.current}/{MAX_CAPACITY}명</span>
-              </p>
-            </div>
+          <div className="text-center mb-8">
+            <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">참가비</p>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">
+              오고 싶은 <span className="text-amber-600">시간만큼만</span> 오세요
+            </h2>
+            <p className="text-sm text-gray-500 mt-2">
+              1교시·2교시를 따로 신청하실 수 있어요. 당일 추가로 내실 돈은 없습니다.
+            </p>
           </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {COURSES.map((c) => (
+              <div key={c.key} className={`relative rounded-2xl p-5 flex flex-col ${
+                c.recommended
+                  ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-200"
+                  : "bg-white border border-gray-200"
+              }`}>
+                {c.recommended && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gray-900 text-white rounded-full text-[11px] font-black whitespace-nowrap">
+                    ⭐ 이 코스를 가장 많이 고르세요
+                  </span>
+                )}
+                <p className="text-2xl">{c.emoji}</p>
+                <p className={`text-sm font-black mt-2 ${c.recommended ? "text-white" : "text-gray-900"}`}>{c.label}</p>
+                <p className={`text-xs mt-0.5 ${c.recommended ? "text-white/70" : "text-gray-500"}`}>
+                  {c.sub} · {c.time} ({c.duration})
+                </p>
+                <p className={`text-3xl font-black mt-3 ${c.recommended ? "text-white" : "text-amber-600"}`}>
+                  {c.fee.toLocaleString("ko-KR")}<span className="text-base font-bold">원</span>
+                </p>
+                <p className={`text-xs mt-2 ${c.recommended ? "text-white/80" : "text-gray-500"}`}>{c.desc}</p>
+                <ul className={`mt-3 pt-3 border-t space-y-1.5 flex-1 ${c.recommended ? "border-white/25" : "border-gray-100"}`}>
+                  {c.includes.map((inc) => (
+                    <li key={inc} className={`flex items-start gap-1.5 text-xs ${c.recommended ? "text-white/90" : "text-gray-600"}`}>
+                      <Check size={13} className="flex-shrink-0 mt-0.5" /> {inc}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-5">
+            선착순 {MAX_CAPACITY}명 · 현재{" "}
+            <span className="font-black text-amber-600">{status.current}/{MAX_CAPACITY}명</span>
+          </p>
         </section>
 
         {/* 회비에 포함된 것 */}
@@ -496,9 +618,9 @@ export default function BbqPage() {
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">WHAT YOU GET</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              회비에 포함된 <span className="text-amber-600">6가지</span>
+              풀코스에 포함된 <span className="text-amber-600">6가지</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-2">당일 추가로 내실 돈은 없습니다</p>
+            <p className="text-sm text-gray-500 mt-2">바베큐만·스터디만 신청하시면 해당 교시 항목만 포함됩니다</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {INCLUDED.map((b, i) => (
@@ -562,10 +684,11 @@ export default function BbqPage() {
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">회비</p>
                   <p className="text-sm font-semibold text-gray-900 mt-1">
-                    <span className="text-xs text-gray-400 line-through mr-1">{ORIGINAL_FEE.toLocaleString("ko-KR")}</span>
-                    <span className="text-amber-600 text-lg font-black">{FEE.toLocaleString("ko-KR")}원</span>
+                    <span className="text-amber-600 text-lg font-black">
+                      {MIN_FEE.toLocaleString("ko-KR")}~{MAX_FEE.toLocaleString("ko-KR")}원
+                    </span>
                   </p>
-                  <p className="text-xs text-gray-500">얼리버드 {DISCOUNT_PERCENT}% 적용가</p>
+                  <p className="text-xs text-gray-500">선택한 코스에 따라</p>
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-4">

@@ -32,10 +32,19 @@ interface Application {
   region: string | null;
   transport: string | null;
   photo_consent: boolean | null;
+  // 항아리 바베큐 전용 — 다른 프로그램 신청서에는 없다
+  course?: string | null;
   program: string;
   status: string;
   created_at: string;
 }
+
+/* 항아리 바베큐 참가 코스 — api/programs/bbq/route.ts 와 같은 값을 유지한다 */
+const BBQ_COURSE_LABEL: Record<string, string> = {
+  bbq: "🍖 바베큐만 (3만원)",
+  full: "🍖🤖 바베큐+스터디 (6만원)",
+  study: "🤖 스터디만 (3만원)",
+};
 
 interface ProgramInfo {
   label: string;
@@ -144,7 +153,7 @@ export default function AdminProgramsPage() {
       alert("내보낼 데이터가 없습니다.");
       return;
     }
-    const headers = ["이름", "연락처", "이메일", "나이", "성별", "직업", "지역", "이동수단", "신청이유", "촬영동의", "프로그램", "상태", "신청일시"];
+    const headers = ["이름", "연락처", "이메일", "나이", "성별", "직업", "지역", "이동수단", "참가코스", "신청이유", "촬영동의", "프로그램", "상태", "신청일시"];
     const escape = (v: string | null | boolean | undefined) => {
       if (v === null || v === undefined) return "";
       const s = String(v).replace(/"/g, '""');
@@ -168,6 +177,7 @@ export default function AdminProgramsPage() {
       escape(a.occupation),
       escape(a.region),
       escape(a.transport),
+      escape(a.course ? BBQ_COURSE_LABEL[a.course] || a.course : ""),
       escape(a.reason),
       escape(a.photo_consent ? "동의" : "미동의"),
       escape(programs[a.program]?.label || a.program),
@@ -511,8 +521,16 @@ export default function AdminProgramsPage() {
                       </div>
                     )}
 
-                    {(app.region || app.transport || app.photo_consent !== null) && (
+                    {(app.course || app.region || app.transport || app.photo_consent !== null) && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {app.course && (
+                          <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">참가 코스</p>
+                            <p className="text-sm font-semibold text-amber-700">
+                              {BBQ_COURSE_LABEL[app.course] || app.course}
+                            </p>
+                          </div>
+                        )}
                         {app.region && (
                           <div className="bg-gray-50 rounded-xl p-3">
                             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">지역</p>
