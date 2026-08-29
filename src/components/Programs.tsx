@@ -65,25 +65,25 @@ export default function Programs() {
     {
       icon: Utensils,
       title: "항아리 바베큐 모임",
-      duration: "최대 3시간 (9.8 19:00~22:00)",
-      price: 30000,
-      perPerson: 30000,
-      maxPeople: "6명 한정",
-      categories: ["healing", "pension", "membership"],
-      tags: ["NEW", "코스 선택", "선착순 6명"],
+      duration: "4시간 (9.8 19:00~23:00)",
+      price: 60000,
+      perPerson: 60000,
+      maxPeople: "30석 한정",
+      categories: ["healing", "pension", "membership", "mt"],
+      tags: ["NEW", "월 2회", "선착순 30석"],
       tagColors: ["bg-amber-100 text-amber-700", "bg-orange-100 text-orange-700", "bg-orange-100 text-orange-700"],
       gradient: "from-amber-500 to-orange-600",
       image: "/img/bbq-night.jpg",
       features: [
-        "항아리 훈연 바베큐 (고기 배부르게)",
-        "주류 & 음료 포함 (추가금 없음)",
-        "펜션 통째 대관",
-        "2교시 AI 자동수익 워크숍",
-        "모임 후 커뮤니티 합류",
+        "항아리 훈연 바베큐 (배부르게)",
+        "각자 한 가지씩 가져오는 포트럭",
+        "60평 펜션 통째 대관",
+        "2부 사례 공유 · 자동수익 스터디",
+        "멤버십 회원은 15,000원",
         "전주역·터미널 카니발 픽업",
       ],
       extras: [],
-      description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 바베큐만 3만원, 스터디·커뮤니티까지 함께하면 5만원. 딱 6명만.",
+      description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 일반 6만원, 라이브 코드가 있으면 5만원, 멤버십 회원은 1.5만원. 월 2회 · 30석.",
       highlight: true,
       isBbq: true,
     },
@@ -482,7 +482,7 @@ export default function Programs() {
                     )}
                     {prog.isBbq && (
                       <div className="absolute top-3 left-3 bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
-                        🍖 3만원부터
+                        🍖 월 2회 · 30석
                       </div>
                     )}
                     {prog.isPrivateMembership && (
@@ -534,7 +534,7 @@ export default function Programs() {
                     )}
                     {prog.isBbq && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
-                        9.8(화) 저녁
+                        9.8(화) 4시간
                       </div>
                     )}
                     {prog.isPrivateMembership && (
@@ -643,14 +643,14 @@ export default function Programs() {
                     ) : prog.isBbq ? (
                       <>
                         <div className="flex items-baseline gap-1.5 mb-1">
-                          <span className="text-3xl font-black text-amber-600">30,000</span>
-                          <span className="text-sm text-text-light">~ 50,000원/인</span>
+                          <span className="text-3xl font-black text-amber-600">60,000</span>
+                          <span className="text-sm text-text-light">원/인</span>
                         </div>
                         <p className="text-xs text-gray-500 mb-1.5">
-                          바베큐만 3만 · 스터디+커뮤니티까지 5만
+                          라이브 코드 5만 · 멤버십 회원 1.5만
                         </p>
                         <p className="text-xs font-bold text-amber-600 mb-5">
-                          🍖 원하는 코스만 골라서 · 선착순 6명 한정
+                          🍖 4시간 · 선착순 30석 한정
                         </p>
                       </>
                     ) : prog.isMembership ? (
@@ -744,7 +744,7 @@ export default function Programs() {
                         href="/programs/bbq"
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-amber-500/10 text-amber-700 hover:bg-amber-600 hover:text-white text-center"
                       >
-                        🍖 코스 보고 신청하기 →
+                        🍖 신청하고 자리 잡기 →
                       </Link>
                     ) : prog.isVibeCoding ? (
                       <Link

@@ -18,7 +18,7 @@ const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "vibe-coding-basic": { label: "바이브코딩 워크숍 기초반", maxCapacity: 20 },
   "soundwalk-2026": { label: "달팽이 소리산책 리트릿 2026", maxCapacity: 20 },
   // 항아리 바베큐는 월 1회 정기 모임이라 회차마다 키가 하나씩 늘어난다.
-  "bbq-2026-09": { label: "항아리 바베큐 모임 0회 (9월)", maxCapacity: 6 },
+  "bbq-2026-09-1": { label: "항아리 바베큐 모임 (9월 1회차)", maxCapacity: 30 },
   // 프라이빗 멤버십은 월 1기수 오픈이라 기수마다 키가 하나씩 늘어난다.
   "membership-2026-10": { label: "달팽이 프라이빗 멤버십 1기 (10월)", maxCapacity: 20 },
 };
@@ -314,15 +314,15 @@ export async function PATCH(req: NextRequest) {
 ✨ 정식 신청자로 전환되었습니다
 ━━━━━━━━━━━━
 
-■ 모임: 항아리 바베큐 + AI 자동수익
-■ 일시: 2026.9.8(화) 19:00~22:00
+■ 모임: 항아리 바베큐 + 자동수익 스터디
+■ 일시: 2026.9.8(화) 19:00~23:00 (4시간)
 ■ 장소: 전북 완주군 소양면 해월신왕길 92
-■ 회비: 30,000원 (얼리버드)
+■ 회비: 신청하신 참가 유형 기준
 
 입금계좌: 카카오뱅크 3333-06-4749542 임솔
 ※ 입금 확인 후 최종 확정됩니다.
 
-6명 한정이라 자리가 금방 나갑니다.
+30석 한정이라 자리가 금방 나갑니다.
 빠른 입금 부탁드려요!
 
 문의: 010-8531-9531 (임솔)`;
@@ -379,7 +379,7 @@ export async function PATCH(req: NextRequest) {
 ■ 회차: ${roundProgram}
 
 ━━━━━━━━━━━━
-현재 ${activeCount || 0}/6명
+현재 ${activeCount || 0}/30석
 대기자 ${wlCount || 0}명
 ━━━━━━━━━━━━
 
@@ -558,19 +558,13 @@ export async function PATCH(req: NextRequest) {
       } else if (tableName === "bbq_applications") {
         // 항아리 바베큐 확정 문자 — 신청한 코스에 따라 시간·금액·준비물이 달라진다.
         // 코스 정의는 app/api/programs/bbq/route.ts 와 같은 값을 유지한다.
-        const BBQ_COURSES: Record<string, { label: string; fee: string; time: string; sessions: string; laptop: boolean }> = {
-          bbq: {
-            label: "항아리 바베큐만", fee: "30,000원", time: "19:00~20:00",
-            sessions: "1교시 19:00~20:00 항아리 바베큐",
-            laptop: false,
-          },
-          full: {
-            label: "항아리 바베큐 + AI 스터디 + 커뮤니티", fee: "50,000원", time: "19:00~22:00",
-            sessions: "1교시 19:00~20:00 항아리 바베큐\n2교시 20:00~22:00 자동 수익 시스템 만들기",
-            laptop: true,
-          },
+        // 요금은 자격에 따라 갈리고, 프로그램은 모두 동일한 4시간이다.
+        const BBQ_FEES: Record<string, { label: string; fee: string }> = {
+          guest: { label: "일반 참가", fee: "60,000원" },
+          code: { label: "라이브 코드 할인", fee: "50,000원" },
+          member: { label: "멤버십 회원", fee: "15,000원" },
         };
-        const c = BBQ_COURSES[appData.course as string] || BBQ_COURSES.full;
+        const c = BBQ_FEES[appData.fee_type as string] || BBQ_FEES.guest;
 
         const transport = appData.transport || "";
         let gatherInfo = "";
@@ -585,18 +579,22 @@ export async function PATCH(req: NextRequest) {
         const msg = `안녕하세요, ${appData.name}님!
 항아리 바베큐 모임 참가가 최종 확정되었습니다 🍖
 
-■ 코스: ${c.label}
-■ 일시: 2026.9.8(화) ${c.time}
+■ 참가 유형: ${c.label}
+■ 일시: 2026.9.8(화) 19:00~23:00 (4시간)
 ■ 장소: 달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)${gatherInfo}
 ■ 회비: ${c.fee} (입금 확인 완료 ✅)
 
-━━ ⏰ 참여하시는 시간 ━━
-${c.sessions}
+━━ ⏰ 타임테이블 ━━
+1부 19:00~21:00 항아리 바베큐 + 포트럭
+2부 21:00~23:00 사례 공유 · 자동수익 스터디
+
+━━ 🥘 포트럭 ━━
+나눠 드실 음식이나 음료를 한 가지씩
+가져와주세요. 부담 없는 걸로 충분합니다.
 
 ━━ 🎒 준비물 ━━
-${c.laptop
-  ? "• 노트북 또는 태블릿 (스터디용 · 선택)\n• 그 외 준비물 없습니다\n\n━━ 🫂 커뮤니티 ━━\n모임 당일 커뮤니티 초대 링크를 보내드립니다."
-  : "• 준비물 없습니다 — 고기·술 다 준비되어 있어요"}
+• 노트북 또는 태블릿 (2부용 · 선택)
+• 고기는 저희가 다 준비해둡니다
 
 당일 뵙겠습니다!
 

@@ -13,51 +13,50 @@ const SENDER = (process.env.SOLAPI_SENDER || "").trim();
 const ADMIN_SOL = "01085319531";
 
 const TABLE = "bbq_applications";
-// 월 1회 정기 모임. 다음 회차를 열 때는 이 값과 EVENT_DATE_TEXT 만 바꾸면
-// 정원 카운트가 자동으로 0부터 다시 시작한다.
-const PROGRAM = "bbq-2026-09";
-const MAX_CAPACITY = 6;
+const MEMBER_TABLE = "membership_applications";
+
+/* ───── 회차 정보 ─────
+   월 2회 진행. 다음 회차를 열 때 PROGRAM / EVENT_DATE_TEXT 를 바꾸면
+   정원 카운트가 자동으로 0부터 다시 시작한다. */
+const PROGRAM = "bbq-2026-09-1";
+const EVENT_DATE_TEXT = "2026.9.8(화)";
+const EVENT_TIME_TEXT = "19:00~23:00 (4시간)";
+
+/* 30석. 정상 운영기에는 멤버 20 + 신규 10 으로 나누지만,
+   초기 회차는 멤버가 아직 없어 30석 전부를 신규에게 연다.
+   멤버 좌석을 분리할 때 아래 두 상수를 켜서 쓴다. */
+const MAX_CAPACITY = 30;
+// const MEMBER_SEATS = 20;
+// const GUEST_SEATS = 10;
+
 const ACCOUNT = "카카오뱅크 3333-06-4749542 임솔";
 const VENUE = "달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)";
-const EVENT_DATE_TEXT = "2026.9.8(화)";
 
-/* ───── 참가 코스 2종 ─────
-   밥만 먹고 갈 수도 있고, 스터디·커뮤니티까지 갈 수도 있다.
-   풀패키지는 두 배가 아니라 5만원 — 2교시까지 오는 쪽으로 기울이려는 가격이다.
-   가격을 바꿀 땐 여기와 programs/bbq/page.tsx 의 COURSES 를 같이 고친다. */
-type CourseKey = "bbq" | "full";
-const COURSES: Record<CourseKey, {
-  label: string; feeText: string; time: string; sessions: string; included: string[];
-}> = {
-  bbq: {
-    label: "항아리 바베큐만",
-    feeText: "30,000원",
-    time: "19:00~20:00 (1시간)",
-    sessions: "1교시 19:00~20:00 항아리 바베큐",
-    included: ["항아리 훈연 바베큐 (배부르게)", "주류 & 음료", "펜션 대관료"],
-  },
-  full: {
-    label: "항아리 바베큐 + AI 스터디 + 커뮤니티",
-    feeText: "50,000원",
-    time: "19:00~22:00 (3시간)",
-    sessions: "1교시 19:00~20:00 항아리 바베큐\n2교시 20:00~22:00 자동 수익 시스템 만들기",
-    included: [
-      "항아리 훈연 바베큐 (배부르게)",
-      "주류 & 음료",
-      "펜션 대관료",
-      "AI 자동수익 워크숍 2시간",
-      "모임 후 커뮤니티 합류",
-    ],
-  },
+/* ───── 요금 3단 ─────
+   "무엇을 듣느냐"가 아니라 "누구냐"로 갈린다. 프로그램은 모두 동일한 4시간.
+   가격을 바꿀 땐 programs/bbq/page.tsx 의 FEE_TYPES 도 같이 고친다. */
+type FeeType = "guest" | "code" | "member";
+const FEE_TYPES: Record<FeeType, { label: string; amount: number; text: string }> = {
+  guest: { label: "일반 참가", amount: 60_000, text: "60,000원" },
+  code: { label: "라이브 코드 할인", amount: 50_000, text: "50,000원" },
+  member: { label: "멤버십 회원", amount: 15_000, text: "15,000원" },
 };
-const DEFAULT_COURSE: CourseKey = "full";
+const DEFAULT_FEE: FeeType = "guest";
 
-// 이동수단별 집결 안내 — 두 코스 모두 19:00 시작이라 시각은 같다
+/* 온라인 라이브를 끝까지 본 분에게 공지하는 코드. 회차마다 바뀌므로
+   Vercel 환경변수(BBQ_LIVE_CODE)로 빼서 재배포 없이 교체할 수 있게 했다. */
+const LIVE_CODE = (process.env.BBQ_LIVE_CODE || "DALPAENGI").trim().toUpperCase();
+
+// 이동수단별 집결 안내 — 19:00 시작 기준
 const GATHER: Record<string, string> = {
   전주고속터미널: "전주고속터미널 18:10 (카니발 차량 픽업)",
   전주역: "전주역 18:30 (카니발 차량 픽업)",
   자차: "펜션 18:50 직접 도착 (무료 주차)",
 };
+
+// 타임테이블 — 모든 참가자가 동일하게 4시간
+const TIMETABLE = `1부 19:00~21:00 항아리 바베큐 + 포트럭
+2부 21:00~23:00 사례 공유 · 자동수익 스터디`;
 
 // GET: 현재 신청 수 조회 (이번 회차의 pending+confirmed만 카운트)
 export async function GET() {
@@ -76,17 +75,31 @@ export async function GET() {
   });
 }
 
+/* 멤버십 회원인지 확인한다.
+   checkable=false 는 멤버십 테이블 자체를 못 읽은 경우다. 이때는 신청을 막지 않고
+   관리자 확인 대상으로 넘긴다 — 테이블이 없는 기간에 접수가 끊기면 안 되기 때문. */
+async function verifyMember(phone: string): Promise<{ verified: boolean; checkable: boolean }> {
+  const { data, error } = await supabaseAdmin
+    .from(MEMBER_TABLE)
+    .select("id")
+    .eq("phone", phone)
+    .eq("status", "confirmed")
+    .maybeSingle();
+
+  if (error) return { verified: false, checkable: false };
+  return { verified: !!data, checkable: true };
+}
+
 // POST: 신청 접수
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, age, gender, occupation, reason, photoConsent, transport, region } = body;
   let { phone } = body;
 
-  // 코스는 화면에서 항상 보내지만, 값이 이상하면 풀코스로 떨어뜨린다.
-  const course: CourseKey = (["bbq", "full"] as const).includes(body.course)
-    ? body.course
-    : DEFAULT_COURSE;
-  const courseInfo = COURSES[course];
+  const feeType: FeeType = (["guest", "code", "member"] as const).includes(body.feeType)
+    ? body.feeType
+    : DEFAULT_FEE;
+  const feeInfo = FEE_TYPES[feeType];
 
   if (!name || !phone) {
     return NextResponse.json({ error: "이름과 연락처는 필수입니다." }, { status: 400 });
@@ -98,6 +111,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "촬영 동의는 필수입니다." }, { status: 400 });
   }
 
+  // 라이브 코드 검증 — 대소문자·공백 무시
+  if (feeType === "code") {
+    const input = String(body.liveCode || "").trim().toUpperCase();
+    if (!input) {
+      return NextResponse.json({ error: "라이브 코드를 입력해주세요." }, { status: 400 });
+    }
+    if (input !== LIVE_CODE) {
+      return NextResponse.json(
+        { error: "라이브 코드가 맞지 않습니다. 다시 확인해주세요." },
+        { status: 400 }
+      );
+    }
+  }
+
   // 전화번호 정규화: 숫자만 추출 + 0 누락 시 복구 + 010-1234-5678 형식
   let digits = String(phone).replace(/[^0-9]/g, "");
   if (digits.length === 10 && !digits.startsWith("0")) digits = "0" + digits;
@@ -107,7 +134,23 @@ export async function POST(req: NextRequest) {
     phone = digits;
   }
 
-  // 중복 체크 — 이번 회차 안에서만 (다음 달 재참가는 허용)
+  // 멤버 요금은 확정 멤버만. 확인이 가능한데 명단에 없으면 되돌려보낸다.
+  let memberNeedsCheck = false;
+  if (feeType === "member") {
+    const { verified, checkable } = await verifyMember(phone);
+    if (checkable && !verified) {
+      return NextResponse.json(
+        {
+          error:
+            "멤버십 회원으로 확인되지 않는 번호입니다. 일반 참가로 신청하시거나 멤버십에 먼저 지원해주세요.",
+        },
+        { status: 403 }
+      );
+    }
+    if (!checkable) memberNeedsCheck = true;
+  }
+
+  // 중복 체크 — 이번 회차 안에서만 (다음 회차 재참가는 허용)
   const { data: existing } = await supabaseAdmin
     .from(TABLE)
     .select("id")
@@ -153,10 +196,12 @@ export async function POST(req: NextRequest) {
     status: isWaitlist ? "waitlist" : "pending",
   };
 
-  let { error } = await supabaseAdmin.from(TABLE).insert({ ...row, course });
-  // course 컬럼 마이그레이션 전이면 컬럼 없이 재시도한다. 신청을 흘리지 않기 위한 임시 안전장치.
-  // TODO(sol): 20260829120000_bbq_course.sql 적용 확인 후 이 분기 삭제
-  if (error && error.message.includes("course")) {
+  let { error } = await supabaseAdmin
+    .from(TABLE)
+    .insert({ ...row, fee_type: feeType, fee_amount: feeInfo.amount });
+  // fee_type 컬럼 마이그레이션 전이면 컬럼 없이 재시도한다. 신청을 흘리지 않기 위한 임시 안전장치.
+  // TODO(sol): 20260829150000_bbq_fee_type.sql 적용 확인 후 이 분기 삭제
+  if (error && (error.message.includes("fee_type") || error.message.includes("fee_amount"))) {
     ({ error } = await supabaseAdmin.from(TABLE).insert(row));
   }
 
@@ -168,13 +213,20 @@ export async function POST(req: NextRequest) {
   const applicantPhone = phone.replace(/[^0-9]/g, "");
   const gatherInfo = GATHER[transport] ? `\n■ 집결: ${GATHER[transport]}` : "";
 
+  console.log(
+    "[bbq] 신청 접수:",
+    phone.replace(/(\d{3})-\d{4}-(\d{4})/, "$1-****-$2"),
+    feeType,
+    isWaitlist ? "(대기)" : ""
+  );
+
   // SMS 발송 (실패해도 신청은 성공 처리)
   try {
     const applicantMsg = isWaitlist
       ? `안녕하세요, ${name}님!
 
 아쉽게도 항아리 바베큐 모임
-${MAX_CAPACITY}명 정원이 마감되었습니다 🍖
+${MAX_CAPACITY}석이 마감되었습니다 🍖
 
 대기자 명단에 등록되었습니다.
 ━━━━━━━━━━━
@@ -182,42 +234,47 @@ ${MAX_CAPACITY}명 정원이 마감되었습니다 🍖
 ━━━━━━━━━━━
 
 • 취소자 발생 시 순번대로 연락드립니다
-• 다음 회차(월 1회) 진행 시 가장 먼저 안내드립니다
+• 다음 회차(월 2회) 진행 시 가장 먼저 안내드립니다
 
 문의: 010-8531-9531 (임솔)
 관심 가져주셔서 진심으로 감사합니다 :)`
       : `안녕하세요, ${name}님!
 항아리 바베큐 모임 신청이 접수되었습니다 🍖
 
-━━ 📋 신청하신 코스 ━━
-▶ ${courseInfo.label}
-▶ 참가비 ${courseInfo.feeText}
+━━ 📋 신청 내용 ━━
+▶ ${feeInfo.label}
+▶ 참가비 ${feeInfo.text}
 
-■ 일시: ${EVENT_DATE_TEXT} ${courseInfo.time}
+■ 일시: ${EVENT_DATE_TEXT} ${EVENT_TIME_TEXT}
 ■ 장소: ${VENUE}${gatherInfo}
 
-━━ 🍖 회비에 포함된 것 ━━
-${courseInfo.included.map((v) => `• ${v}`).join("\n")}
+━━ 🍖 참가비에 포함된 것 ━━
+• 항아리 훈연 바베큐 (배부르게)
+• 음료 & 펜션 대관료
+• 2부 사례 공유 · 자동수익 스터디
+
+━━ 🥘 포트럭 안내 ━━
+나눠 드실 음식이나 음료를 한 가지씩
+가져와주세요. 부담 없는 걸로 충분합니다.
 
 ━━ 💳 결제 안내 ━━
 입금계좌: ${ACCOUNT}
-입금금액: ${courseInfo.feeText}
+입금금액: ${feeInfo.text}
 입금자명: ${name}
 ※ 입금해주시면 신청이 최종 확정됩니다.
+${memberNeedsCheck ? "※ 멤버십 회원 여부 확인 후 안내드립니다.\n" : ""}
+━━ ⏰ 타임테이블 ━━
+${TIMETABLE}
 
-━━ ⏰ 참여하시는 시간 ━━
-${courseInfo.sessions}
-${
-  course === "bbq"
-    ? "\n※ 2교시(AI 스터디)까지 함께하고 싶으시면\n   말씀 주세요. 차액 2만원으로 변경됩니다."
-    : "\n※ 노트북 또는 태블릿을 가져오시면\n   2교시에 바로 따라 만들어보실 수 있습니다."
-}
+※ 노트북 또는 태블릿을 가져오시면
+   2부에 바로 따라 만들어보실 수 있습니다.
+
 문의: 010-8531-9531 (임솔)
 감사합니다 :)`;
 
     const adminMsg = `[항아리BBQ ${isWaitlist ? "대기자" : "새 신청"}]
 
-■ 코스: ${courseInfo.label} (${courseInfo.feeText})
+■ 요금: ${feeInfo.label} (${feeInfo.text})${memberNeedsCheck ? " ⚠️멤버확인필요" : ""}
 ■ 이름: ${name}
 ■ 연락처: ${phone}
 ■ 나이: ${age || "-"}
@@ -228,18 +285,22 @@ ${
 ■ 이동방법: ${transport || "-"}
 ■ 촬영동의: ${photoConsent ? "동의" : "미동의"}
 
-${isWaitlist ? `⭐ 대기자 ${waitlistNumber}번 등록` : `현재 ${newCount}/${MAX_CAPACITY}명`}
+${isWaitlist ? `⭐ 대기자 ${waitlistNumber}번 등록` : `현재 ${newCount}/${MAX_CAPACITY}석`}
 ⏳ 입금 대기 (${ACCOUNT})`;
 
     const applicantSubject = isWaitlist ? "항아리BBQ 대기자 등록 안내" : "항아리BBQ 신청 안내";
     const adminSubject = isWaitlist ? "항아리BBQ 대기자 신청" : "항아리BBQ 새 신청";
 
     await Promise.allSettled([
-      messageService.sendOne({ to: applicantPhone, from: SENDER, text: applicantMsg, type: "LMS", subject: applicantSubject }),
-      messageService.sendOne({ to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: adminSubject }),
+      messageService.sendOne({
+        to: applicantPhone, from: SENDER, text: applicantMsg, type: "LMS", subject: applicantSubject,
+      }),
+      messageService.sendOne({
+        to: ADMIN_SOL, from: SENDER, text: adminMsg, type: "LMS", subject: adminSubject,
+      }),
     ]);
-  } catch (smsErr) {
-    console.error("항아리BBQ SMS 발송 실패:", smsErr);
+  } catch (e) {
+    console.error("[bbq] SMS 발송 실패:", e);
   }
 
   return NextResponse.json({

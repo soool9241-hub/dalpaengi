@@ -17,54 +17,53 @@ import {
 import Link from "next/link";
 
 /* ───── 회차 정보 ─────
-   월 1회 정기 모임이다. 다음 회차를 열 때 여기 네 개와
-   api/programs/bbq/route.ts 의 PROGRAM / EVENT_TEXT 를 같이 바꾼다. */
-const ROUND_LABEL = "0회";
+   월 2회 진행. 다음 회차를 열 때 여기 네 개와
+   api/programs/bbq/route.ts 의 PROGRAM / EVENT_DATE_TEXT 를 같이 바꾼다. */
+const ROUND_LABEL = "9월 1회차";
 const EVENT_DATE = "2026-09-08T19:00:00+09:00";
 const EVENT_TEXT = "2026.9.8(화)";
-const EVENT_TIME = "19:00~22:00";
+const EVENT_TIME = "19:00~23:00";
 
-const MAX_CAPACITY = 6;
+/* 30석. 정상 운영기에는 멤버 20 + 신규 10 으로 나누지만
+   초기 회차는 멤버가 아직 없어 30석 전부를 신규에게 연다. */
+const MAX_CAPACITY = 30;
 
-/* ───── 참가 코스 2종 ─────
-   밥만 먹고 갈 수도 있고, 스터디·커뮤니티까지 갈 수도 있다.
-   풀패키지는 두 배가 아니라 5만원 — 2교시까지 오는 쪽으로 기울이려는 가격이다.
-   가격을 바꿀 땐 api/programs/bbq/route.ts 의 COURSES 도 같이 고친다. */
-const COURSES = [
+/* ───── 요금 3단 ─────
+   "무엇을 듣느냐"가 아니라 "누구냐"로 갈린다.
+   프로그램은 모두 동일한 4시간이고, 자격에 따라 금액만 달라진다.
+   가격을 바꿀 땐 api/programs/bbq/route.ts 의 FEE_TYPES 도 같이 고친다. */
+const FEE_TYPES = [
   {
-    key: "bbq",
+    key: "guest",
     emoji: "🍖",
-    label: "항아리 바베큐만",
-    sub: "1교시",
-    time: "19:00~20:00",
-    duration: "1시간",
-    fee: 30_000,
-    desc: "훈연 고기와 술 한잔, 딱 그것만",
-    includes: ["항아리 훈연 바베큐", "주류 & 음료", "펜션 대관료"],
-    recommended: false,
+    label: "일반 참가",
+    fee: 60_000,
+    desc: "누구나 신청하실 수 있어요",
+    note: "",
+    tone: "plain",
   },
   {
-    key: "full",
-    emoji: "🍖🤖",
-    label: "바베큐 + AI 스터디 + 커뮤니티",
-    sub: "1교시 + 2교시",
-    time: "19:00~22:00",
-    duration: "3시간",
+    key: "code",
+    emoji: "🎟️",
+    label: "라이브 코드 할인",
     fee: 50_000,
-    desc: "먹고, 배우고, 끝나고도 이어지는",
-    includes: [
-      "항아리 훈연 바베큐",
-      "주류 & 음료",
-      "펜션 대관료",
-      "AI 자동수익 워크숍 2시간",
-      "모임 후 커뮤니티 합류",
-    ],
-    recommended: true,
+    desc: "온라인 라이브를 끝까지 보신 분",
+    note: "라이브 종료 시 공지되는 코드가 필요합니다",
+    tone: "plain",
+  },
+  {
+    key: "member",
+    emoji: "🐌",
+    label: "멤버십 회원",
+    fee: 15_000,
+    desc: "달팽이 프라이빗 멤버십 회원",
+    note: "좌석도 먼저 잡으실 수 있어요",
+    tone: "member",
   },
 ] as const;
 
-const MIN_FEE = 30_000;
-const MAX_FEE = 50_000;
+const MIN_FEE = 15_000;
+const MAX_FEE = 60_000;
 
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 const VENUE_ADDR = "전북 완주군 소양면 해월신왕길 92";
@@ -81,20 +80,20 @@ const IMG = {
 /* ───── 두 개의 교시 ───── */
 const SESSIONS = [
   {
-    num: "1교시",
-    time: "19:00~20:00",
+    num: "1부",
+    time: "19:00~21:00",
     emoji: "🍖",
-    title: "항아리 바베큐",
+    title: "항아리 바베큐 + 포트럭",
     tag: "미식클럽 대장과 함께",
-    desc: "항아리 속에서 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 고기. 직화로 굽는 게 아니라 항아리 안 열기로 익히기 때문에 겉은 바삭하고 속은 촉촉합니다. 보기만 해도 군침 도는 그 비주얼, 직접 확인해보세요.",
+    desc: "항아리 속에서 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 고기. 직화로 굽는 게 아니라 항아리 안 열기로 익히기 때문에 겉은 바삭하고 속은 촉촉합니다. 보기만 해도 군침 도는 그 비주얼, 직접 확인해보세요. 여기에 각자 한 가지씩 가져온 음식이 더해지면 상이 꽤 근사해집니다.",
     img: IMG.pot,
     color: "border-amber-200 bg-amber-50/50",
   },
   {
-    num: "2교시",
-    time: "20:00~22:00",
+    num: "2부",
+    time: "21:00~23:00",
     emoji: "🤖",
-    title: "자동 수익 시스템 만들기",
+    title: "사례 공유 · 자동수익 스터디",
     tag: "AI 수익화 인사이트 공유",
     desc: "배부르게 먹은 다음, 실제로 굴러가고 있는 자동 수익 구조를 뜯어봅니다. 어떤 서비스를 어떻게 만들었고 무엇이 먹혔는지 — 슬라이드 발표가 아니라 화면 켜놓고 같이 만져보는 시간입니다.",
     img: IMG.study,
@@ -114,18 +113,20 @@ const WELCOME = [
    "그 돈이면 딴 데서도" 로 빠지기 때문. 대신 무엇이 좋은지를 적는다. */
 const INCLUDED = [
   { icon: "🍖", title: "항아리 훈연 바베큐", desc: "장시간 훈연한 고기, 배부르게", value: "이게 메인" },
-  { icon: "🍺", title: "주류 & 음료", desc: "술·음료 별도 계산 없음", value: "추가금 0" },
-  { icon: "🏡", title: "펜션 통째 대관", desc: "넓은 공간을 여섯이서", value: "눈치 볼 일 없음" },
-  { icon: "🤖", title: "AI 자동수익 워크숍", desc: "2시간, 실제 사례 기반", value: "따라 만들어봄" },
-  { icon: "🫂", title: "모임 후 커뮤니티", desc: "끝나고도 계속 이어지는 자리", value: "일회성 아님" },
+  { icon: "🥘", title: "포트럭 한 상", desc: "각자 한 가지씩, 모이면 푸짐하게", value: "같이 차림" },
+  { icon: "🏡", title: "펜션 통째 대관", desc: "60평 독채를 통째로", value: "눈치 볼 일 없음" },
+  { icon: "🤖", title: "사례 공유 · 스터디", desc: "2시간, 실제 사례 기반", value: "따라 만들어봄" },
+  { icon: "🫂", title: "월 2회 정기 모임", desc: "한 번 오면 다음 회차가 또 있음", value: "일회성 아님" },
   { icon: "🚐", title: "전주역·터미널 픽업", desc: "차 없어도 오실 수 있어요", value: "뚜벅이 환영" },
 ];
 
-/* ───── 왜 6명인가 ───── */
+/* ───── 왜 30석인가 ─────
+   6명일 때의 "한 테이블 대화" 논리는 30명에선 성립하지 않는다.
+   대신 30이라는 숫자가 왜 상한인지를 공간·운영 기준으로 적는다. */
 const WHY_SIX = [
-  "고기가 나오는 속도와 먹는 속도가 맞는 인원",
-  "한 테이블에서 전원이 대화가 되는 인원",
-  "2교시에 각자 질문을 다 할 수 있는 인원",
+  "항아리 한 번에 제대로 구울 수 있는 최대 인원",
+  "60평 독채에서 서로 부딪히지 않고 앉을 수 있는 한계",
+  "2부에 각자 질문을 하나씩은 던질 수 있는 규모",
 ];
 
 /* ───── 잔여석 카운터 훅 ───── */
@@ -159,14 +160,18 @@ function ApplyForm() {
   const [photoConsent, setPhotoConsent] = useState(false);
   const [transport, setTransport] = useState("");
   const [region, setRegion] = useState("");
-  // 대부분 풀코스를 고르므로 기본 선택으로 열어둔다.
-  const [course, setCourse] = useState<string>("full");
+  // 대부분 일반 참가라 기본값으로 열어둔다.
+  const [feeType, setFeeType] = useState<string>("guest");
+  const [liveCode, setLiveCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [waitlistModal, setWaitlistModal] = useState<{ show: boolean; number: number }>({ show: false, number: 0 });
 
   const submit = async () => {
-    if (!course) { setResult({ ok: false, msg: "참가 코스를 선택해주세요." }); return; }
+    if (!feeType) { setResult({ ok: false, msg: "참가 유형을 선택해주세요." }); return; }
+    if (feeType === "code" && !liveCode.trim()) {
+      setResult({ ok: false, msg: "라이브 코드를 입력해주세요." }); return;
+    }
     if (!name.trim()) { setResult({ ok: false, msg: "이름을 입력해주세요." }); return; }
     if (!phone.trim()) { setResult({ ok: false, msg: "연락처를 입력해주세요." }); return; }
     if (!age.trim()) { setResult({ ok: false, msg: "나이를 입력해주세요." }); return; }
@@ -182,12 +187,12 @@ function ApplyForm() {
       const res = await fetch("/api/programs/bbq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, age, gender, occupation, reason, photoConsent, transport, region, course }),
+        body: JSON.stringify({ name, phone, age, gender, occupation, reason, photoConsent, transport, region, feeType, liveCode }),
       });
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion(""); setCourse("full");
+        setName(""); setPhone(""); setAge(""); setGender(""); setOccupation(""); setReason(""); setPhotoConsent(false); setTransport(""); setRegion(""); setFeeType("guest"); setLiveCode("");
         if (data.waitlisted === true) {
           const num = Number(data.waitlistNumber) || 1;
           setWaitlistModal({ show: true, number: num });
@@ -205,7 +210,7 @@ function ApplyForm() {
   };
 
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20";
-  const selectedCourse = COURSES.find((c) => c.key === course) ?? COURSES[1];
+  const selectedFee = FEE_TYPES.find((f) => f.key === feeType) ?? FEE_TYPES[0];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -217,7 +222,7 @@ function ApplyForm() {
               <div className="text-5xl mb-3">🍖</div>
               <p className="text-xs font-bold tracking-widest opacity-90 mb-1">SOLD OUT</p>
               <h3 className="text-2xl font-black">아쉽게도 마감되었어요</h3>
-              <p className="text-sm text-white/90 mt-2">{MAX_CAPACITY}명 선착순이 이미 채워졌습니다</p>
+              <p className="text-sm text-white/90 mt-2">{MAX_CAPACITY}석이 이미 채워졌습니다</p>
             </div>
             <div className="p-6 space-y-4">
               <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 text-center">
@@ -229,7 +234,7 @@ function ApplyForm() {
                 <p className="text-sm font-bold text-gray-900">🔥 이렇게 진행됩니다</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
                   <li>• 취소자 발생 시 <span className="font-bold text-amber-600">순번대로</span> 연락드립니다</li>
-                  <li>• 다음 회차는 <span className="font-bold text-amber-600">한 달 뒤</span> — 가장 먼저 안내드립니다</li>
+                  <li>• 다음 회차는 <span className="font-bold text-amber-600">이번 달 안</span>에 또 있습니다 — 가장 먼저 안내드려요</li>
                   <li>• 입력하신 연락처로 문자가 발송되었어요</li>
                 </ul>
               </div>
@@ -244,39 +249,67 @@ function ApplyForm() {
         </div>
       )}
       <div className="p-6 space-y-4">
-        {/* 코스 선택 — 금액이 여기서 정해지므로 폼 맨 위에 둔다 */}
+        {/* 참가 유형 — 금액이 여기서 정해지므로 폼 맨 위에 둔다 */}
         <div>
-          <label className="text-xs font-semibold text-gray-600 block mb-2">참가 코스 <span className="text-red-500">*</span></label>
+          <label className="text-xs font-semibold text-gray-600 block mb-1">참가 유형 <span className="text-red-500">*</span></label>
+          <p className="text-[11px] text-gray-400 mb-2">프로그램은 모두 같습니다. 자격에 따라 금액만 달라져요.</p>
           <div className="flex flex-col gap-2">
-            {COURSES.map((c) => (
-              <button key={c.key} type="button" onClick={() => setCourse(c.key)}
+            {FEE_TYPES.map((f) => (
+              <button key={f.key} type="button" onClick={() => setFeeType(f.key)}
                 className={`w-full rounded-xl border-2 transition-all text-left px-4 py-3 ${
-                  course === c.key ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-gray-300"
+                  feeType === f.key
+                    ? (f.tone === "member" ? "border-violet-500 bg-violet-50 shadow-md" : "border-amber-500 bg-amber-50 shadow-md")
+                    : "border-gray-200 hover:border-gray-300"
                 }`}>
                 <div className="flex items-center gap-3">
                   <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    course === c.key ? "border-amber-500 bg-amber-500" : "border-gray-300"
+                    feeType === f.key
+                      ? (f.tone === "member" ? "border-violet-500 bg-violet-500" : "border-amber-500 bg-amber-500")
+                      : "border-gray-300"
                   }`}>
-                    {course === c.key && <span className="w-2 h-2 rounded-full bg-white" />}
+                    {feeType === f.key && <span className="w-2 h-2 rounded-full bg-white" />}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`text-sm font-bold ${course === c.key ? "text-amber-700" : "text-gray-700"}`}>
-                        {c.emoji} {c.label}
-                      </span>
-                      {c.recommended && (
-                        <span className="px-1.5 py-0.5 bg-gray-900 text-white rounded text-[10px] font-black">추천</span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{c.sub} · {c.time} ({c.duration})</p>
+                    <span className={`text-sm font-bold ${
+                      feeType === f.key ? (f.tone === "member" ? "text-violet-700" : "text-amber-700") : "text-gray-700"
+                    }`}>
+                      {f.emoji} {f.label}
+                    </span>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{f.desc}</p>
                   </div>
-                  <span className={`text-base font-black flex-shrink-0 ${course === c.key ? "text-amber-600" : "text-gray-400"}`}>
-                    {c.fee.toLocaleString("ko-KR")}원
+                  <span className={`text-base font-black flex-shrink-0 ${
+                    feeType === f.key ? (f.tone === "member" ? "text-violet-600" : "text-amber-600") : "text-gray-400"
+                  }`}>
+                    {f.fee.toLocaleString("ko-KR")}원
                   </span>
                 </div>
               </button>
             ))}
           </div>
+
+          {feeType === "code" && (
+            <div className="mt-2">
+              <input
+                value={liveCode}
+                onChange={(e) => setLiveCode(e.target.value)}
+                placeholder="라이브 종료 시 공지된 코드를 입력해주세요"
+                className="w-full px-3 py-2.5 rounded-xl border-2 border-amber-300 bg-amber-50/50 text-sm font-semibold tracking-wide focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
+              <p className="text-[11px] text-gray-500 mt-1.5">
+                🎟️ 코드는 다음 회차 1회에 한해 사용하실 수 있습니다.
+              </p>
+            </div>
+          )}
+
+          {feeType === "member" && (
+            <div className="mt-2 p-3 bg-violet-50 border border-violet-200 rounded-xl">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                🐌 신청하신 <span className="font-bold text-violet-700">연락처로 멤버십 회원 여부를 확인</span>합니다.
+                아직 회원이 아니시면{" "}
+                <a href="/membership" className="font-bold text-violet-700 underline">멤버십 안내</a>를 먼저 봐주세요.
+              </p>
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -374,7 +407,7 @@ function ApplyForm() {
           className="w-full py-3.5 rounded-xl text-white font-bold text-base transition-opacity disabled:opacity-50 bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-90">
           {loading
             ? "신청 중..."
-            : `${selectedCourse.emoji} ${selectedCourse.fee.toLocaleString("ko-KR")}원으로 신청하기`}
+            : `${selectedFee.emoji} ${selectedFee.fee.toLocaleString("ko-KR")}원으로 신청하기`}
         </button>
         {result && (
           <p className={`text-center text-sm font-semibold ${result.ok ? "text-green-600" : "text-red-500"}`}>
@@ -427,10 +460,10 @@ export default function BbqPage() {
               항아리에서 훈연한 고기,<br />같이 먹을 사람 {MAX_CAPACITY}명
             </h1>
             <p className="text-lg sm:text-xl text-white/80 mt-3 font-medium">
-              1교시 항아리 바베큐 · 2교시 AI 자동수익
+              1부 항아리 바베큐 · 2부 자동수익 스터디
             </p>
             <p className="text-sm sm:text-base text-amber-300 mt-2 font-bold">
-              육즙은 가득, 기름기는 쏙 — 고기·술·대관료 전부 포함
+              육즙은 가득, 기름기는 쏙 — 각자 한 가지씩 들고 오는 포트럭
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
@@ -438,38 +471,37 @@ export default function BbqPage() {
                 <Calendar size={14} /> {EVENT_TEXT} 저녁
               </div>
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-                <Clock size={14} /> {EVENT_TIME} (3시간)
+                <Clock size={14} /> {EVENT_TIME} (4시간)
               </div>
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-                <Users size={14} /> {MAX_CAPACITY}명 한정
+                <Users size={14} /> {MAX_CAPACITY}석 한정
               </div>
             </div>
             <p className="text-xs text-white/50 mt-3 flex items-center gap-1">
               <MapPin size={12} /> 소양 달팽이아지트 · 전주역/터미널 픽업 있음
             </p>
 
-            {/* 코스 가격 요약 — 원하는 만큼만 골라 오세요 */}
+            {/* 요금 요약 — 자격에 따라 금액만 달라진다 */}
             <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-5 border border-white/20">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full mb-3">
                 <Flame size={12} className="text-white" />
-                <span className="text-[11px] font-black text-white tracking-wide">{ROUND_LABEL} · 원하는 코스만 골라서</span>
+                <span className="text-[11px] font-black text-white tracking-wide">{ROUND_LABEL} · 4시간 · {MAX_CAPACITY}석</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {COURSES.map((c) => (
-                  <div key={c.key} className={`rounded-xl px-2 py-3 border ${
-                    c.recommended ? "bg-amber-500/25 border-amber-300/60" : "bg-white/5 border-white/15"
+              <div className="grid grid-cols-3 gap-2">
+                {FEE_TYPES.map((f) => (
+                  <div key={f.key} className={`rounded-xl px-2 py-3 border ${
+                    f.tone === "member" ? "bg-violet-500/25 border-violet-300/60" : "bg-white/5 border-white/15"
                   }`}>
-                    <p className="text-base leading-none">{c.emoji}</p>
-                    <p className="text-[11px] text-white/70 mt-1.5 leading-tight">{c.sub}</p>
+                    <p className="text-base leading-none">{f.emoji}</p>
+                    <p className="text-[11px] text-white/70 mt-1.5 leading-tight whitespace-nowrap">{f.label}</p>
                     <p className="text-lg font-black text-white mt-0.5 whitespace-nowrap">
-                      {(c.fee / 10_000).toLocaleString("ko-KR")}<span className="text-xs font-bold">만원</span>
+                      {(f.fee / 10_000).toLocaleString("ko-KR")}<span className="text-xs font-bold">만원</span>
                     </p>
-                    <p className="text-[10px] text-white/50 mt-0.5">{c.duration}</p>
                   </div>
                 ))}
               </div>
               <p className="text-xs text-white/50 mt-3">
-                선착순 {MAX_CAPACITY}명 한정{dday > 0 ? <> · <span className="text-amber-300 font-bold">D-{dday}</span></> : null}
+                선착순 {MAX_CAPACITY}석{dday > 0 ? <> · <span className="text-amber-300 font-bold">D-{dday}</span></> : null}
               </p>
             </div>
 
@@ -514,13 +546,13 @@ export default function BbqPage() {
           </div>
         </section>
 
-        {/* 타임테이블 — 2교시 구성 */}
+        {/* 타임테이블 — 2부 구성 */}
         <section className="pb-12 sm:pb-16">
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">TIMETABLE</p>
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900">3시간, <span className="text-amber-600">두 개의 교시</span></h2>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">4시간, <span className="text-amber-600">두 개의 부</span></h2>
             <p className="text-sm text-gray-500 mt-2">먼저 배부르게 먹고, 그다음 머리를 채웁니다</p>
-            <p className="text-xs text-amber-600 font-bold mt-2">💡 1교시만 참여하고 가셔도 괜찮습니다</p>
+            <p className="text-xs text-amber-600 font-bold mt-2">💡 2부까지 마치고 현장에서 마무리합니다</p>
           </div>
           <div className="space-y-4">
             {SESSIONS.map((s, i) => (
@@ -550,56 +582,58 @@ export default function BbqPage() {
           </div>
           <div className="mt-4 bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
             <p className="text-xs text-blue-700 font-semibold">
-              💻 2교시에 노트북이나 태블릿을 가져오시면 바로 따라 만들어보실 수 있어요 (선택)
+              💻 2부에 노트북이나 태블릿을 가져오시면 바로 따라 만들어보실 수 있어요 (선택)
             </p>
           </div>
         </section>
 
-        {/* 참가비 — 코스 3종 */}
+        {/* 참가비 — 자격별 3단 */}
         <section className="pb-12 sm:pb-16">
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">참가비</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              오고 싶은 <span className="text-amber-600">시간만큼만</span> 오세요
+              프로그램은 같고, <span className="text-amber-600">금액만 다릅니다</span>
             </h2>
             <p className="text-sm text-gray-500 mt-2">
-              밥만 먹고 가셔도 되고, 스터디까지 함께하셔도 됩니다. 당일 추가로 내실 돈은 없습니다.
+              누구로 오시느냐에 따라 참가비가 달라져요. 당일 추가로 내실 돈은 없습니다.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
-            {COURSES.map((c) => (
-              <div key={c.key} className={`relative rounded-2xl p-5 flex flex-col ${
-                c.recommended
-                  ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-200"
+          <div className="grid gap-3 sm:grid-cols-3">
+            {FEE_TYPES.map((f) => (
+              <div key={f.key} className={`relative rounded-2xl p-5 flex flex-col ${
+                f.tone === "member"
+                  ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-200"
                   : "bg-white border border-gray-200"
               }`}>
-                {c.recommended && (
+                {f.tone === "member" && (
                   <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gray-900 text-white rounded-full text-[11px] font-black whitespace-nowrap">
-                    ⭐ 이 코스를 가장 많이 고르세요
+                    🐌 가장 저렴한 방법
                   </span>
                 )}
-                <p className="text-2xl">{c.emoji}</p>
-                <p className={`text-sm font-black mt-2 ${c.recommended ? "text-white" : "text-gray-900"}`}>{c.label}</p>
-                <p className={`text-xs mt-0.5 ${c.recommended ? "text-white/70" : "text-gray-500"}`}>
-                  {c.sub} · {c.time} ({c.duration})
+                <p className="text-2xl">{f.emoji}</p>
+                <p className={`text-sm font-black mt-2 ${f.tone === "member" ? "text-white" : "text-gray-900"}`}>{f.label}</p>
+                <p className={`text-3xl font-black mt-3 ${f.tone === "member" ? "text-white" : "text-amber-600"}`}>
+                  {f.fee.toLocaleString("ko-KR")}<span className="text-base font-bold">원</span>
                 </p>
-                <p className={`text-3xl font-black mt-3 ${c.recommended ? "text-white" : "text-amber-600"}`}>
-                  {c.fee.toLocaleString("ko-KR")}<span className="text-base font-bold">원</span>
-                </p>
-                <p className={`text-xs mt-2 ${c.recommended ? "text-white/80" : "text-gray-500"}`}>{c.desc}</p>
-                <ul className={`mt-3 pt-3 border-t space-y-1.5 flex-1 ${c.recommended ? "border-white/25" : "border-gray-100"}`}>
-                  {c.includes.map((inc) => (
-                    <li key={inc} className={`flex items-start gap-1.5 text-xs ${c.recommended ? "text-white/90" : "text-gray-600"}`}>
-                      <Check size={13} className="flex-shrink-0 mt-0.5" /> {inc}
-                    </li>
-                  ))}
-                </ul>
+                <p className={`text-xs mt-2 ${f.tone === "member" ? "text-white/85" : "text-gray-500"}`}>{f.desc}</p>
+                {f.note && (
+                  <p className={`text-[11px] mt-2 pt-2 border-t ${
+                    f.tone === "member" ? "text-white/70 border-white/25" : "text-gray-400 border-gray-100"
+                  }`}>
+                    {f.note}
+                  </p>
+                )}
+                {f.tone === "member" && (
+                  <Link href="/membership" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+                    멤버십 알아보기 <ArrowRight size={12} />
+                  </Link>
+                )}
               </div>
             ))}
           </div>
           <p className="text-center text-sm text-gray-500 mt-5">
-            선착순 {MAX_CAPACITY}명 · 현재{" "}
-            <span className="font-black text-amber-600">{status.current}/{MAX_CAPACITY}명</span>
+            선착순 {MAX_CAPACITY}석 · 현재{" "}
+            <span className="font-black text-amber-600">{status.current}/{MAX_CAPACITY}석</span>
           </p>
         </section>
 
@@ -608,9 +642,9 @@ export default function BbqPage() {
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">WHAT YOU GET</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              풀패키지에 포함된 <span className="text-amber-600">6가지</span>
+              참가비에 포함된 <span className="text-amber-600">6가지</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-2">바베큐만 신청하시면 고기·주류·대관료가 포함됩니다</p>
+            <p className="text-sm text-gray-500 mt-2">참가 유형과 무관하게 모두 동일하게 누리십니다</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {INCLUDED.map((b, i) => (
@@ -629,7 +663,7 @@ export default function BbqPage() {
           <div className="mt-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
             <p className="text-xs font-bold text-amber-600 uppercase tracking-wider text-center">WHY {MAX_CAPACITY}</p>
             <h3 className="text-lg sm:text-xl font-black text-gray-900 mt-2 text-center leading-snug">
-              항아리 하나에<br />딱 맞는 인원입니다
+              항아리 하나로<br />감당되는 최대 인원입니다
             </h3>
             <div className="mt-5 space-y-2.5 max-w-sm mx-auto">
               {WHY_SIX.map((t, i) => (
@@ -640,7 +674,7 @@ export default function BbqPage() {
               ))}
             </div>
             <p className="text-xs text-gray-500 text-center mt-5">
-              더 받을 수 있어도 안 받습니다. {MAX_CAPACITY}명이 이 모임의 정원이에요.
+              더 받을 수 있어도 안 받습니다. {MAX_CAPACITY}석이 이 모임의 정원이에요.
             </p>
             <div className="text-center">
               <a href="#apply" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-full font-bold text-sm hover:opacity-90 transition-opacity">
@@ -659,7 +693,7 @@ export default function BbqPage() {
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">일시</p>
                   <p className="text-sm font-semibold text-gray-900 mt-1">{EVENT_TEXT} {EVENT_TIME}</p>
-                  <p className="text-xs text-gray-500">{ROUND_LABEL} · 이후 월 1회 정기</p>
+                  <p className="text-xs text-gray-500">{ROUND_LABEL} · 월 2회 정기</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">장소</p>
@@ -668,7 +702,7 @@ export default function BbqPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">인원</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">{MAX_CAPACITY}명 한정</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1">{MAX_CAPACITY}석 한정</p>
                   <p className="text-xs text-gray-500">선착순 마감</p>
                 </div>
                 <div>
@@ -684,7 +718,7 @@ export default function BbqPage() {
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">포함 내용</p>
                 <div className="flex flex-wrap gap-2">
-                  {["항아리 훈연 바베큐", "주류 & 음료", "펜션 대관료", "AI 자동수익 워크숍"].map((item) => (
+                  {["항아리 훈연 바베큐", "음료", "펜션 대관료", "사례 공유 · 자동수익 스터디", "포트럭 한 상"].map((item) => (
                     <span key={item} className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-sm text-gray-700 font-medium">{item}</span>
                   ))}
                 </div>
@@ -695,7 +729,8 @@ export default function BbqPage() {
                   <li>🚗 펜션에 주차 공간 넉넉합니다.</li>
                   <li>🚐 차 없으셔도 전주역·고속터미널에서 픽업해드립니다.</li>
                   <li>💳 입금 확인 후 신청이 최종 확정됩니다.</li>
-                  <li>🔁 월 1회 정기 모임이며, 일정은 변동될 수 있습니다.</li>
+                  <li>🔁 월 2회 정기 모임이며, 일정은 변동될 수 있습니다.</li>
+                  <li>🥘 나눠 드실 음식이나 음료를 한 가지씩 가져와주세요 (포트럭).</li>
                 </ul>
               </div>
             </div>
@@ -756,17 +791,17 @@ export default function BbqPage() {
               </p>
               <div className="flex items-center justify-center gap-4 mt-6">
                 <div className="text-center">
-                  <p className="text-3xl font-black text-white">{MAX_CAPACITY}명</p>
+                  <p className="text-3xl font-black text-white">{MAX_CAPACITY}석</p>
                   <p className="text-xs text-white/50 mt-1">한정 모집</p>
                 </div>
                 <div className="w-px h-12 bg-white/20" />
                 <div className="text-center">
-                  <p className="text-3xl font-black text-amber-400">2교시</p>
-                  <p className="text-xs text-white/50 mt-1">먹고 · 배우고</p>
+                  <p className="text-3xl font-black text-amber-400">월 2회</p>
+                  <p className="text-xs text-white/50 mt-1">정기 진행</p>
                 </div>
                 <div className="w-px h-12 bg-white/20" />
                 <div className="text-center">
-                  <p className="text-3xl font-black text-white">3시간</p>
+                  <p className="text-3xl font-black text-white">4시간</p>
                   <p className="text-xs text-white/50 mt-1">올인원</p>
                 </div>
               </div>
