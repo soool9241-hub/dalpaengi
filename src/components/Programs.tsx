@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film, Music } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film, Music, Network } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -20,16 +20,17 @@ const categories = [
 const PROGRAM_IDS = [
   "stay",     // 0: 달팽이 소리산책 리트릿 — 시그니처 (별도 페이지)
   "stay",     // 1: 항아리 바베큐 모임 (별도 페이지)
-  "stay",     // 2: 대학생 MT 패키지
-  "stay",     // 3: 바이브코딩 (별도 페이지)
-  "stay",     // 4: 멤버십 스터디 (별도 페이지)
-  "jolib",    // 5: 나만의 아지트 만들기 (목공체험) ⭐
-  "stay",     // 6: 완주하다 봄 리트릿 (별도 페이지)
-  "stay",     // 7: 숙박 패키지
-  "half",     // 8: 3시간 대여
-  "daynight", // 9: 주/야간 패키지
-  "healing",  // 10: 힐링캠프
-  "stay",     // 11: JIFF STAY (별도 페이지)
+  "stay",     // 2: 달팽이 프라이빗 멤버십 (별도 페이지)
+  "stay",     // 3: 대학생 MT 패키지
+  "stay",     // 4: 바이브코딩 (별도 페이지)
+  "stay",     // 5: 멤버십 스터디 (별도 페이지)
+  "jolib",    // 6: 나만의 아지트 만들기 (목공체험) ⭐
+  "stay",     // 7: 완주하다 봄 리트릿 (별도 페이지)
+  "stay",     // 8: 숙박 패키지
+  "half",     // 9: 3시간 대여
+  "daynight", // 10: 주/야간 패키지
+  "healing",  // 11: 힐링캠프
+  "stay",     // 12: JIFF STAY (별도 페이지)
 ] as const;
 
 export default function Programs() {
@@ -85,6 +86,32 @@ export default function Programs() {
       description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 바베큐만 3만원, 스터디·커뮤니티까지 함께하면 5만원. 딱 6명만.",
       highlight: true,
       isBbq: true,
+    },
+    {
+      icon: Network,
+      title: "달팽이 프라이빗 멤버십",
+      duration: "월 1기수 · 최소 3개월",
+      price: 300000,
+      priceLabel: "월 300,000원",
+      perPerson: 300000,
+      maxPeople: "기수당 20명",
+      categories: ["membership", "pension"],
+      tags: ["NEW", "1기 모집", "20명 한정"],
+      tagColors: ["bg-violet-100 text-violet-700", "bg-indigo-100 text-indigo-600", "bg-purple-100 text-purple-600"],
+      gradient: "from-violet-600 to-indigo-600",
+      image: "/img/living-room-wide.jpg",
+      features: [
+        "AI 레퍼런스 공유회 (주 1회 온라인)",
+        "빌더데이 (월 1회 오프라인 6시간)",
+        "달팽이 공유회 — 멤버 프로젝트 공유",
+        "항아리 바베큐 모임 멤버가 1.5만원",
+        "달팽이 라운지 자유석 (평일 09~18시)",
+        "인프라 맵 쉐어 — 서로의 채널을 나눔",
+      ],
+      extras: [],
+      description: "내걸 내놓고 입장하는 멤버십입니다. 혼자 모은 1,000명은 혼자 쓰면 1,000명이지만, 스무 명이 각자 가진 걸 내놓으면 2만 명이 됩니다. 배우러 오는 곳이 아니라 서로의 도달을 키우는 곳이에요. 지원 후 심사가 있습니다.",
+      highlight: true,
+      isPrivateMembership: true,
     },
     {
       icon: GraduationCap,
@@ -458,6 +485,11 @@ export default function Programs() {
                         🍖 3만원부터
                       </div>
                     )}
+                    {prog.isPrivateMembership && (
+                      <div className="absolute top-3 left-3 bg-violet-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+                        🐌 1기 모집
+                      </div>
+                    )}
                     {prog.isMembership && (
                       <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                         📚 멤버십
@@ -470,7 +502,7 @@ export default function Programs() {
                     )}
                     {/* BEST 배지는 top-3 left-3 위치를 전용 배지들과 공유하므로,
                         전용 배지가 있는 카드에서는 겹치지 않게 제외한다. */}
-                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && !prog.isBbq && (
+                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && !prog.isBbq && !prog.isPrivateMembership && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
                       </div>
@@ -503,6 +535,11 @@ export default function Programs() {
                     {prog.isBbq && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         9.8(화) 저녁
+                      </div>
+                    )}
+                    {prog.isPrivateMembership && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-violet-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        20명 한정
                       </div>
                     )}
                     {prog.isMembership && (
@@ -589,6 +626,18 @@ export default function Programs() {
                         </div>
                         <p className="text-xs font-bold text-red-500 mb-5">
                           🎉 사전예약 특가 · 선착순 20명 한정
+                        </p>
+                      </>
+                    ) : prog.isPrivateMembership ? (
+                      <>
+                        <div className="flex items-baseline gap-1.5 mb-1">
+                          <span className="text-sm text-text-light">월</span>
+                          <span className="text-3xl font-black text-violet-600">300,000</span>
+                          <span className="text-sm text-text-light">원</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-1.5">최소 3개월 · 기수당 20명</p>
+                        <p className="text-xs font-bold text-violet-600 mb-5">
+                          🐌 지원 후 심사 · 결제는 심사 뒤에
                         </p>
                       </>
                     ) : prog.isBbq ? (
@@ -682,6 +731,13 @@ export default function Programs() {
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-teal-500/10 text-teal-700 hover:bg-teal-600 hover:text-white text-center"
                       >
                         🎵 사전예약 특가 보기 →
+                      </Link>
+                    ) : prog.isPrivateMembership ? (
+                      <Link
+                        href="/membership"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-violet-500/10 text-violet-700 hover:bg-violet-600 hover:text-white text-center"
+                      >
+                        🐌 멤버십 알아보기 →
                       </Link>
                     ) : prog.isBbq ? (
                       <Link

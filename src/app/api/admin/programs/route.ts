@@ -19,6 +19,8 @@ const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "soundwalk-2026": { label: "달팽이 소리산책 리트릿 2026", maxCapacity: 20 },
   // 항아리 바베큐는 월 1회 정기 모임이라 회차마다 키가 하나씩 늘어난다.
   "bbq-2026-09": { label: "항아리 바베큐 모임 0회 (9월)", maxCapacity: 6 },
+  // 프라이빗 멤버십은 월 1기수 오픈이라 기수마다 키가 하나씩 늘어난다.
+  "membership-2026-10": { label: "달팽이 프라이빗 멤버십 1기 (10월)", maxCapacity: 20 },
 };
 
 // 프로그램 식별자에 따라 테이블명 결정
@@ -26,6 +28,7 @@ function getTableName(program?: string | null): string {
   if (program && program.startsWith("vibe-coding")) return "vibecoding_applications";
   if (program && program.startsWith("soundwalk")) return "soundwalk_applications";
   if (program && program.startsWith("bbq")) return "bbq_applications";
+  if (program && program.startsWith("membership")) return "membership_applications";
   return "retreat_applications";
 }
 
@@ -36,7 +39,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || "";
 
   // 통계는 항상 모든 신청 테이블에서 집계
-  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications", "bbq_applications"];
+  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications", "bbq_applications", "membership_applications"];
   const allRowsForStats: { program: string; status: string }[] = [];
   for (const t of tablesForStats) {
     const { data: rows } = await supabaseAdmin.from(t).select("program, status");
@@ -511,6 +514,46 @@ export async function PATCH(req: NextRequest) {
 
         await messageService.sendOne({
           to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 리트릿 참가 확정"
+        });
+      } else if (tableName === "membership_applications") {
+        // 멤버십은 "합격 통보 + 결제 안내" 다. 확정 시점에 아직 입금 전이라
+        // 항바모처럼 "입금 확인 완료" 라고 쓰면 안 된다.
+        const msg = `안녕하세요, ${appData.name}님!
+
+달팽이 프라이빗 멤버십 1기
+합류가 확정되었습니다 🐌
+
+지원서 잘 읽었습니다.
+내놓아주시겠다고 적어주신 부분이
+저희가 찾던 그 마음이었어요.
+
+━━ 📋 멤버십 안내 ━━
+■ 기수: 1기 (2026년 10월 시작)
+■ 정원: 20명
+■ 회비: 월 300,000원 (최소 3개월)
+
+━━ 💳 결제 안내 ━━
+입금계좌: 카카오뱅크 3333-06-4749542 임솔
+입금금액: 300,000원 (첫 달)
+입금자명: ${appData.name}
+
+━━ 🎫 이용하실 수 있는 것 ━━
+• AI 레퍼런스 공유회 (주 1회 온라인)
+• 빌더데이 (월 1회 오프라인 6시간)
+• 달팽이 공유회 (부정기)
+• 항아리 바베큐 모임 멤버가 15,000원
+• 달팽이 라운지 자유석 (평일 09~18시)
+
+━━ 🤝 첫 번째로 하실 일 ━━
+입금 확인 후 멤버 채널로 초대드립니다.
+들어오시면 인프라 맵에 채널을 등록해주세요.
+그게 이 멤버십의 시작입니다.
+
+문의: 010-8531-9531 (임솔)
+함께하게 되어 반갑습니다 :)`;
+
+        await messageService.sendOne({
+          to: phone, from: SENDER, text: msg, type: "LMS", subject: "멤버십 1기 합류 확정 안내"
         });
       } else if (tableName === "bbq_applications") {
         // 항아리 바베큐 확정 문자 — 신청한 코스에 따라 시간·금액·준비물이 달라진다.

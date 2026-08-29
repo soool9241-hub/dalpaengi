@@ -34,6 +34,13 @@ interface Application {
   photo_consent: boolean | null;
   // 항아리 바베큐 전용 — 다른 프로그램 신청서에는 없다
   course?: string | null;
+  // 프라이빗 멤버십 지원서 전용
+  channels?: string | null;
+  reach?: number | null;
+  give?: string | null;
+  want?: string | null;
+  helped?: string | null;
+  how_found?: string | null;
   program: string;
   status: string;
   created_at: string;
@@ -517,6 +524,46 @@ export default function AdminProgramsPage() {
                       <div className="bg-gray-50 rounded-xl p-3">
                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">신청 이유 / 기대하는 점</p>
                         <p className="text-sm text-gray-700">{app.reason}</p>
+                      </div>
+                    )}
+
+                    {/* 멤버십 지원서 — give/want 균형이 심사의 핵심이라 나란히 놓는다 */}
+                    {(app.give || app.want || app.helped) && (
+                      <div className="space-y-2">
+                        {app.channels && (
+                          <div className="bg-violet-50 border border-violet-100 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-violet-500 uppercase mb-1">
+                              인프라 맵{app.reach ? ` · 약 ${app.reach.toLocaleString()}명` : ""}
+                            </p>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{app.channels}</p>
+                          </div>
+                        )}
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {app.give && (
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1">내놓을 수 있는 것</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{app.give}</p>
+                            </div>
+                          )}
+                          {app.want && (
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-amber-600 uppercase mb-1">받고 싶은 것</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{app.want}</p>
+                            </div>
+                          )}
+                        </div>
+                        {app.helped && (
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">남을 도와본 경험</p>
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{app.helped}</p>
+                          </div>
+                        )}
+                        {app.how_found && (
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">알게 된 경로</p>
+                            <p className="text-sm text-gray-700">{app.how_found}</p>
+                          </div>
+                        )}
                       </div>
                     )}
 

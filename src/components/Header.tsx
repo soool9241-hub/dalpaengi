@@ -12,6 +12,7 @@ const navLinks = [
   { label: "FAQ", href: "#faq" },
   { label: "문의", href: "#contact" },
   { label: "🎬 JIFF STAY", href: "/programs/jiff" },
+  { label: "🐌 멤버십", href: "/membership" },
 ];
 
 export default function Header() {
