@@ -78,10 +78,11 @@ export default function Programs() {
         "주류 & 음료 포함 (추가금 없음)",
         "펜션 통째 대관",
         "2교시 AI 자동수익 워크숍",
+        "모임 후 커뮤니티 합류",
         "전주역·터미널 카니발 픽업",
       ],
       extras: [],
-      description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 바베큐만(3만) · 스터디만(3만) · 둘 다(6만) 중에 골라서 오시면 됩니다. 딱 6명만.",
+      description: "굽는 게 아니라 항아리 안에서 익힙니다. 장시간 훈연해 육즙은 가득하고 기름기는 쏙 빠진 항아리 바베큐를 1교시에 배부르게 먹고, 2교시엔 실제로 굴러가는 AI 자동수익 구조를 같이 뜯어봅니다. 바베큐만 3만원, 스터디·커뮤니티까지 함께하면 5만원. 딱 6명만.",
       highlight: true,
       isBbq: true,
     },
@@ -594,10 +595,10 @@ export default function Programs() {
                       <>
                         <div className="flex items-baseline gap-1.5 mb-1">
                           <span className="text-3xl font-black text-amber-600">30,000</span>
-                          <span className="text-sm text-text-light">~ 60,000원/인</span>
+                          <span className="text-sm text-text-light">~ 50,000원/인</span>
                         </div>
                         <p className="text-xs text-gray-500 mb-1.5">
-                          바베큐만 3만 · 스터디만 3만 · 둘 다 6만
+                          바베큐만 3만 · 스터디+커뮤니티까지 5만
                         </p>
                         <p className="text-xs font-bold text-amber-600 mb-5">
                           🍖 원하는 코스만 골라서 · 선착순 6명 한정

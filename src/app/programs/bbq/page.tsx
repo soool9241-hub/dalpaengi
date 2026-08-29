@@ -26,10 +26,9 @@ const EVENT_TIME = "19:00~22:00";
 
 const MAX_CAPACITY = 6;
 
-/* ───── 참가 코스 3종 ─────
-   1교시(바베큐)와 2교시(스터디)를 따로 신청할 수 있게 쪼갰다.
-   full 은 두 코스를 합친 금액이라 묶음 할인은 없다 — 대신 "다 하는 쪽"으로
-   자연스럽게 기울도록 추천 배지만 단다.
+/* ───── 참가 코스 2종 ─────
+   밥만 먹고 갈 수도 있고, 스터디·커뮤니티까지 갈 수도 있다.
+   풀패키지는 두 배가 아니라 5만원 — 2교시까지 오는 쪽으로 기울이려는 가격이다.
    가격을 바꿀 땐 api/programs/bbq/route.ts 의 COURSES 도 같이 고친다. */
 const COURSES = [
   {
@@ -47,31 +46,25 @@ const COURSES = [
   {
     key: "full",
     emoji: "🍖🤖",
-    label: "바베큐 + AI 스터디",
+    label: "바베큐 + AI 스터디 + 커뮤니티",
     sub: "1교시 + 2교시",
     time: "19:00~22:00",
     duration: "3시간",
-    fee: 60_000,
-    desc: "먹고, 배우고, 만들어보는 풀코스",
-    includes: ["항아리 훈연 바베큐", "주류 & 음료", "펜션 대관료", "AI 자동수익 워크숍"],
+    fee: 50_000,
+    desc: "먹고, 배우고, 끝나고도 이어지는",
+    includes: [
+      "항아리 훈연 바베큐",
+      "주류 & 음료",
+      "펜션 대관료",
+      "AI 자동수익 워크숍 2시간",
+      "모임 후 커뮤니티 합류",
+    ],
     recommended: true,
-  },
-  {
-    key: "study",
-    emoji: "🤖",
-    label: "AI 스터디만",
-    sub: "2교시",
-    time: "20:00~22:00",
-    duration: "2시간",
-    fee: 30_000,
-    desc: "저녁 먹고 와서 공부만",
-    includes: ["AI 자동수익 워크숍", "음료 & 다과", "펜션 대관료"],
-    recommended: false,
   },
 ] as const;
 
 const MIN_FEE = 30_000;
-const MAX_FEE = 60_000;
+const MAX_FEE = 50_000;
 
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 const VENUE_ADDR = "전북 완주군 소양면 해월신왕길 92";
@@ -124,7 +117,7 @@ const INCLUDED = [
   { icon: "🍺", title: "주류 & 음료", desc: "술·음료 별도 계산 없음", value: "추가금 0" },
   { icon: "🏡", title: "펜션 통째 대관", desc: "넓은 공간을 여섯이서", value: "눈치 볼 일 없음" },
   { icon: "🤖", title: "AI 자동수익 워크숍", desc: "2시간, 실제 사례 기반", value: "따라 만들어봄" },
-  { icon: "🌌", title: "소양의 밤공기", desc: "산속 마당, 불멍 가능", value: "도시엔 없는 것" },
+  { icon: "🫂", title: "모임 후 커뮤니티", desc: "끝나고도 계속 이어지는 자리", value: "일회성 아님" },
   { icon: "🚐", title: "전주역·터미널 픽업", desc: "차 없어도 오실 수 있어요", value: "뚜벅이 환영" },
 ];
 
@@ -330,9 +323,9 @@ function ApplyForm() {
           <label className="text-xs font-semibold text-gray-600 block mb-1">이동 방법 <span className="text-red-500">*</span></label>
           <div className="flex flex-col gap-2">
             {[
-              { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: course === "study" ? "19:10" : "18:10", pickup: true },
-              { value: "전주역", label: "뚜벅이전용 — 전주역", time: course === "study" ? "19:30" : "18:30", pickup: true },
-              { value: "자차", label: "개별이동 — 자차이용", time: course === "study" ? "19:50" : "18:50", pickup: false },
+              { value: "전주고속터미널", label: "뚜벅이전용 — 전주고속터미널", time: "18:10", pickup: true },
+              { value: "전주역", label: "뚜벅이전용 — 전주역", time: "18:30", pickup: true },
+              { value: "자차", label: "개별이동 — 자차이용", time: "18:50", pickup: false },
             ].map((t) => (
               <button key={t.value} type="button" onClick={() => setTransport(t.value)}
                 className={`w-full rounded-xl border-2 transition-all text-left overflow-hidden ${
@@ -362,11 +355,8 @@ function ApplyForm() {
               <p className="text-sm font-black text-amber-700">🚐 카니발로 친절히 모시러 갑니다!</p>
               <p className="text-xs text-gray-600 mt-1">
                 <span className="font-bold text-amber-600">{transport}</span>에서{" "}
-                <span className="font-bold text-amber-600">
-                  {transport === "전주고속터미널"
-                    ? (course === "study" ? "19:10" : "18:10")
-                    : (course === "study" ? "19:30" : "18:30")}
-                </span>에 집결 — 확정 후 상세 안내 드립니다
+                <span className="font-bold text-amber-600">{transport === "전주고속터미널" ? "18:10" : "18:30"}</span>
+                에 집결 — 확정 후 상세 안내 드립니다
               </p>
             </div>
           )}
@@ -464,7 +454,7 @@ export default function BbqPage() {
                 <Flame size={12} className="text-white" />
                 <span className="text-[11px] font-black text-white tracking-wide">{ROUND_LABEL} · 원하는 코스만 골라서</span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {COURSES.map((c) => (
                   <div key={c.key} className={`rounded-xl px-2 py-3 border ${
                     c.recommended ? "bg-amber-500/25 border-amber-300/60" : "bg-white/5 border-white/15"
@@ -530,7 +520,7 @@ export default function BbqPage() {
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">TIMETABLE</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">3시간, <span className="text-amber-600">두 개의 교시</span></h2>
             <p className="text-sm text-gray-500 mt-2">먼저 배부르게 먹고, 그다음 머리를 채웁니다</p>
-            <p className="text-xs text-amber-600 font-bold mt-2">💡 두 교시 중 원하는 것만 신청하셔도 됩니다</p>
+            <p className="text-xs text-amber-600 font-bold mt-2">💡 1교시만 참여하고 가셔도 괜찮습니다</p>
           </div>
           <div className="space-y-4">
             {SESSIONS.map((s, i) => (
@@ -573,10 +563,10 @@ export default function BbqPage() {
               오고 싶은 <span className="text-amber-600">시간만큼만</span> 오세요
             </h2>
             <p className="text-sm text-gray-500 mt-2">
-              1교시·2교시를 따로 신청하실 수 있어요. 당일 추가로 내실 돈은 없습니다.
+              밥만 먹고 가셔도 되고, 스터디까지 함께하셔도 됩니다. 당일 추가로 내실 돈은 없습니다.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
             {COURSES.map((c) => (
               <div key={c.key} className={`relative rounded-2xl p-5 flex flex-col ${
                 c.recommended
@@ -618,9 +608,9 @@ export default function BbqPage() {
           <div className="text-center mb-8">
             <p className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2">WHAT YOU GET</p>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              풀코스에 포함된 <span className="text-amber-600">6가지</span>
+              풀패키지에 포함된 <span className="text-amber-600">6가지</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-2">바베큐만·스터디만 신청하시면 해당 교시 항목만 포함됩니다</p>
+            <p className="text-sm text-gray-500 mt-2">바베큐만 신청하시면 고기·주류·대관료가 포함됩니다</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {INCLUDED.map((b, i) => (

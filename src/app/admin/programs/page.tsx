@@ -42,8 +42,7 @@ interface Application {
 /* 항아리 바베큐 참가 코스 — api/programs/bbq/route.ts 와 같은 값을 유지한다 */
 const BBQ_COURSE_LABEL: Record<string, string> = {
   bbq: "🍖 바베큐만 (3만원)",
-  full: "🍖🤖 바베큐+스터디 (6만원)",
-  study: "🤖 스터디만 (3만원)",
+  full: "🍖🤖 바베큐+스터디+커뮤니티 (5만원)",
 };
 
 interface ProgramInfo {

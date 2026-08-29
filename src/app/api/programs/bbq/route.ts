@@ -21,11 +21,11 @@ const ACCOUNT = "카카오뱅크 3333-06-4749542 임솔";
 const VENUE = "달팽이아지트펜션 (전북 완주군 소양면 해월신왕길 92)";
 const EVENT_DATE_TEXT = "2026.9.8(화)";
 
-/* ───── 참가 코스 3종 ─────
-   1교시(바베큐)와 2교시(스터디)를 따로 신청할 수 있다.
-   full 은 두 코스를 합친 금액이라 별도 묶음 할인은 없다.
+/* ───── 참가 코스 2종 ─────
+   밥만 먹고 갈 수도 있고, 스터디·커뮤니티까지 갈 수도 있다.
+   풀패키지는 두 배가 아니라 5만원 — 2교시까지 오는 쪽으로 기울이려는 가격이다.
    가격을 바꿀 땐 여기와 programs/bbq/page.tsx 의 COURSES 를 같이 고친다. */
-type CourseKey = "bbq" | "full" | "study";
+type CourseKey = "bbq" | "full";
 const COURSES: Record<CourseKey, {
   label: string; feeText: string; time: string; sessions: string; included: string[];
 }> = {
@@ -37,34 +37,27 @@ const COURSES: Record<CourseKey, {
     included: ["항아리 훈연 바베큐 (배부르게)", "주류 & 음료", "펜션 대관료"],
   },
   full: {
-    label: "항아리 바베큐 + AI 스터디",
-    feeText: "60,000원",
+    label: "항아리 바베큐 + AI 스터디 + 커뮤니티",
+    feeText: "50,000원",
     time: "19:00~22:00 (3시간)",
     sessions: "1교시 19:00~20:00 항아리 바베큐\n2교시 20:00~22:00 자동 수익 시스템 만들기",
-    included: ["항아리 훈연 바베큐 (배부르게)", "주류 & 음료", "펜션 대관료", "AI 자동수익 워크숍 2시간"],
-  },
-  study: {
-    label: "AI 스터디만",
-    feeText: "30,000원",
-    time: "20:00~22:00 (2시간)",
-    sessions: "2교시 20:00~22:00 자동 수익 시스템 만들기",
-    included: ["AI 자동수익 워크숍 2시간", "음료 & 다과", "펜션 대관료"],
+    included: [
+      "항아리 훈연 바베큐 (배부르게)",
+      "주류 & 음료",
+      "펜션 대관료",
+      "AI 자동수익 워크숍 2시간",
+      "모임 후 커뮤니티 합류",
+    ],
   },
 };
 const DEFAULT_COURSE: CourseKey = "full";
 
-/* 이동수단별 집결 시각 — 스터디만 참가하면 시작이 1시간 늦으므로 픽업도 1시간 뒤 */
-const GATHER: Record<string, { label: string; bbq: string; study: string }> = {
-  전주고속터미널: { label: "전주고속터미널 (카니발 차량 픽업)", bbq: "18:10", study: "19:10" },
-  전주역: { label: "전주역 (카니발 차량 픽업)", bbq: "18:30", study: "19:30" },
-  자차: { label: "펜션 직접 도착 (무료 주차)", bbq: "18:50", study: "19:50" },
+// 이동수단별 집결 안내 — 두 코스 모두 19:00 시작이라 시각은 같다
+const GATHER: Record<string, string> = {
+  전주고속터미널: "전주고속터미널 18:10 (카니발 차량 픽업)",
+  전주역: "전주역 18:30 (카니발 차량 픽업)",
+  자차: "펜션 18:50 직접 도착 (무료 주차)",
 };
-
-function gatherText(transport: string, course: CourseKey) {
-  const g = GATHER[transport];
-  if (!g) return "";
-  return `${g.label} ${course === "study" ? g.study : g.bbq}`;
-}
 
 // GET: 현재 신청 수 조회 (이번 회차의 pending+confirmed만 카운트)
 export async function GET() {
@@ -90,7 +83,7 @@ export async function POST(req: NextRequest) {
   let { phone } = body;
 
   // 코스는 화면에서 항상 보내지만, 값이 이상하면 풀코스로 떨어뜨린다.
-  const course: CourseKey = (["bbq", "full", "study"] as const).includes(body.course)
+  const course: CourseKey = (["bbq", "full"] as const).includes(body.course)
     ? body.course
     : DEFAULT_COURSE;
   const courseInfo = COURSES[course];
@@ -173,8 +166,7 @@ export async function POST(req: NextRequest) {
 
   const newCount = (activeCount || 0) + 1;
   const applicantPhone = phone.replace(/[^0-9]/g, "");
-  const gather = gatherText(transport, course);
-  const gatherInfo = gather ? `\n■ 집결: ${gather}` : "";
+  const gatherInfo = GATHER[transport] ? `\n■ 집결: ${GATHER[transport]}` : "";
 
   // SMS 발송 (실패해도 신청은 성공 처리)
   try {
@@ -217,7 +209,7 @@ ${courseInfo.included.map((v) => `• ${v}`).join("\n")}
 ${courseInfo.sessions}
 ${
   course === "bbq"
-    ? "\n※ 2교시(AI 스터디)까지 함께하고 싶으시면\n   말씀 주세요. 차액 3만원으로 변경됩니다."
+    ? "\n※ 2교시(AI 스터디)까지 함께하고 싶으시면\n   말씀 주세요. 차액 2만원으로 변경됩니다."
     : "\n※ 노트북 또는 태블릿을 가져오시면\n   2교시에 바로 따라 만들어보실 수 있습니다."
 }
 문의: 010-8531-9531 (임솔)
