@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   Clock,
   Users,
@@ -466,16 +465,17 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
 }
 
 /* ═══════════════════════════════════════ */
-function HanokTourContent() {
-  const searchParams = useSearchParams();
+export default function HanokTourPage() {
   // 한국어 UI 가 필요한 건 솔과 국내 문의자다. 기본은 외국인이라 영어.
   const [lang, setLang] = useState<Lang>("en");
   const [referral, setReferral] = useState<string | null>(null);
   const [referralName, setReferralName] = useState<string | null>(null);
 
-  const ref = searchParams.get("ref");
-
+  /* ref 를 useSearchParams 로 읽으면 Suspense 경계가 생기면서 본문이
+     서버 렌더링에서 빠진다. 이 페이지는 외국인 검색 유입이 목적이라
+     HTML 에 본문이 반드시 들어 있어야 해서 window 에서 직접 읽는다. */
   useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
     fetch(`/api/programs/hanok-tour${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`)
       .then((r) => r.json())
       .then((d) => {
@@ -483,7 +483,7 @@ function HanokTourContent() {
         setReferralName(d.referralName ?? null);
       })
       .catch(() => {});
-  }, [ref]);
+  }, []);
 
   const t = T[lang];
   const minFee = referral ? 81_000 : 90_000;
@@ -786,14 +786,5 @@ function HanokTourContent() {
         </section>
       </div>
     </main>
-  );
-}
-
-export default function HanokTourPage() {
-  // useSearchParams 는 Suspense 경계가 필요하다 (Next.js App Router)
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <HanokTourContent />
-    </Suspense>
   );
 }
