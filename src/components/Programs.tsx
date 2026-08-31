@@ -18,9 +18,9 @@ const categories = [
 // programs 배열 인덱스 → 예약 폼의 programType 매핑
 // 별도 페이지로 빠지는 프로그램(바이브/멤버십/리트릿/JIFF)은 사용 안 됨 (placeholder)
 const PROGRAM_IDS = [
-  "stay",     // 0: 달팽이 소리산책 리트릿 — 시그니처 (별도 페이지)
-  "stay",     // 1: 항아리 바베큐 모임 (별도 페이지)
-  "stay",     // 2: 달팽이 프라이빗 멤버십 (별도 페이지)
+  "stay",     // 0: 항아리 바베큐 모임 — 메인 (별도 페이지)
+  "stay",     // 1: 달팽이 프라이빗 멤버십 (별도 페이지)
+  "stay",     // 2: 달팽이 소리산책 리트릿 (별도 페이지)
   "stay",     // 3: 대학생 MT 패키지
   "stay",     // 4: 바이브코딩 (별도 페이지)
   "stay",     // 5: 멤버십 스터디 (별도 페이지)
@@ -37,31 +37,6 @@ export default function Programs() {
   const { pricing } = usePricing();
 
   const programs = useMemo(() => [
-    {
-      icon: Music,
-      title: "달팽이 소리산책 리트릿",
-      duration: "6시간 (9.6 12:00~18:00)",
-      price: 99000,
-      originalPrice: 200000,
-      perPerson: 99000,
-      maxPeople: "20명 한정",
-      categories: ["healing", "pension", "family", "mt", "membership"],
-      tags: ["NEW", "사전예약 50%", "선착순 20명"],
-      tagColors: ["bg-teal-100 text-teal-600", "bg-red-100 text-red-600", "bg-amber-100 text-amber-700"],
-      gradient: "from-teal-500 to-emerald-500",
-      image: "/img/retreat-spring-bg.jpg",
-      features: [
-        "완주 숲 소리채집 (녹음키트 대여)",
-        "채집한 소리를 원소스로 AI 작곡 (Suno)",
-        "완주 로컬 점심 + 간식 제공",
-        "소리 파형 CNC 목판 기념품",
-        "결과물 공유회 · 20명 한정",
-      ],
-      extras: [],
-      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 원소스로 Suno에 올려 세상에 하나뿐인 내 음악을 만드는 6시간. 악기도 악보도 필요 없습니다. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
-      highlight: true,
-      isSoundwalk: true,
-    },
     {
       icon: Utensils,
       title: "항아리 바베큐 모임",
@@ -112,6 +87,31 @@ export default function Programs() {
       description: "내걸 내놓고 입장하는 멤버십입니다. 혼자 모은 1,000명은 혼자 쓰면 1,000명이지만, 스무 명이 각자 가진 걸 내놓으면 2만 명이 됩니다. 배우러 오는 곳이 아니라 서로의 도달을 키우는 곳이에요. 지원 후 심사가 있습니다.",
       highlight: true,
       isPrivateMembership: true,
+    },
+    {
+      icon: Music,
+      title: "달팽이 소리산책 리트릿",
+      duration: "6시간 (9.6 12:00~18:00)",
+      price: 99000,
+      originalPrice: 200000,
+      perPerson: 99000,
+      maxPeople: "20명 한정",
+      categories: ["healing", "pension", "family", "mt", "membership"],
+      tags: ["NEW", "사전예약 50%", "선착순 20명"],
+      tagColors: ["bg-teal-100 text-teal-600", "bg-red-100 text-red-600", "bg-amber-100 text-amber-700"],
+      gradient: "from-teal-500 to-emerald-500",
+      image: "/img/retreat-spring-bg.jpg",
+      features: [
+        "완주 숲 소리채집 (녹음키트 대여)",
+        "채집한 소리를 원소스로 AI 작곡 (Suno)",
+        "완주 로컬 점심 + 간식 제공",
+        "소리 파형 CNC 목판 기념품",
+        "결과물 공유회 · 20명 한정",
+      ],
+      extras: [],
+      description: "눈을 뜨면 풍경을 보지만, 눈을 감으면 소리가 들립니다. 완주 숲을 걸으며 새소리·계곡·바람을 직접 녹음하고, 그 소리를 원소스로 Suno에 올려 세상에 하나뿐인 내 음악을 만드는 6시간. 악기도 악보도 필요 없습니다. 돌아가는 길, 플레이리스트에 나만의 곡과 소리 파형 목판이 남습니다.",
+      highlight: true,
+      isSoundwalk: true,
     },
     {
       icon: GraduationCap,
@@ -417,12 +417,21 @@ export default function Programs() {
             {filteredPrograms.map((prog, i) => {
               const Icon = prog.icon;
               const originalIndex = programs.indexOf(prog);
+              /* 배치 우선순위: 항바모(전폭) → 멤버십(2칸) → 나머지(1칸).
+                 크기를 데이터가 아니라 여기서 정해야 카테고리 필터로 걸러져도
+                 남은 카드들이 그리드를 자연스럽게 메운다. */
+              const isHero = prog.isBbq;
+              const isWide = prog.isPrivateMembership;
               return (
                 <div
                   key={originalIndex}
                   className={`group rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
-                    prog.isSoundwalk
-                      ? "bg-gradient-to-b from-teal-50 to-white ring-4 ring-teal-500 shadow-xl hover:shadow-2xl md:col-span-2 lg:col-span-3"
+                    isHero
+                      ? "bg-gradient-to-b from-amber-50 to-white ring-4 ring-amber-500 shadow-xl hover:shadow-2xl md:col-span-2 lg:col-span-3"
+                      : isWide
+                      ? "bg-gradient-to-b from-violet-50 to-white ring-2 ring-violet-500 shadow-lg hover:shadow-2xl md:col-span-2 lg:col-span-2"
+                      : prog.isSoundwalk
+                      ? "bg-gradient-to-b from-teal-50 to-white ring-2 ring-teal-400 shadow-lg hover:shadow-xl"
                       : prog.isRetreat
                       ? "bg-gradient-to-b from-green-50 to-white ring-2 ring-primary shadow-lg hover:shadow-2xl md:col-span-2 lg:col-span-1"
                       : "bg-white border border-border hover:shadow-xl"
@@ -430,34 +439,56 @@ export default function Programs() {
                 >
                   {/* Image Area */}
                   <div className={`relative overflow-hidden flex items-center justify-center ${
-                    prog.isSoundwalk ? "h-64 sm:h-72" : prog.isRetreat ? "h-56" : "h-48"
+                    isHero ? "h-72 sm:h-80" : isWide ? "h-56 sm:h-64" : prog.isRetreat ? "h-56" : "h-48"
                   }`}>
                     <img src={prog.image} alt={prog.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                     <div className={`absolute inset-0 ${
-                      prog.isSoundwalk
-                        ? "bg-gradient-to-b from-teal-900/50 via-black/40 to-black/70"
+                      isHero
+                        ? "bg-gradient-to-b from-amber-900/50 via-black/45 to-black/75"
+                        : isWide
+                        ? "bg-gradient-to-b from-violet-900/60 via-black/45 to-black/75"
+                        : prog.isSoundwalk
+                        ? "bg-gradient-to-b from-teal-900/50 via-black/40 to-black/65"
                         : prog.isRetreat
                         ? "bg-gradient-to-b from-primary/60 to-black/50"
                         : "bg-black/40"
                     }`} />
                     <div className="relative text-center text-white z-10 px-4">
-                      {prog.isSoundwalk && <span className="text-5xl block mb-2">🎵</span>}
+                      {isHero && <span className="text-6xl block mb-2">🍖</span>}
+                      {isWide && <span className="text-5xl block mb-2">🐌</span>}
+                      {prog.isSoundwalk && <span className="text-4xl block mb-2">🎵</span>}
                       {prog.isRetreat && <span className="text-4xl block mb-2">🌱</span>}
-                      {!prog.isRetreat && !prog.isSoundwalk && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
-                      <p className={`font-bold ${prog.isSoundwalk ? "text-2xl sm:text-3xl" : prog.isRetreat ? "text-xl" : "text-lg"}`}>
+                      {!isHero && !isWide && !prog.isRetreat && !prog.isSoundwalk && <Icon size={40} className="mx-auto mb-2 opacity-80" />}
+                      <p className={`font-bold ${
+                        isHero ? "text-3xl sm:text-4xl" : isWide ? "text-xl sm:text-2xl" : prog.isRetreat ? "text-xl" : "text-lg"
+                      }`}>
                         {prog.title}
                       </p>
-                      {prog.isSoundwalk && (
+                      {isHero && (
                         <>
-                          <p className="text-white/80 text-sm sm:text-base mt-2">채집한 소리를 원소스로, 나만의 음악을 만드는 하루</p>
-                          <p className="text-amber-300 text-xs sm:text-sm font-bold mt-1.5">숲 소리채집 · Suno AI 작곡 · 공유회</p>
+                          <p className="text-white/85 text-sm sm:text-lg mt-2">항아리에서 훈연한 고기, 그리고 자동수익 스터디</p>
+                          <p className="text-amber-300 text-xs sm:text-sm font-bold mt-1.5">월 2회 · 30석 · 4시간 · 포트럭</p>
                         </>
+                      )}
+                      {isWide && (
+                        <>
+                          <p className="text-white/85 text-sm sm:text-base mt-2">내걸 내놓고 입장하는 멤버십</p>
+                          <p className="text-violet-200 text-xs sm:text-sm font-bold mt-1.5">기수당 20명 · 최소 3개월</p>
+                        </>
+                      )}
+                      {prog.isSoundwalk && (
+                        <p className="text-white/75 text-xs sm:text-sm mt-1.5">채집한 소리로 나만의 음악을 만드는 하루</p>
                       )}
                       {prog.isRetreat && <p className="text-white/70 text-sm mt-1">몸, 마음, 의식을 깨우는 1박 2일</p>}
                     </div>
-                    {prog.isSoundwalk && (
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-teal-700 text-[11px] font-black px-3 py-1 rounded-full tracking-widest">
+                    {isHero && (
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-amber-700 text-[11px] font-black px-3 py-1 rounded-full tracking-widest">
                         SIGNATURE PROGRAM
+                      </div>
+                    )}
+                    {isWide && (
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-violet-700 text-[11px] font-black px-3 py-1 rounded-full tracking-widest">
+                        PRIVATE MEMBERSHIP
                       </div>
                     )}
                     {prog.isJiff && (
@@ -550,9 +581,9 @@ export default function Programs() {
                   </div>
 
                   {/* Content */}
-                  <div className={prog.isSoundwalk ? "p-6 lg:max-w-2xl lg:mx-auto lg:text-center" : "p-6"}>
+                  <div className={isHero ? "p-6 lg:max-w-2xl lg:mx-auto lg:text-center" : isWide ? "p-6 lg:text-center" : "p-6"}>
                     {/* Tags */}
-                    <div className={`flex flex-wrap gap-1.5 mb-4 ${prog.isSoundwalk ? "lg:justify-center" : ""}`}>
+                    <div className={`flex flex-wrap gap-1.5 mb-4 ${isHero || isWide ? "lg:justify-center" : ""}`}>
                       {prog.tags.map((tag, j) => (
                         <span
                           key={j}
@@ -563,11 +594,13 @@ export default function Programs() {
                       ))}
                     </div>
 
-                    {/* 시그니처 카드는 폭이 넓으니 포함 내역을 함께 노출 */}
-                    {prog.isSoundwalk && (
+                    {/* 넓은 카드는 폭에 여유가 있으니 포함 내역을 함께 노출 */}
+                    {(isHero || isWide) && (
                       <div className="flex flex-wrap gap-2 justify-start lg:justify-center mb-4">
                         {prog.features.map((f) => (
-                          <span key={f} className="text-xs bg-white border border-teal-200 text-teal-800 px-3 py-1.5 rounded-full font-medium">
+                          <span key={f} className={`text-xs bg-white px-3 py-1.5 rounded-full font-medium border ${
+                            isHero ? "border-amber-200 text-amber-800" : "border-violet-200 text-violet-800"
+                          }`}>
                             {f}
                           </span>
                         ))}
