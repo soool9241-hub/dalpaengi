@@ -35,6 +35,17 @@ interface Application {
   // 항아리 바베큐 전용 — 다른 프로그램 신청서에는 없다
   fee_type?: string | null;
   fee_amount?: number | null;
+  // 한옥투어(외국인) 전용
+  country?: string | null;
+  messenger?: string | null;
+  course?: string | null;
+  party_size?: number | null;
+  preferred_time?: string | null;
+  requests?: string | null;
+  referral?: string | null;
+  fee_per_person?: number | null;
+  total_fee?: number | null;
+  coupon_granted?: boolean | null;
   // 프라이빗 멤버십 지원서 전용
   channels?: string | null;
   reach?: number | null;
@@ -48,6 +59,14 @@ interface Application {
 }
 
 /* 항아리 바베큐 참가 코스 — api/programs/bbq/route.ts 와 같은 값을 유지한다 */
+/* 한옥투어 제휴처 — api/programs/hanok-tour/route.ts 의 PARTNERS 와 같은 값 */
+const HANOK_PARTNER_LABEL: Record<string, string> = {
+  tirol: "티롤카페",
+  hanboknam: "한복남",
+  jaman: "자만벽화마을",
+  direct: "직접 유입",
+};
+
 /* 항아리 바베큐 요금 유형 — api/programs/bbq/route.ts 와 같은 값을 유지한다 */
 const BBQ_FEE_LABEL: Record<string, string> = {
   guest: "🍖 일반 (6만원)",
@@ -527,6 +546,53 @@ export default function AdminProgramsPage() {
                       <div className="bg-gray-50 rounded-xl p-3">
                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">신청 이유 / 기대하는 점</p>
                         <p className="text-sm text-gray-700">{app.reason}</p>
+                      </div>
+                    )}
+
+                    {/* 한옥투어 — 정산에 필요한 값(코스·인원·금액·유입처)을 한 줄에 모은다 */}
+                    {app.party_size != null && app.total_fee != null && (
+                      <div className="bg-stone-50 border border-stone-200 rounded-xl p-3">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                          <span className="text-sm font-bold text-stone-800">
+                            {app.course === "full" ? "6시간 원데이" : "4시간 코스"} · {app.party_size}명
+                          </span>
+                          <span className="text-sm font-black text-amber-700">
+                            {app.total_fee.toLocaleString()}원
+                            <span className="text-[11px] font-normal text-gray-500 ml-1">
+                              (1인 {(app.fee_per_person ?? 0).toLocaleString()}원)
+                            </span>
+                          </span>
+                          {app.preferred_time && (
+                            <span className="text-xs text-gray-500">희망 {app.preferred_time}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {app.country && (
+                            <span className="px-2 py-0.5 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600">
+                              🌏 {app.country}
+                            </span>
+                          )}
+                          {app.messenger && (
+                            <span className="px-2 py-0.5 bg-white border border-gray-200 rounded-full text-[11px] text-gray-600">
+                              💬 {app.messenger}
+                            </span>
+                          )}
+                          {app.referral && (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-bold">
+                              🎟️ {HANOK_PARTNER_LABEL[app.referral] || app.referral} · 10% 할인
+                            </span>
+                          )}
+                          {app.coupon_granted && (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[11px] font-bold">
+                              🎁 펜션 쿠폰 10만원
+                            </span>
+                          )}
+                        </div>
+                        {app.requests && (
+                          <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-stone-200 whitespace-pre-line">
+                            📝 {app.requests}
+                          </p>
+                        )}
                       </div>
                     )}
 

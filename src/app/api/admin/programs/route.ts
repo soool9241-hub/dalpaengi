@@ -21,6 +21,8 @@ const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "bbq-2026-09-1": { label: "항아리 바베큐 모임 (9월 1회차)", maxCapacity: 30 },
   // 프라이빗 멤버십은 월 1기수 오픈이라 기수마다 키가 하나씩 늘어난다.
   "membership-2026-10": { label: "달팽이 프라이빗 멤버십 1기 (10월)", maxCapacity: 20 },
+  // 한옥투어는 고정 회차가 아니라 날짜별 예약 요청이라 정원 개념이 다르다(1회 출발 최대 10명).
+  "hanok-tour": { label: "한국 문화 체험 투어 (외국인)", maxCapacity: 10 },
 };
 
 // 프로그램 식별자에 따라 테이블명 결정
@@ -29,6 +31,7 @@ function getTableName(program?: string | null): string {
   if (program && program.startsWith("soundwalk")) return "soundwalk_applications";
   if (program && program.startsWith("bbq")) return "bbq_applications";
   if (program && program.startsWith("membership")) return "membership_applications";
+  if (program && program.startsWith("hanok")) return "hanok_tour_bookings";
   return "retreat_applications";
 }
 
@@ -39,7 +42,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || "";
 
   // 통계는 항상 모든 신청 테이블에서 집계
-  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications", "bbq_applications", "membership_applications"];
+  const tablesForStats = ["retreat_applications", "vibecoding_applications", "soundwalk_applications", "bbq_applications", "membership_applications", "hanok_tour_bookings"];
   const allRowsForStats: { program: string; status: string }[] = [];
   for (const t of tablesForStats) {
     const { data: rows } = await supabaseAdmin.from(t).select("program, status");
@@ -515,6 +518,63 @@ export async function PATCH(req: NextRequest) {
         await messageService.sendOne({
           to: phone, from: SENDER, text: msg, type: "LMS", subject: "소리산책 리트릿 참가 확정"
         });
+      } else if (tableName === "hanok_tour_bookings") {
+        // 외국인 예약이라 해외 번호에는 문자가 가지 않는다. 국내 휴대폰일 때만 발송하고
+        // 그 외에는 솔이 이메일·메신저로 직접 안내한다.
+        if (!/^010\d{8}$/.test(phone)) {
+          console.log("[hanok-tour] 해외 연락처 — 문자 발송 건너뜀");
+        } else {
+          const isKo = appData.language !== "en";
+          const fee = Number(appData.fee_per_person || 0);
+          const total = Number(appData.total_fee || 0);
+          const msg = isKo
+            ? `안녕하세요, ${appData.name}님!
+한옥 체험 투어 예약이 확정되었습니다 🏯
+
+■ 일시: ${appData.preferred_date || "-"} ${appData.preferred_time || ""}
+■ 인원: ${appData.party_size}명
+■ 금액: 1인 ${fee.toLocaleString("ko-KR")}원 (총 ${total.toLocaleString("ko-KR")}원)
+■ 집결: 전주 한옥마을 (상세 위치는 전날 다시 안내드립니다)
+${appData.coupon_granted ? "\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n   100,000원 할인 쿠폰을 드립니다." : ""}
+
+━━ 🏯 코스 ━━
+한옥마을 픽업 → 두부마을 로컬 식사
+→ 한옥 카페 티타임(약과) → 전통 소반 만들기
+→ 한옥마을 복귀
+
+━━ 🎒 준비물 ━━
+• 편한 신발 (한옥 마루에서 신발을 벗습니다)
+• 완성한 소반을 담아갈 가방이 있으면 좋아요
+
+당일 뵙겠습니다!
+문의: 010-8531-9531 (임솔)`
+            : `Hello ${appData.name}!
+Your Korean Culture Tour is confirmed 🏯
+
+■ Date: ${appData.preferred_date || "-"} ${appData.preferred_time || ""}
+■ Party: ${appData.party_size} people
+■ Price: KRW ${fee.toLocaleString("en-US")} per person
+   (Total KRW ${total.toLocaleString("en-US")})
+■ Meeting point: Jeonju Hanok Village
+   (exact spot sent the day before)
+
+━━ COURSE ━━
+Pickup → local tofu-village lunch
+→ tea and yakgwa in a hanok cafe
+→ build your own soban → drop-off
+
+━━ BRING ━━
+• Easy shoes (you take them off on the hanok floor)
+• A bag for the soban you make
+
+See you soon!
+Contact: +82 10-8531-9531 (Sol)`;
+
+          await messageService.sendOne({
+            to: phone, from: SENDER, text: msg, type: "LMS",
+            subject: isKo ? "한옥투어 예약 확정" : "Korean Culture Tour - Confirmed",
+          });
+        }
       } else if (tableName === "membership_applications") {
         // 멤버십은 "합격 통보 + 결제 안내" 다. 확정 시점에 아직 입금 전이라
         // 항바모처럼 "입금 확인 완료" 라고 쓰면 안 된다.

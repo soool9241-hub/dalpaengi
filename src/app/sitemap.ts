@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/programs/sound-walk`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/programs/bbq`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/membership`, lastModified, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/programs/hanok-tour`, lastModified, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/programs/spring-retreat`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/programs/vibe-coding`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/programs/jiff`, lastModified, changeFrequency: "monthly", priority: 0.7 },

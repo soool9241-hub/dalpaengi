@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film, Music, Network } from "lucide-react";
+import { Moon, Clock, Sun, Check, X, Users, MapPin, Utensils, GraduationCap, Boxes, Heart, Leaf, Code, BookOpen, Film, Music, Network, Landmark } from "lucide-react";
 import Link from "next/link";
 import { useReservation } from "@/context/ReservationContext";
 import { usePricing } from "@/context/SettingsContext";
@@ -20,17 +20,18 @@ const categories = [
 const PROGRAM_IDS = [
   "stay",     // 0: 항아리 바베큐 모임 — 메인 (별도 페이지)
   "stay",     // 1: 달팽이 프라이빗 멤버십 (별도 페이지)
-  "stay",     // 2: 달팽이 소리산책 리트릿 (별도 페이지)
-  "stay",     // 3: 대학생 MT 패키지
-  "stay",     // 4: 바이브코딩 (별도 페이지)
-  "stay",     // 5: 멤버십 스터디 (별도 페이지)
-  "jolib",    // 6: 나만의 아지트 만들기 (목공체험) ⭐
-  "stay",     // 7: 완주하다 봄 리트릿 (별도 페이지)
-  "stay",     // 8: 숙박 패키지
-  "half",     // 9: 3시간 대여
-  "daynight", // 10: 주/야간 패키지
-  "healing",  // 11: 힐링캠프
-  "stay",     // 12: JIFF STAY (별도 페이지)
+  "stay",     // 2: 한국 문화 체험 투어 (외국인 · 별도 페이지)
+  "stay",     // 3: 달팽이 소리산책 리트릿 (별도 페이지)
+  "stay",     // 4: 대학생 MT 패키지
+  "stay",     // 5: 바이브코딩 (별도 페이지)
+  "stay",     // 6: 멤버십 스터디 (별도 페이지)
+  "jolib",    // 7: 나만의 아지트 만들기 (목공체험) ⭐
+  "stay",     // 8: 완주하다 봄 리트릿 (별도 페이지)
+  "stay",     // 9: 숙박 패키지
+  "half",     // 10: 3시간 대여
+  "daynight", // 11: 주/야간 패키지
+  "healing",  // 12: 힐링캠프
+  "stay",     // 13: JIFF STAY (별도 페이지)
 ] as const;
 
 export default function Programs() {
@@ -87,6 +88,30 @@ export default function Programs() {
       description: "내걸 내놓고 입장하는 멤버십입니다. 혼자 모은 1,000명은 혼자 쓰면 1,000명이지만, 스무 명이 각자 가진 걸 내놓으면 2만 명이 됩니다. 배우러 오는 곳이 아니라 서로의 도달을 키우는 곳이에요. 지원 후 심사가 있습니다.",
       highlight: true,
       isPrivateMembership: true,
+    },
+    {
+      icon: Landmark,
+      title: "한국 문화 체험 투어",
+      duration: "4시간 / 6시간 (한옥마을 픽업)",
+      price: 90000,
+      perPerson: 90000,
+      maxPeople: "최대 10명",
+      categories: ["healing", "pension", "family"],
+      tags: ["NEW", "FOR VISITORS", "픽업 포함"],
+      tagColors: ["bg-amber-100 text-amber-700", "bg-stone-200 text-stone-700", "bg-emerald-100 text-emerald-700"],
+      gradient: "from-stone-600 to-stone-800",
+      image: "/img/exterior-main.jpg",
+      features: [
+        "두부마을 로컬 식사 (관광지 아님)",
+        "500평 한옥 카페 티타임 + 약과",
+        "전통 소반 만들기 (완성품 증정)",
+        "전주 한옥마을 픽업·복귀",
+        "3인 이상 펜션 할인쿠폰 10만원",
+      ],
+      extras: [],
+      description: "외국인 여행객을 위한 하루 코스입니다. 관광지 식당이 아닌 동네 두부집에서 밥을 먹고, 실제 한옥으로 지은 카페 마루에서 약과와 차를 마시고, 우리 공방에서 재단한 원목으로 전통 소반을 직접 만들어 가져갑니다. 사진만 남는 여행이 아니라 만든 게 남는 하루.",
+      highlight: true,
+      isHanokTour: true,
     },
     {
       icon: Music,
@@ -521,6 +546,11 @@ export default function Programs() {
                         🐌 1기 모집
                       </div>
                     )}
+                    {prog.isHanokTour && (
+                      <div className="absolute top-3 left-3 bg-stone-800 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+                        🏯 For Visitors
+                      </div>
+                    )}
                     {prog.isMembership && (
                       <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                         📚 멤버십
@@ -533,7 +563,7 @@ export default function Programs() {
                     )}
                     {/* BEST 배지는 top-3 left-3 위치를 전용 배지들과 공유하므로,
                         전용 배지가 있는 카드에서는 겹치지 않게 제외한다. */}
-                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && !prog.isBbq && !prog.isPrivateMembership && (
+                    {prog.highlight && !prog.isRetreat && !prog.isSoundwalk && !prog.isVibeCoding && !prog.isBbq && !prog.isPrivateMembership && !prog.isHanokTour && (
                       <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
                         BEST
                       </div>
@@ -571,6 +601,11 @@ export default function Programs() {
                     {prog.isPrivateMembership && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-violet-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
                         20명 한정
+                      </div>
+                    )}
+                    {prog.isHanokTour && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-stone-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                        픽업 포함
                       </div>
                     )}
                     {prog.isMembership && (
@@ -659,6 +694,17 @@ export default function Programs() {
                         </div>
                         <p className="text-xs font-bold text-red-500 mb-5">
                           🎉 사전예약 특가 · 선착순 20명 한정
+                        </p>
+                      </>
+                    ) : prog.isHanokTour ? (
+                      <>
+                        <div className="flex items-baseline gap-1.5 mb-1">
+                          <span className="text-3xl font-black text-stone-700">90,000</span>
+                          <span className="text-sm text-text-light">원/인부터</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-1.5">4시간 9만 · 6시간 9.9만 (2인 이상)</p>
+                        <p className="text-xs font-bold text-stone-700 mb-5">
+                          🏯 식사·차·소반키트·픽업 모두 포함
                         </p>
                       </>
                     ) : prog.isPrivateMembership ? (
@@ -764,6 +810,13 @@ export default function Programs() {
                         className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-teal-500/10 text-teal-700 hover:bg-teal-600 hover:text-white text-center"
                       >
                         🎵 사전예약 특가 보기 →
+                      </Link>
+                    ) : prog.isHanokTour ? (
+                      <Link
+                        href="/programs/hanok-tour"
+                        className="block w-full py-3 rounded-xl font-semibold text-sm transition-all bg-stone-500/10 text-stone-700 hover:bg-stone-800 hover:text-white text-center"
+                      >
+                        🏯 코스 보기 · View Tour →
                       </Link>
                     ) : prog.isPrivateMembership ? (
                       <Link
