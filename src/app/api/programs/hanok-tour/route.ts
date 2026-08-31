@@ -14,15 +14,24 @@ const TABLE = "hanok_tour_bookings";
 const PROGRAM = "hanok-tour";
 
 /* ───── 코스 2종 ─────
-   주신 코스 가이드(이동 포함 5시간 10분)를 기준으로,
-   4시간 코스는 공방 투어를 빼고 소반 체험을 60분으로 줄인 축약본이다.
-   가격을 바꿀 땐 programs/hanok-tour/page.tsx 의 COURSES 도 같이 고친다. */
+   구간 시간의 합이 정확히 240분·360분이 되게 맞췄다(이동 시간 포함).
+   6시간 코스만 공방 투어와 스냅 촬영이 들어가고, 소반 시간도 100분으로 길다.
+   일정을 바꿀 땐 programs/hanok-tour/page.tsx 의 ITINERARY 도 같이 고친다. */
 type CourseKey = "half" | "full";
 const COURSES: Record<CourseKey, {
   labelKo: string; labelEn: string; hours: number; fee: number; minParty: number;
+  planKo: string; planEn: string;
 }> = {
-  half: { labelKo: "4시간 코스", labelEn: "4-Hour Course", hours: 4, fee: 90_000, minParty: 1 },
-  full: { labelKo: "6시간 코스", labelEn: "6-Hour Full Course", hours: 6, fee: 99_000, minParty: 2 },
+  half: {
+    labelKo: "4시간 코스", labelEn: "4-Hour Course", hours: 4, fee: 90_000, minParty: 1,
+    planKo: "픽업·이동 30분\n두부마을 로컬 식사 50분\n한옥 카페 티타임 55분\n전통 소반 만들기 75분\n한옥마을 복귀 30분",
+    planEn: "Pickup & drive 30m\nTofu village lunch 50m\nHanok cafe tea 55m\nSoban making 75m\nBack to Hanok Village 30m",
+  },
+  full: {
+    labelKo: "6시간 원데이", labelEn: "6-Hour One Day", hours: 6, fee: 99_000, minParty: 2,
+    planKo: "픽업·이동 30분\n두부마을 로컬 식사 60분\n한옥 카페 티타임 70분\n스토리팜 공방 투어 45분\n전통 소반 만들기 100분\n스냅 촬영·마무리 20분\n한옥마을 복귀 35분",
+    planEn: "Pickup & drive 30m\nTofu village lunch 60m\nHanok cafe tea 70m\nStudio tour 45m\nSoban making 100m\nPhotos & wrap-up 20m\nBack to Hanok Village 35m",
+  },
 };
 
 // 한옥마을 제휴 카페 QR 로 들어오면 10% 할인. 어느 카페에서 왔는지도 같이 남는다.
@@ -64,6 +73,8 @@ export async function GET(req: NextRequest) {
       labelKo: c.labelKo,
       labelEn: c.labelEn,
       hours: c.hours,
+      planKo: c.planKo,
+      planEn: c.planEn,
       fee: c.fee,
       minParty: c.minParty,
       discountedFee: validRef ? Math.round((c.fee * (1 - REFERRAL_DISCOUNT)) / 10) * 10 : c.fee,
@@ -234,10 +245,8 @@ ${requests ? `\n■ 요청사항: ${requests}` : ""}
 ${referral ? `\n🎟️ ${PARTNERS[referral]} 제휴 10% 할인이 적용되었습니다.` : ""}
 ${couponGranted ? `\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n   ${COUPON_VALUE.toLocaleString("ko-KR")}원 할인 쿠폰을 드립니다.` : ""}
 
-━━ 🏯 코스 ━━
-전주 한옥마을 픽업 → 두부마을 로컬 식사
-→ 한옥 카페 티타임(약과) → 전통 소반 만들기
-→ 한옥마을 복귀
+━━ 🏯 코스 (${courseInfo.hours}시간) ━━
+${courseInfo.planKo}
 
 ━━ 📌 다음 단계 ━━
 가능 여부를 확인하고 24시간 안에
@@ -248,12 +257,15 @@ ${couponGranted ? `\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n  
         : `Hello ${name}!
 Your Korean Culture Tour request is received 🏯
 
-■ Course: ${courseInfo.labelEn}
+■ Course: ${courseInfo.labelEn} (${courseInfo.hours} hours)
 ■ Party: ${partySize} people
 ■ Date: ${preferredDate}${preferredTime ? ` ${preferredTime}` : ""}
 ■ Price: KRW ${feePerPerson.toLocaleString("en-US")} per person
    (Total KRW ${totalFee.toLocaleString("en-US")})
 ${referral ? `\nPartner discount (10%) applied.` : ""}
+
+━━ SCHEDULE ━━
+${courseInfo.planEn}
 
 We will confirm availability within 24 hours.
 Please do not transfer any payment yet.

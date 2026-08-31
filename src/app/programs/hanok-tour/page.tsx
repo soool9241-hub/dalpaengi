@@ -58,44 +58,52 @@ const IMG = {
 };
 
 /* ───── 코스 일정 ─────
-   full 전용 구간은 fullOnly 로 표시해 4시간 코스에서 흐리게 처리한다. */
+   half / full 각각의 소요 시간을 분으로 들고 있고, 합이 정확히 240분·360분이 되게 짰다.
+   0 이면 그 코스에서는 빠지는 구간이다. 구간 시간에는 이동 시간이 포함돼 있다.
+   시간을 고칠 땐 아래 TOTAL 검증이 깨지지 않는지 확인할 것. */
 const ITINERARY = [
   {
-    icon: Bus, min: 30, fullOnly: false,
-    ko: { t: "전주 한옥마을에서 픽업", d: "카니발 차량으로 모시러 갑니다. 짐은 숙소에 두고 오세요." },
-    en: { t: "Pickup at Jeonju Hanok Village", d: "We pick you up by van. Leave your luggage at your stay." },
+    icon: Bus, half: 30, full: 30,
+    ko: { t: "전주 한옥마을 픽업 · 두부마을로 이동", d: "카니발 차량으로 모시러 갑니다. 짐은 숙소에 두고 오세요." },
+    en: { t: "Pickup at Hanok Village · Drive to Tofu Village", d: "We pick you up by van. Leave your luggage at your stay." },
   },
   {
-    icon: Utensils, min: 60, fullOnly: false,
+    icon: Utensils, half: 50, full: 60,
     ko: { t: "두부마을에서 로컬 식사", d: "관광지 식당이 아니라 동네 사람들이 가는 두부집입니다. 그날 아침에 만든 두부로 차린 한 상." },
     en: { t: "Lunch in the Tofu Village", d: "Not a tourist restaurant — the tofu house locals actually go to. A full table set with tofu made that morning." },
   },
   {
-    icon: Coffee, min: 60, fullOnly: false,
-    ko: { t: "500평 한옥 카페에서 티타임", d: "한옥으로 지은 카페의 마루에 앉아 차 한 잔. 디저트는 빵이 아니라 약과입니다." },
-    en: { t: "Tea in a 500-pyeong Hanok Cafe", d: "Sit on the wooden floor of a real hanok with a cup of tea. Dessert is yakgwa — a Korean honey pastry, not cake." },
+    icon: Coffee, half: 55, full: 70,
+    ko: { t: "500평 한옥 카페에서 티타임", d: "한옥으로 지은 카페의 마루에 앉아 차 한 잔. 디저트는 빵이 아니라 약과입니다. (이동 10분 포함)" },
+    en: { t: "Tea in a 500-pyeong Hanok Cafe", d: "Sit on the wooden floor of a real hanok with a cup of tea. Dessert is yakgwa — a Korean honey pastry, not cake. (includes 10 min drive)" },
   },
   {
-    icon: MapPin, min: 30, fullOnly: true,
-    ko: { t: "스토리팜 120평 공방 투어", d: "CNC 장비가 도는 목공방을 직접 보여드립니다. 잠시 뒤 만드실 소반이 어떻게 재단되는지도." },
-    en: { t: "Storyfarm Woodworking Studio Tour", d: "A working 120-pyeong studio with CNC machines running — including how the soban you are about to build is cut." },
+    icon: MapPin, half: 0, full: 45,
+    ko: { t: "스토리팜 120평 공방 투어", d: "CNC 장비가 도는 목공방을 직접 보여드립니다. 잠시 뒤 만드실 소반이 어떻게 재단되는지도. (이동 15분 포함)" },
+    en: { t: "Storyfarm Woodworking Studio Tour", d: "A working 120-pyeong studio with CNC machines running — including how the soban you are about to build is cut. (includes 15 min drive)" },
   },
   {
-    icon: Hammer, min: 90, halfMin: 60, fullOnly: false,
+    icon: Hammer, half: 75, full: 100,
     ko: { t: "전통 소반 만들기", d: "달팽이아지트 60평 공간에서 나만의 소반을 조립합니다. 완성한 소반은 가져가세요." },
     en: { t: "Build Your Own Traditional Soban", d: "Assemble a Korean low table in our 60-pyeong space. The soban you finish is yours to take home." },
   },
   {
-    icon: Camera, min: 0, fullOnly: true,
-    ko: { t: "스냅 사진 촬영", d: "코스 내내 사진을 찍어드립니다. 한옥 마루에서, 공방에서, 완성한 소반과 함께." },
-    en: { t: "Snapshot Photo Service", d: "We photograph you along the way — on the hanok floor, in the studio, and with your finished soban." },
+    icon: Camera, half: 0, full: 20,
+    ko: { t: "스냅 사진 촬영 · 마무리", d: "완성한 소반과 함께 사진을 남깁니다. 한옥 마루와 공방에서도 틈틈이 찍어드려요." },
+    en: { t: "Snapshot Photos · Wrap-up", d: "Photos with the soban you just finished — plus candid shots on the hanok floor and in the studio along the way." },
   },
   {
-    icon: Bus, min: 30, fullOnly: false,
+    icon: Bus, half: 30, full: 35,
     ko: { t: "한옥마을로 복귀", d: "출발하신 자리에 다시 내려드립니다." },
     en: { t: "Back to Hanok Village", d: "We drop you off where we picked you up." },
   },
 ];
+
+// 표시된 시간의 합이 실제 코스 길이와 맞는지 한 곳에서 계산한다.
+const TOTAL = {
+  half: ITINERARY.reduce((a, s) => a + s.half, 0),
+  full: ITINERARY.reduce((a, s) => a + s.full, 0),
+};
 
 /* ───── 왜 이 코스인가 ───── */
 const PILLARS = [
@@ -146,8 +154,9 @@ const T = {
     introC: "이 코스는 그 두 가지를 하루에 담았습니다.",
     pillarsTitle: "이 하루에 담긴", pillarsHl: "세 가지",
     itinTitle: "코스", itinHl: "일정",
-    itinNote: "4시간 코스에서는 흐리게 표시된 구간이 빠지고, 소반 체험이 60분으로 진행됩니다",
-    fullOnlyBadge: "6시간 코스 전용",
+    itinNote: "코스를 눌러서 비교해보세요. 구간 시간에는 이동 시간이 포함되어 있습니다",
+    fullOnlyBadge: "6시간 전용",
+    totalTime: "총 소요 시간",
     priceTitle: "코스와", priceHl: "요금",
     priceNote: "픽업·식사·차·다과·소반 키트가 모두 포함된 금액입니다",
     minParty: "최소 인원",
@@ -189,8 +198,9 @@ const T = {
     introC: "This course puts both into a single day.",
     pillarsTitle: "Three things in", pillarsHl: "one day",
     itinTitle: "The", itinHl: "Itinerary",
-    itinNote: "The 4-hour course skips the greyed-out stops, and the soban session runs 60 minutes",
-    fullOnlyBadge: "6-hour course only",
+    itinNote: "Tap a course to compare. Each block includes the drive time between stops",
+    fullOnlyBadge: "6-hour only",
+    totalTime: "Total duration",
     priceTitle: "Courses &", priceHl: "Pricing",
     priceNote: "Pickup, lunch, tea, dessert and the soban kit are all included",
     minParty: "Minimum",
@@ -470,6 +480,8 @@ export default function HanokTourPage() {
   const [lang, setLang] = useState<Lang>("en");
   const [referral, setReferral] = useState<string | null>(null);
   const [referralName, setReferralName] = useState<string | null>(null);
+  // 일정 섹션에서 보고 있는 코스. 예약 폼의 선택과는 별개다.
+  const [viewCourse, setViewCourse] = useState<string>("full");
 
   /* ref 를 useSearchParams 로 읽으면 Suspense 경계가 생기면서 본문이
      서버 렌더링에서 빠진다. 이 페이지는 외국인 검색 유입이 목적이라
@@ -600,47 +612,76 @@ export default function HanokTourPage() {
           </div>
         </section>
 
-        {/* 코스 일정 */}
+        {/* 코스 일정 — 4시간/6시간을 눌러서 비교할 수 있게 한다 */}
         <section className="pb-12 sm:pb-16">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
               {t.itinTitle} <span className="text-amber-600">{t.itinHl}</span>
             </h2>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">{t.itinNote}</p>
           </div>
+
+          <div className="flex justify-center gap-2 mb-5">
+            {COURSES.map((c) => (
+              <button key={c.key} type="button" onClick={() => setViewCourse(c.key)}
+                className={`px-4 py-2 rounded-full text-sm font-bold border-2 transition-all ${
+                  viewCourse === c.key
+                    ? "border-stone-800 bg-stone-800 text-white"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}>
+                {c[lang].label}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-3">
             {ITINERARY.map((s, i) => {
               const Icon = s.icon;
+              const min = viewCourse === "full" ? s.full : s.half;
+              const skipped = min === 0;
               return (
-                <div key={i} className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-4 ${
-                  s.fullOnly ? "border-dashed border-gray-200 bg-gray-50/60" : "border-gray-200 bg-white"
+                <div key={i} className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-4 transition-all ${
+                  skipped ? "border-dashed border-gray-200 bg-gray-50/60" : "border-gray-200 bg-white"
                 }`}>
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    s.fullOnly ? "bg-gray-100 text-gray-400" : "bg-amber-50 text-amber-700"
+                    skipped ? "bg-gray-100 text-gray-300" : "bg-amber-50 text-amber-700"
                   }`}>
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`font-bold text-sm ${s.fullOnly ? "text-gray-500" : "text-gray-900"}`}>{s[lang].t}</p>
-                      {s.min > 0 && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-bold">
-                          {s.halfMin ? `${s.halfMin}–${s.min}` : s.min} min
-                        </span>
-                      )}
-                      {s.fullOnly && (
-                        <span className="px-2 py-0.5 bg-stone-800 text-white rounded-full text-[10px] font-bold">
+                      <p className={`font-bold text-sm ${skipped ? "text-gray-400" : "text-gray-900"}`}>{s[lang].t}</p>
+                      {skipped ? (
+                        <span className="px-2 py-0.5 bg-stone-700 text-white rounded-full text-[10px] font-bold">
                           {t.fullOnlyBadge}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-black">
+                          {min} min
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs mt-1.5 leading-relaxed ${s.fullOnly ? "text-gray-400" : "text-gray-600"}`}>
+                    <p className={`text-xs mt-1.5 leading-relaxed ${skipped ? "text-gray-400" : "text-gray-600"}`}>
                       {s[lang].d}
                     </p>
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* 합계 — 표시된 시간이 실제 코스 길이와 맞는다는 걸 보여준다 */}
+          <div className="mt-4 rounded-2xl bg-stone-900 text-white px-5 py-4 flex items-center justify-between">
+            <span className="text-xs text-white/60 uppercase tracking-widest">{t.totalTime}</span>
+            <span className="text-xl font-black">
+              {Math.floor(TOTAL[viewCourse === "full" ? "full" : "half"] / 60)}h{" "}
+              {TOTAL[viewCourse === "full" ? "full" : "half"] % 60 > 0
+                ? `${TOTAL[viewCourse === "full" ? "full" : "half"] % 60}m`
+                : ""}
+              <span className="text-xs font-normal text-white/50 ml-2">
+                ({TOTAL[viewCourse === "full" ? "full" : "half"]} min)
+              </span>
+            </span>
           </div>
         </section>
 

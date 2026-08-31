@@ -537,10 +537,10 @@ export async function PATCH(req: NextRequest) {
 ■ 집결: 전주 한옥마을 (상세 위치는 전날 다시 안내드립니다)
 ${appData.coupon_granted ? "\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n   100,000원 할인 쿠폰을 드립니다." : ""}
 
-━━ 🏯 코스 ━━
-한옥마을 픽업 → 두부마을 로컬 식사
-→ 한옥 카페 티타임(약과) → 전통 소반 만들기
-→ 한옥마을 복귀
+━━ 🏯 코스 (${appData.course === "full" ? "6" : "4"}시간) ━━
+${appData.course === "full"
+  ? "픽업·이동 30분\n두부마을 로컬 식사 60분\n한옥 카페 티타임 70분\n스토리팜 공방 투어 45분\n전통 소반 만들기 100분\n스냅 촬영·마무리 20분\n한옥마을 복귀 35분"
+  : "픽업·이동 30분\n두부마을 로컬 식사 50분\n한옥 카페 티타임 55분\n전통 소반 만들기 75분\n한옥마을 복귀 30분"}
 
 ━━ 🎒 준비물 ━━
 • 편한 신발 (한옥 마루에서 신발을 벗습니다)
@@ -558,10 +558,10 @@ Your Korean Culture Tour is confirmed 🏯
 ■ Meeting point: Jeonju Hanok Village
    (exact spot sent the day before)
 
-━━ COURSE ━━
-Pickup → local tofu-village lunch
-→ tea and yakgwa in a hanok cafe
-→ build your own soban → drop-off
+━━ COURSE (${appData.course === "full" ? "6" : "4"} hours) ━━
+${appData.course === "full"
+  ? "Pickup & drive 30m\nTofu village lunch 60m\nHanok cafe tea 70m\nStudio tour 45m\nSoban making 100m\nPhotos & wrap-up 20m\nBack to Hanok Village 35m"
+  : "Pickup & drive 30m\nTofu village lunch 50m\nHanok cafe tea 55m\nSoban making 75m\nBack to Hanok Village 30m"}
 
 ━━ BRING ━━
 • Easy shoes (you take them off on the hanok floor)
