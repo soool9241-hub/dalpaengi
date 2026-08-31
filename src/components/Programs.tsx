@@ -116,7 +116,7 @@ export default function Programs() {
     {
       icon: Music,
       title: "달팽이 소리산책 리트릿",
-      duration: "6시간 (9.6 12:00~18:00)",
+      duration: "6시간 (일정 조율 중)",
       price: 99000,
       originalPrice: 200000,
       perPerson: 99000,
@@ -590,7 +590,7 @@ export default function Programs() {
                     )}
                     {prog.isSoundwalk && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
-                        9.6(일)
+                        일정 조율 중
                       </div>
                     )}
                     {prog.isBbq && (

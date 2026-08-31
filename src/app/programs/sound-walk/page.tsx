@@ -29,7 +29,12 @@ const FEE = 99_000;
 const DISCOUNT_PERCENT = 50;
 const MAX_CAPACITY = 20;
 const MIN_CAPACITY = 10;
+/* 일정 미정. 날짜가 확정되면 DATE_TBD 를 false 로 바꾸고 아래 두 값을 채운다.
+   그러면 D-day 배지와 페이지 곳곳의 날짜 표기가 한꺼번에 되살아난다. */
+const DATE_TBD = true;
 const EVENT_DATE = "2026-09-06T12:00:00+09:00";
+const EVENT_TEXT = DATE_TBD ? "일정 조율 중" : "2026.9.6(일)";
+const EVENT_TIME = "12:00~18:00";
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 // AI 음악창작에 사용하는 서비스. 참가자가 사전에 가입해와야 한다.
 const SUNO_URL = "https://suno.com/me";
@@ -322,7 +327,7 @@ const LEADERS = [
 ];
 
 /* ───── 후기
-   ⚠️ 소리산책은 2026.9.6 베타 1회차 = 아직 후기 없음.
+   ⚠️ 소리산책은 베타 1회차 전 = 아직 후기 없음.
    달팽이아지트에서 진행한 「완주하다 봄 리트릿」(2026.4) 실제 후기를 사용하며,
    섹션 제목·주석으로 어느 프로그램 후기인지 명확히 밝힌다. ───── */
 const REVIEWS = [
@@ -415,7 +420,7 @@ function ReviewSlider() {
     <section className="pb-14 sm:pb-16">
       <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">달팽이아지트 리트릿 후기</h2>
       <p className="text-sm text-gray-500 text-center mb-1">같은 공간, 같은 호스트가 진행한 리트릿에 참가한 분들의 실제 후기입니다</p>
-      <p className="text-xs text-gray-400 text-center mb-8">※ 「완주하다 봄 리트릿」(2026.4) 참가자 후기 · 소리산책은 9.6 첫 회차입니다</p>
+      <p className="text-xs text-gray-400 text-center mb-8">※ 「완주하다 봄 리트릿」(2026.4) 참가자 후기 · 소리산책은 아직 첫 회차 전입니다</p>
       <div
         className="relative"
         onTouchStart={(e) => { touchStart.current = e.touches[0].clientX; }}
@@ -682,6 +687,7 @@ function useSoundwalkStatus() {
 
 /* ───── D-day ───── */
 function getDday() {
+  if (DATE_TBD) return null;
   const diff = Math.ceil((new Date(EVENT_DATE).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   return diff > 0 ? diff : 0;
 }
@@ -766,7 +772,7 @@ export default function SoundWalkPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-                <Calendar size={14} /> 2026.9.6(일) 12:00~18:00
+                <Calendar size={14} /> {EVENT_TEXT}{DATE_TBD ? "" : ` ${EVENT_TIME}`}
               </div>
               <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
                 <MapPin size={14} /> 달팽이아지트펜션 (전북 완주 소양)
@@ -1059,7 +1065,7 @@ export default function SoundWalkPage() {
         {/* ─── 10. 타임테이블 ─── */}
         <section className="pb-14 sm:pb-16">
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center mb-2">하루 타임테이블</h2>
-          <p className="text-sm text-gray-500 text-center mb-6">2026.9.6(일) · 12:00~18:00</p>
+          <p className="text-sm text-gray-500 text-center mb-6">{EVENT_TEXT} · {EVENT_TIME}</p>
           <div className="space-y-2.5">
             {TIMETABLE.map((item, i) => (
               <div key={i} className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3">
@@ -1267,7 +1273,7 @@ export default function SoundWalkPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">일시</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1">2026.9.6(일)</p>
+                <p className="text-sm font-semibold text-gray-900 mt-1">{EVENT_TEXT}</p>
                 <p className="text-xs text-gray-500">12:00~18:00 (6시간)</p>
               </div>
               <div>
