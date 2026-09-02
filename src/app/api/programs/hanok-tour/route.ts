@@ -13,78 +13,89 @@ const ADMIN_SOL = "01085319531";
 const TABLE = "hanok_tour_bookings";
 const PROGRAM = "hanok-tour";
 
-/* ───── 코스 2종 ─────
-   구간 시간의 합이 정확히 240분·360분이 되게 맞췄다(이동 시간 포함).
-   6시간 코스만 공방 투어와 스냅 촬영이 들어가고, 소반 시간도 100분으로 길다.
-   일정을 바꿀 땐 programs/hanok-tour/page.tsx 의 ITINERARY 도 같이 고친다. */
-type CourseKey = "half" | "full";
+/* ───── 공통 조건 ─────
+   네 상품 모두 6시간(12:00~18:00), 1인 99,000원, 10~15명 단체.
+   달라지는 건 오후 체험뿐이다. */
+const FEE = 99_000;
+const MIN_PARTY = 10;
+const MAX_PARTY = 15;
+const MEETING = "전주 한옥마을";
+
+/* ───── 상품 4종 ─────
+   가격·일정을 바꿀 땐 programs/hanok-tour/page.tsx 의 COURSES 도 같이 고친다.
+   D 는 제목 미확정 상태라 작업 제목을 쓰고 있다. */
+type CourseKey = "A" | "B" | "C" | "D";
 const COURSES: Record<CourseKey, {
-  labelKo: string; labelEn: string; hours: number; fee: number; minParty: number;
-  planKo: string; planEn: string;
+  nameKo: string; nameEn: string; endTime: string; planKo: string; planEn: string;
 }> = {
-  half: {
-    labelKo: "4시간 코스", labelEn: "4-Hour Course", hours: 4, fee: 90_000, minParty: 1,
-    planKo: "픽업·이동 30분\n두부마을 로컬 식사 50분\n한옥 카페 티타임 55분\n전통 소반 만들기 75분\n한옥마을 복귀 30분",
-    planEn: "Pickup & drive 30m\nTofu village lunch 50m\nHanok cafe tea 55m\nSoban making 75m\nBack to Hanok Village 30m",
+  A: {
+    nameKo: "내 손으로 만드는 한국 밥상",
+    nameEn: "Make Your Own Korean Table",
+    endTime: "17:35",
+    planKo: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상 (60분)\n13:35 한옥카페 전통차 (60분)\n14:45 스토리팜 CNC 공방 투어 (30분)\n15:20 전통소반 만들기 (90분)\n16:50 각인·포장·기념촬영\n17:35 한옥마을 복귀",
+    planEn: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch (60m)\n13:35 Hanok cafe, Korean tea (60m)\n14:45 StoryFarm CNC workshop tour (30m)\n15:20 Make your own soban (90m)\n16:50 Engraving, wrapping, photos\n17:35 Back to Hanok Village",
   },
-  full: {
-    labelKo: "6시간 원데이", labelEn: "6-Hour One Day", hours: 6, fee: 99_000, minParty: 2,
-    planKo: "픽업·이동 30분\n두부마을 로컬 식사 60분\n한옥 카페 티타임 70분\n스토리팜 공방 투어 45분\n전통 소반 만들기 100분\n스냅 촬영·마무리 20분\n한옥마을 복귀 35분",
-    planEn: "Pickup & drive 30m\nTofu village lunch 60m\nHanok cafe tea 70m\nStudio tour 45m\nSoban making 100m\nPhotos & wrap-up 20m\nBack to Hanok Village 35m",
+  B: {
+    nameKo: "완주 로컬 하루",
+    nameEn: "Wanju Slow Day",
+    endTime: "17:05",
+    planKo: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상 (60분)\n13:35 한옥카페 전통차 (60분)\n14:35 소양 고택 투어 (30분)\n15:05 K-콘텐츠 촬영지 투어 (30분)\n15:35 호수뷰 산책 (60분)\n17:05 한옥마을 복귀",
+    planEn: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch (60m)\n13:35 Hanok cafe, Korean tea (60m)\n14:35 Historic hanok house tour (30m)\n15:05 K-content filming location (30m)\n15:35 Lakeside walk (60m)\n17:05 Back to Hanok Village",
+  },
+  C: {
+    nameKo: "손으로 빚는 한국의 다과",
+    nameEn: "Make Korean Tea Sweets",
+    endTime: "17:35",
+    planKo: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상 (60분)\n13:35 한옥카페 전통차 (60분)\n15:05 다과·다식 만들기 (90분)\n16:35 직접 만든 다식으로 티타임 (30분)\n17:35 한옥마을 복귀",
+    planEn: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch (60m)\n13:35 Hanok cafe, Korean tea (60m)\n15:05 Dasik & tea sweets class (90m)\n16:35 Tea time with what you made (30m)\n17:35 Back to Hanok Village",
+  },
+  D: {
+    nameKo: "전주 소리 집중 힐링",
+    nameEn: "A Day of Korean Sound",
+    endTime: "18:00",
+    planKo: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상 (60분)\n14:00 소리나무 카페 · 헤아리움 음향 감상실\n     · 진공관앰프 공방 (90분)\n16:00 소리채집 프로그램 (90분)\n18:00 한옥마을 복귀",
+    planEn: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch (60m)\n14:00 Sorinamu cafe, Hearium listening hall\n     & vacuum-tube amp workshop (90m)\n16:00 Field recording program (90m)\n18:00 Back to Hanok Village",
   },
 };
 
-// 한옥마을 제휴 카페 QR 로 들어오면 10% 할인. 어느 카페에서 왔는지도 같이 남는다.
-const REFERRAL_DISCOUNT = 0.1;
-// 3인 이상 동반 예약 시 달팽이아지트 펜션 할인 쿠폰 10만원 제공
-const COUPON_MIN_PARTY = 3;
-const COUPON_VALUE = 100_000;
-
-const MAX_PARTY = 10;
-
-/* 제휴처 목록. QR 코드마다 ref 값을 다르게 발급해 유입 카페를 구분한다.
-   새 제휴처가 생기면 여기에 한 줄 추가하고 그 값으로 QR 을 만들면 된다. */
+/* 한옥마을 제휴 카페 QR 유입 추적. 새 제휴처는 여기에 한 줄 추가하고 그 값으로 QR 을 만든다. */
 const PARTNERS: Record<string, string> = {
-  tirol: "티롤카페",
+  tirol: "카페 티롤",
   hanboknam: "한복남",
   jaman: "자만벽화마을",
   direct: "직접 유입",
 };
 
-function calcFee(course: CourseKey, partySize: number, referral: string | null) {
-  const base = COURSES[course].fee;
-  const discounted = referral ? Math.round((base * (1 - REFERRAL_DISCOUNT)) / 10) * 10 : base;
-  return {
-    feePerPerson: discounted,
-    totalFee: discounted * partySize,
-    couponGranted: partySize >= COUPON_MIN_PARTY,
-  };
+/* 제휴 할인율. 정리본 마진표가 99,000원 기준으로 잡혀 있어 기본값을 0 으로 둔다.
+   10명 팀에 10% 를 걸면 A·C 상품 마진이 절반 아래로 떨어진다.
+   할인을 켤 때는 이 값만 0.1 로 바꾸면 페이지 표기까지 같이 따라간다. */
+const REFERRAL_DISCOUNT = 0;
+
+function calcFee(partySize: number, referral: string | null) {
+  const discounted =
+    referral && REFERRAL_DISCOUNT > 0
+      ? Math.round((FEE * (1 - REFERRAL_DISCOUNT)) / 10) * 10
+      : FEE;
+  return { feePerPerson: discounted, totalFee: discounted * partySize };
 }
 
-// GET: 코스·요금 정보 (페이지가 서버 값과 어긋나지 않도록 여기서 내려준다)
+// GET: 상품·요금 정보 (페이지가 서버 값과 어긋나지 않도록 여기서 내려준다)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const ref = searchParams.get("ref");
   const validRef = ref && PARTNERS[ref] ? ref : null;
+  const { feePerPerson } = calcFee(1, validRef);
 
   return NextResponse.json({
-    courses: Object.entries(COURSES).map(([key, c]) => ({
-      key,
-      labelKo: c.labelKo,
-      labelEn: c.labelEn,
-      hours: c.hours,
-      planKo: c.planKo,
-      planEn: c.planEn,
-      fee: c.fee,
-      minParty: c.minParty,
-      discountedFee: validRef ? Math.round((c.fee * (1 - REFERRAL_DISCOUNT)) / 10) * 10 : c.fee,
-    })),
+    fee: FEE,
+    feePerPerson,
+    minParty: MIN_PARTY,
+    maxParty: MAX_PARTY,
+    meeting: MEETING,
+    courses: Object.entries(COURSES).map(([key, c]) => ({ key, ...c })),
     referral: validRef,
     referralName: validRef ? PARTNERS[validRef] : null,
     referralDiscount: REFERRAL_DISCOUNT,
-    couponMinParty: COUPON_MIN_PARTY,
-    couponValue: COUPON_VALUE,
-    maxParty: MAX_PARTY,
   });
 }
 
@@ -93,15 +104,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     name, phone, email, messenger, country, language,
-    preferredDate, preferredTime, requests, privacyConsent,
+    preferredDate, requests, privacyConsent,
   } = body;
 
-  const course: CourseKey = (["half", "full"] as const).includes(body.course) ? body.course : "half";
+  const course: CourseKey = (["A", "B", "C", "D"] as const).includes(body.course) ? body.course : "A";
   const courseInfo = COURSES[course];
-
-  const partySize = Math.max(1, Math.min(MAX_PARTY, parseInt(String(body.partySize), 10) || 1));
-  const referral = body.referral && PARTNERS[body.referral] ? String(body.referral) : null;
   const isKo = language === "ko";
+
+  const rawParty = parseInt(String(body.partySize), 10);
+  const partySize = Number.isFinite(rawParty) ? rawParty : 0;
 
   if (!name || !String(name).trim()) {
     return NextResponse.json(
@@ -111,8 +122,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 외국인 대상이라 한국 전화번호가 없을 수 있다. 연락 수단이 하나도 없으면 받을 수 없다.
-  const hasContact = [phone, email, messenger].some((v) => v && String(v).trim());
-  if (!hasContact) {
+  if (![phone, email, messenger].some((v) => v && String(v).trim())) {
     return NextResponse.json(
       {
         error: isKo
@@ -130,12 +140,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (partySize < courseInfo.minParty) {
+  // 차량·가이드가 팀 단위 정액이라 인원이 적으면 운영이 성립하지 않는다.
+  if (partySize < MIN_PARTY || partySize > MAX_PARTY) {
     return NextResponse.json(
       {
         error: isKo
-          ? `${courseInfo.labelKo}는 최소 ${courseInfo.minParty}인부터 신청하실 수 있습니다.`
-          : `The ${courseInfo.labelEn} requires at least ${courseInfo.minParty} people.`,
+          ? `이 투어는 ${MIN_PARTY}~${MAX_PARTY}명 단체로 운영됩니다.`
+          : `This tour runs for groups of ${MIN_PARTY} to ${MAX_PARTY} people.`,
       },
       { status: 400 }
     );
@@ -143,14 +154,12 @@ export async function POST(req: NextRequest) {
 
   if (privacyConsent !== true) {
     return NextResponse.json(
-      {
-        error: isKo
-          ? "개인정보 수집 동의는 필수입니다."
-          : "Consent to data collection is required.",
-      },
+      { error: isKo ? "개인정보 수집 동의는 필수입니다." : "Consent to data collection is required." },
       { status: 400 }
     );
   }
+
+  const referral = body.referral && PARTNERS[body.referral] ? String(body.referral) : null;
 
   // 전화번호가 있으면 정규화. 국내 번호만 문자 발송 대상이 된다.
   let normalizedPhone: string | null = null;
@@ -166,7 +175,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { feePerPerson, totalFee, couponGranted } = calcFee(course, partySize, referral);
+  const { feePerPerson, totalFee } = calcFee(partySize, referral);
 
   const { error } = await supabaseAdmin.from(TABLE).insert({
     name,
@@ -178,12 +187,12 @@ export async function POST(req: NextRequest) {
     course,
     party_size: partySize,
     preferred_date: preferredDate,
-    preferred_time: preferredTime || null,
+    preferred_time: "12:00",
     requests: requests || null,
     referral,
     fee_per_person: feePerPerson,
     total_fee: totalFee,
-    coupon_granted: couponGranted,
+    coupon_granted: false,
     privacy_consent: privacyConsent,
     program: PROGRAM,
     status: "pending",
@@ -208,9 +217,11 @@ export async function POST(req: NextRequest) {
   try {
     const adminMsg = `[한옥투어 새 예약]
 
-■ 코스: ${courseInfo.labelKo} (${courseInfo.hours}시간)
+■ 상품: ${course}. ${courseInfo.nameKo}
 ■ 인원: ${partySize}명
-■ 희망일: ${preferredDate}${preferredTime ? ` ${preferredTime}` : ""}
+■ 희망일: ${preferredDate} 12:00 집결
+■ 종료: ${courseInfo.endTime} (${MEETING} 해산)
+
 ■ 이름: ${name}
 ■ 국적: ${country || "-"}
 ■ 연락처: ${normalizedPhone || "-"}
@@ -221,10 +232,9 @@ export async function POST(req: NextRequest) {
 ━━ 💰 정산 ━━
 1인 ${feePerPerson.toLocaleString("ko-KR")}원 × ${partySize}명
 = ${totalFee.toLocaleString("ko-KR")}원
-${referral ? `🎟️ ${PARTNERS[referral]} QR 유입 (10% 할인 적용)` : "· 직접 유입"}
-${couponGranted ? `🎁 펜션 할인쿠폰 ${COUPON_VALUE.toLocaleString("ko-KR")}원 지급 대상` : ""}
+${referral ? `🎟️ ${PARTNERS[referral]} QR 유입` : "· 직접 유입"}
 ${requests ? `\n■ 요청사항: ${requests}` : ""}
-▶ 관리자에서 확정 처리`;
+▶ 차량·협력처 확인 후 관리자에서 확정 처리`;
 
     const tasks = [
       messageService.sendOne({
@@ -232,43 +242,44 @@ ${requests ? `\n■ 요청사항: ${requests}` : ""}
       }),
     ];
 
-    // 국내 휴대폰이면 신청자에게도 안내 문자. 해외 번호는 발송하지 않고 이메일·메신저로 안내한다.
+    // 국내 휴대폰이면 신청자에게도 안내. 해외 번호는 발송하지 않고 이메일·메신저로 안내한다.
     if (koreanMobile) {
       const applicantMsg = isKo
         ? `안녕하세요, ${name}님!
-한옥 체험 투어 예약이 접수되었습니다 🏯
+완주 로컬 체험 투어 예약이 접수되었습니다 🏯
 
-■ 코스: ${courseInfo.labelKo}
+■ 상품: ${courseInfo.nameKo}
 ■ 인원: ${partySize}명
-■ 희망일: ${preferredDate}${preferredTime ? ` ${preferredTime}` : ""}
-■ 금액: 1인 ${feePerPerson.toLocaleString("ko-KR")}원 (총 ${totalFee.toLocaleString("ko-KR")}원)
-${referral ? `\n🎟️ ${PARTNERS[referral]} 제휴 10% 할인이 적용되었습니다.` : ""}
-${couponGranted ? `\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n   ${COUPON_VALUE.toLocaleString("ko-KR")}원 할인 쿠폰을 드립니다.` : ""}
+■ 일시: ${preferredDate} 12:00~${courseInfo.endTime}
+■ 집결/해산: ${MEETING}
+■ 금액: 1인 ${feePerPerson.toLocaleString("ko-KR")}원
+        (총 ${totalFee.toLocaleString("ko-KR")}원)
 
-━━ 🏯 코스 (${courseInfo.hours}시간) ━━
+━━ 🗓 일정 ━━
 ${courseInfo.planKo}
 
 ━━ 📌 다음 단계 ━━
-가능 여부를 확인하고 24시간 안에
-연락드립니다. 지금 입금하지 마세요.
+차량과 협력처 일정을 확인하고
+24시간 안에 연락드립니다.
+지금 입금하지 마세요.
 
 문의: 010-8531-9531 (임솔)
 감사합니다 :)`
         : `Hello ${name}!
-Your Korean Culture Tour request is received 🏯
+Your Wanju local experience request is received 🏯
 
-■ Course: ${courseInfo.labelEn} (${courseInfo.hours} hours)
-■ Party: ${partySize} people
-■ Date: ${preferredDate}${preferredTime ? ` ${preferredTime}` : ""}
+■ Course: ${courseInfo.nameEn}
+■ Group: ${partySize} people
+■ Date: ${preferredDate} 12:00–${courseInfo.endTime}
+■ Meet & finish: Jeonju Hanok Village
 ■ Price: KRW ${feePerPerson.toLocaleString("en-US")} per person
-   (Total KRW ${totalFee.toLocaleString("en-US")})
-${referral ? `\nPartner discount (10%) applied.` : ""}
+        (Total KRW ${totalFee.toLocaleString("en-US")})
 
 ━━ SCHEDULE ━━
 ${courseInfo.planEn}
 
-We will confirm availability within 24 hours.
-Please do not transfer any payment yet.
+We will confirm vehicle and partner availability
+within 24 hours. Please do not send payment yet.
 
 Contact: +82 10-8531-9531 (Sol)
 Thank you!`;
@@ -276,7 +287,7 @@ Thank you!`;
       tasks.push(
         messageService.sendOne({
           to: koreanMobile, from: SENDER, text: applicantMsg, type: "LMS",
-          subject: isKo ? "한옥투어 예약 접수 안내" : "Korean Culture Tour - Request Received",
+          subject: isKo ? "완주 체험투어 예약 접수" : "Wanju Local Tour - Request Received",
         })
       );
     }
@@ -289,10 +300,10 @@ Thank you!`;
   return NextResponse.json({
     success: true,
     course,
+    courseName: isKo ? courseInfo.nameKo : courseInfo.nameEn,
     partySize,
     feePerPerson,
     totalFee,
-    couponGranted,
     referralApplied: !!referral,
     smsSent: !!koreanMobile,
   });

@@ -60,8 +60,15 @@ interface Application {
 
 /* 항아리 바베큐 참가 코스 — api/programs/bbq/route.ts 와 같은 값을 유지한다 */
 /* 한옥투어 제휴처 — api/programs/hanok-tour/route.ts 의 PARTNERS 와 같은 값 */
+const HANOK_COURSE_LABEL: Record<string, string> = {
+  A: "🪵 A. 내 손으로 만드는 한국 밥상",
+  B: "🌾 B. 완주 로컬 하루",
+  C: "🍡 C. 손으로 빚는 한국의 다과",
+  D: "🎧 D. 전주 소리 집중 힐링",
+};
+
 const HANOK_PARTNER_LABEL: Record<string, string> = {
-  tirol: "티롤카페",
+  tirol: "카페 티롤",
   hanboknam: "한복남",
   jaman: "자만벽화마을",
   direct: "직접 유입",
@@ -554,7 +561,7 @@ export default function AdminProgramsPage() {
                       <div className="bg-stone-50 border border-stone-200 rounded-xl p-3">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                           <span className="text-sm font-bold text-stone-800">
-                            {app.course === "full" ? "6시간 원데이" : "4시간 코스"} · {app.party_size}명
+                            {HANOK_COURSE_LABEL[app.course || ""] || app.course} · {app.party_size}명
                           </span>
                           <span className="text-sm font-black text-amber-700">
                             {app.total_fee.toLocaleString()}원
@@ -579,12 +586,7 @@ export default function AdminProgramsPage() {
                           )}
                           {app.referral && (
                             <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[11px] font-bold">
-                              🎟️ {HANOK_PARTNER_LABEL[app.referral] || app.referral} · 10% 할인
-                            </span>
-                          )}
-                          {app.coupon_granted && (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[11px] font-bold">
-                              🎁 펜션 쿠폰 10만원
+                              🎟️ {HANOK_PARTNER_LABEL[app.referral] || app.referral} 유입
                             </span>
                           )}
                         </div>

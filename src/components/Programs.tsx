@@ -91,25 +91,25 @@ export default function Programs() {
     },
     {
       icon: Landmark,
-      title: "한국 문화 체험 투어",
-      duration: "4시간 / 6시간 (한옥마을 픽업)",
-      price: 90000,
-      perPerson: 90000,
-      maxPeople: "최대 10명",
+      title: "완주 로컬 체험 투어",
+      duration: "6시간 (12:00~18:00)",
+      price: 99000,
+      perPerson: 99000,
+      maxPeople: "10~15명 단체",
       categories: ["healing", "pension", "family"],
-      tags: ["NEW", "FOR VISITORS", "픽업 포함"],
+      tags: ["NEW", "FOR VISITORS", "코스 4종"],
       tagColors: ["bg-amber-100 text-amber-700", "bg-stone-200 text-stone-700", "bg-emerald-100 text-emerald-700"],
       gradient: "from-stone-600 to-stone-800",
       image: "/img/exterior-main.jpg",
       features: [
-        "두부마을 로컬 식사 (관광지 아님)",
-        "500평 한옥 카페 티타임 + 약과",
-        "전통 소반 만들기 (완성품 증정)",
-        "전주 한옥마을 픽업·복귀",
-        "3인 이상 펜션 할인쿠폰 10만원",
+        "두부마을 로컬 한상 (전 코스 공통)",
+        "A. 전통 소반 만들기 (완성품 증정)",
+        "B. 고택·촬영지·호수 트레킹",
+        "C. 다과·다식 만들기 + 티타임",
+        "D. 음향 감상실 + 소리채집",
       ],
       extras: [],
-      description: "외국인 여행객을 위한 하루 코스입니다. 관광지 식당이 아닌 동네 두부집에서 밥을 먹고, 실제 한옥으로 지은 카페 마루에서 약과와 차를 마시고, 우리 공방에서 재단한 원목으로 전통 소반을 직접 만들어 가져갑니다. 사진만 남는 여행이 아니라 만든 게 남는 하루.",
+      description: "외국인 여행객을 위한 6시간 코스입니다. 정오에 전주 한옥마을에서 만나 두부마을에서 로컬 한상을 먹는 오전은 네 코스가 똑같고, 오후를 무엇으로 채울지만 고르시면 됩니다. 소반 만들기 · 완주 로컬 하루 · 다과 만들기 · 소리 힐링 중 택 1.",
       highlight: true,
       isHanokTour: true,
     },
@@ -605,7 +605,7 @@ export default function Programs() {
                     )}
                     {prog.isHanokTour && (
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-stone-700 text-xs font-bold px-3 py-1.5 rounded-full shadow">
-                        픽업 포함
+                        코스 4종 택1
                       </div>
                     )}
                     {prog.isMembership && (
@@ -699,12 +699,12 @@ export default function Programs() {
                     ) : prog.isHanokTour ? (
                       <>
                         <div className="flex items-baseline gap-1.5 mb-1">
-                          <span className="text-3xl font-black text-stone-700">90,000</span>
-                          <span className="text-sm text-text-light">원/인부터</span>
+                          <span className="text-3xl font-black text-stone-700">99,000</span>
+                          <span className="text-sm text-text-light">원/인</span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-1.5">4시간 9만 · 6시간 9.9만 (2인 이상)</p>
+                        <p className="text-xs text-gray-500 mb-1.5">6시간 · 10~15명 단체 · 한옥마을 집결</p>
                         <p className="text-xs font-bold text-stone-700 mb-5">
-                          🏯 식사·차·소반키트·픽업 모두 포함
+                          🏯 A·B·C·D 네 코스 중 택 1
                         </p>
                       </>
                     ) : prog.isPrivateMembership ? (

@@ -8,265 +8,303 @@ import {
   ArrowRight,
   ChevronLeft,
   Check,
-  Camera,
-  Gift,
   Ticket,
   Utensils,
-  Hammer,
-  Coffee,
   Bus,
+  Gift,
+  CloudSun,
+  Home,
 } from "lucide-react";
 import Link from "next/link";
 
-/* ───── 코스 2종 ─────
-   주신 코스 가이드는 이동 포함 5시간 10분이다. 6시간 코스가 그 전체이고,
-   4시간 코스는 공방 투어를 빼고 소반 체험을 60분으로 줄인 축약본이다.
-   가격을 바꿀 땐 api/programs/hanok-tour/route.ts 의 COURSES 도 같이 고친다. */
+/* ───── 공통 조건 ─────
+   네 상품 모두 12:00 한옥마을 집결, 1인 99,000원, 10~15명 단체.
+   달라지는 건 오후 체험뿐이라, 한 페이지에서 상품만 고르는 구조로 짰다. */
+const FEE = 99_000;
+const MIN_PARTY = 10;
+const MAX_PARTY = 15;
+const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
+
+/* 각 장소의 전용 촬영본이 아직 없어 펜션·주변 사진을 쓴다.
+   TODO(sol): 파일럿 진행 후 실제 코스 사진으로 교체 */
+const IMG = {
+  hero: "/img/exterior-main.jpg",
+  A: "/img/living-room-wide.jpg",
+  B: "/img/nature-yard.jpg",
+  C: "/img/kitchen-dining.jpg",
+  D: "/img/living-tv.jpg",
+  cta: "/img/exterior-side.jpg",
+};
+
+/* ───── 상품 4종 ─────
+   일정의 min 은 표시용이 아니라 실제 소요 시간이다. move:true 는 이동 구간.
+   가격·일정을 바꿀 땐 api/programs/hanok-tour/route.ts 의 COURSES 도 같이 고친다.
+   D 는 아직 제목이 확정되지 않아 작업 제목을 쓰고 있다. */
 const COURSES = [
   {
-    key: "half",
-    hours: 4,
-    fee: 90_000,
-    minParty: 1,
-    ko: { label: "4시간 코스", tag: "핵심만", desc: "먹고, 쉬고, 만드는 세 가지" },
-    en: { label: "4-Hour Course", tag: "The Essentials", desc: "Eat, rest, and make — the three core stops" },
+    key: "A",
+    emoji: "🪵",
+    img: IMG.A,
+    end: "17:35",
+    outdoor: false,
+    ko: {
+      name: "내 손으로 만드는 한국 밥상",
+      short: "전통 소반 만들기",
+      tagline: "직접 만든 소반을 들고 돌아갑니다",
+      takeaway: "완성한 소반 1점",
+    },
+    en: {
+      name: "Make Your Own Korean Table",
+      short: "Traditional soban making",
+      tagline: "Go home with a table you built yourself",
+      takeaway: "The soban you made",
+    },
+    plan: [
+      { time: "12:00", min: 0, move: false, ko: "전주 한옥마을 집결 · 오리엔테이션", en: "Meet & greet — Jeonju Hanok Village" },
+      { time: "12:00", min: 30, move: true, ko: "두부마을로 이동", en: "Transfer to Tofu Village" },
+      { time: "12:30", min: 60, move: false, ko: "두부마을 로컬 한상 식사", en: "Local tofu set lunch" },
+      { time: "13:30", min: 5, move: true, ko: "카페 티롤로 이동", en: "Transfer to Cafe Tirol" },
+      { time: "13:35", min: 60, move: false, ko: "한옥 카페 체험 · 전통차", en: "Hanok cafe — traditional Korean tea" },
+      { time: "14:35", min: 10, move: true, ko: "스토리팜으로 이동", en: "Transfer to StoryFarm" },
+      { time: "14:45", min: 30, move: false, ko: "120평 CNC 공방 투어", en: "CNC woodworking studio tour (400㎡)" },
+      { time: "15:15", min: 5, move: true, ko: "달팽이아지트로 도보 이동", en: "Walk to Dalpaengi Azit" },
+      { time: "15:20", min: 90, move: false, ko: "전통 소반 만들기", en: "Make your own soban" },
+      { time: "16:50", min: 15, move: false, ko: "이름 각인 · 보자기 포장 · 기념촬영", en: "Name engraving, wrapping & photos" },
+      { time: "17:05", min: 30, move: true, ko: "전주 한옥마을 복귀", en: "Return to Hanok Village" },
+    ],
+    includes: {
+      ko: ["두부마을 로컬 식사", "카페 티롤 전통차", "120평 CNC 공방 투어", "전통 소반 만들기 90분", "완성 소반 1인 1점", "한옥마을 왕복 차량"],
+      en: ["Local tofu set lunch", "Traditional tea at Cafe Tirol", "CNC workshop tour", "90-min soban making class", "Your finished soban to keep", "Round-trip transfer"],
+    },
+    extras: {
+      ko: ["소반 이름 레이저 각인", "보자기 포장", "영문 조립설명서 + QR 영상", "공방 인증샷 촬영"],
+      en: ["Laser name engraving", "Bojagi cloth wrapping", "English instructions + QR video", "Workshop photo session"],
+    },
   },
   {
-    key: "full",
-    hours: 6,
-    fee: 99_000,
-    minParty: 2,
-    ko: { label: "6시간 원데이", tag: "전체 코스", desc: "공방 투어와 스냅 촬영까지" },
-    en: { label: "6-Hour One Day", tag: "Full Course", desc: "Plus a studio tour and a photo session" },
+    key: "B",
+    emoji: "🌾",
+    img: IMG.B,
+    end: "17:05",
+    outdoor: true,
+    ko: {
+      name: "완주 로컬 하루",
+      short: "고택 · 촬영지 · 호수 트레킹",
+      tagline: "관광지 말고, 완주 사람들이 다니는 길",
+      takeaway: "사진과 걸음",
+    },
+    en: {
+      name: "Wanju Slow Day",
+      short: "Hanok house, filming spots, lakeside",
+      tagline: "Not the tourist route — the roads locals walk",
+      takeaway: "Photos and a long walk",
+    },
+    plan: [
+      { time: "12:00", min: 0, move: false, ko: "전주 한옥마을 집결 · 오리엔테이션", en: "Meet & greet — Jeonju Hanok Village" },
+      { time: "12:00", min: 30, move: true, ko: "두부마을로 이동", en: "Transfer to Tofu Village" },
+      { time: "12:30", min: 60, move: false, ko: "두부마을 로컬 한상 식사", en: "Local tofu set lunch" },
+      { time: "13:30", min: 5, move: true, ko: "카페 티롤로 이동", en: "Transfer to Cafe Tirol" },
+      { time: "13:35", min: 60, move: false, ko: "한옥 카페 체험 · 전통차", en: "Hanok cafe — traditional Korean tea" },
+      { time: "14:35", min: 30, move: false, ko: "소양 고택 투어", en: "Historic hanok house tour" },
+      { time: "15:05", min: 30, move: false, ko: "K-콘텐츠 촬영지 투어", en: "K-content filming location tour" },
+      { time: "15:35", min: 60, move: false, ko: "호수뷰 산책 · 트레킹", en: "Lakeside walk" },
+      { time: "16:35", min: 30, move: true, ko: "전주 한옥마을 복귀", en: "Return to Hanok Village" },
+    ],
+    includes: {
+      ko: ["두부마을 로컬 식사", "카페 티롤 전통차", "소양 고택 가이드 투어", "K-콘텐츠 촬영지 투어", "호수뷰 산책", "한옥마을 왕복 차량"],
+      en: ["Local tofu set lunch", "Traditional tea at Cafe Tirol", "Guided historic hanok tour", "K-content filming location tour", "Lakeside walk", "Round-trip transfer"],
+    },
+    extras: { ko: [], en: [] },
+  },
+  {
+    key: "C",
+    emoji: "🍡",
+    img: IMG.C,
+    end: "17:35",
+    outdoor: false,
+    ko: {
+      name: "손으로 빚는 한국의 다과",
+      short: "다과 · 다식 만들기",
+      tagline: "직접 빚은 다식으로 차 한 잔까지",
+      takeaway: "포장한 다식 한 상자",
+    },
+    en: {
+      name: "Make Korean Tea Sweets",
+      short: "Dasik & tea sweets class",
+      tagline: "Shape them, then drink tea with what you made",
+      takeaway: "A box of your own dasik",
+    },
+    plan: [
+      { time: "12:00", min: 0, move: false, ko: "전주 한옥마을 집결 · 오리엔테이션", en: "Meet & greet — Jeonju Hanok Village" },
+      { time: "12:00", min: 30, move: true, ko: "두부마을로 이동", en: "Transfer to Tofu Village" },
+      { time: "12:30", min: 60, move: false, ko: "두부마을 로컬 한상 식사", en: "Local tofu set lunch" },
+      { time: "13:30", min: 5, move: true, ko: "카페 티롤로 이동", en: "Transfer to Cafe Tirol" },
+      { time: "13:35", min: 60, move: false, ko: "한옥 카페 체험 · 전통차", en: "Hanok cafe — traditional Korean tea" },
+      { time: "14:35", min: 30, move: true, ko: "초록의소양으로 이동", en: "Transfer to Chorok-ui Soyang" },
+      { time: "15:05", min: 90, move: false, ko: "다과 · 다식 만들기", en: "Dasik & tea sweets making class" },
+      { time: "16:35", min: 30, move: false, ko: "직접 만든 다식으로 티타임", en: "Tea time with what you made" },
+      { time: "17:05", min: 30, move: true, ko: "전주 한옥마을 복귀", en: "Return to Hanok Village" },
+    ],
+    includes: {
+      ko: ["두부마을 로컬 식사", "카페 티롤 전통차", "다과·다식 만들기 90분", "완성 다식 포장 1인분", "티타임 30분", "한옥마을 왕복 차량"],
+      en: ["Local tofu set lunch", "Traditional tea at Cafe Tirol", "90-min dasik making class", "Your sweets boxed to take home", "30-min tea time", "Round-trip transfer"],
+    },
+    extras: { ko: [], en: [] },
+  },
+  {
+    key: "D",
+    emoji: "🎧",
+    img: IMG.D,
+    end: "18:00",
+    outdoor: false,
+    ko: {
+      name: "전주 소리 집중 힐링",
+      short: "음향 감상 · 소리채집",
+      tagline: "눈을 감으면 들리는 것들을 모아옵니다",
+      takeaway: "직접 채집한 소리",
+    },
+    en: {
+      name: "A Day of Korean Sound",
+      short: "Listening hall & field recording",
+      tagline: "Close your eyes and collect what you hear",
+      takeaway: "The sounds you recorded",
+    },
+    plan: [
+      { time: "12:00", min: 0, move: false, ko: "전주 한옥마을 집결 · 오리엔테이션", en: "Meet & greet — Jeonju Hanok Village" },
+      { time: "12:00", min: 30, move: true, ko: "두부마을로 이동", en: "Transfer to Tofu Village" },
+      { time: "12:30", min: 60, move: false, ko: "두부마을 로컬 한상 식사", en: "Local tofu set lunch" },
+      { time: "13:30", min: 30, move: true, ko: "소리나무 카페로 이동", en: "Transfer to Sorinamu Cafe" },
+      { time: "14:00", min: 90, move: false, ko: "소리나무 카페 투어 · 헤아리움 100평 음향 감상실 · 진공관앰프 제작공방", en: "Sorinamu cafe tour, Hearium listening hall (330㎡) & vacuum-tube amp workshop" },
+      { time: "15:30", min: 30, move: true, ko: "달팽이아지트로 이동", en: "Transfer to Dalpaengi Azit" },
+      { time: "16:00", min: 90, move: false, ko: "소리채집 프로그램", en: "Field recording program" },
+      { time: "17:30", min: 30, move: true, ko: "전주 한옥마을 복귀", en: "Return to Hanok Village" },
+    ],
+    includes: {
+      ko: ["두부마을 로컬 식사", "소리나무 카페 투어", "진공관앰프 제작공방 견학", "헤아리움 음향 감상실 입장", "소리채집 프로그램 90분", "한옥마을 왕복 차량"],
+      en: ["Local tofu set lunch", "Sorinamu cafe tour", "Vacuum-tube amp workshop visit", "Hearium listening hall entry", "90-min field recording program", "Round-trip transfer"],
+    },
+    extras: { ko: [], en: [] },
   },
 ] as const;
 
-const COUPON_MIN_PARTY = 3;
-const COUPON_VALUE = 100_000;
-const MAX_PARTY = 10;
-const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
-
-/* 한옥 카페·두부마을 전용 촬영본이 아직 없어 펜션·주변 사진을 쓴다.
-   TODO(sol): 1회차 진행 후 실제 코스 사진으로 교체 */
-const IMG = {
-  hero: "/img/exterior-main.jpg",
-  meal: "/img/group-dining.jpg",
-  cafe: "/img/exterior-side.jpg",
-  studio: "/img/whiteboard.jpg",
-  craft: "/img/living-room-wide.jpg",
-  cta: "/img/nature-yard.jpg",
-};
-
-/* ───── 코스 일정 ─────
-   half / full 각각의 소요 시간을 분으로 들고 있고, 합이 정확히 240분·360분이 되게 짰다.
-   0 이면 그 코스에서는 빠지는 구간이다. 구간 시간에는 이동 시간이 포함돼 있다.
-   시간을 고칠 땐 아래 TOTAL 검증이 깨지지 않는지 확인할 것. */
-const ITINERARY = [
-  {
-    icon: Bus, half: 30, full: 30,
-    ko: { t: "전주 한옥마을 픽업 · 두부마을로 이동", d: "카니발 차량으로 모시러 갑니다. 짐은 숙소에 두고 오세요." },
-    en: { t: "Pickup at Hanok Village · Drive to Tofu Village", d: "We pick you up by van. Leave your luggage at your stay." },
-  },
-  {
-    icon: Utensils, half: 50, full: 60,
-    ko: { t: "두부마을에서 로컬 식사", d: "관광지 식당이 아니라 동네 사람들이 가는 두부집입니다. 그날 아침에 만든 두부로 차린 한 상." },
-    en: { t: "Lunch in the Tofu Village", d: "Not a tourist restaurant — the tofu house locals actually go to. A full table set with tofu made that morning." },
-  },
-  {
-    icon: Coffee, half: 55, full: 70,
-    ko: { t: "500평 한옥 카페에서 티타임", d: "한옥으로 지은 카페의 마루에 앉아 차 한 잔. 디저트는 빵이 아니라 약과입니다. (이동 10분 포함)" },
-    en: { t: "Tea in a 500-pyeong Hanok Cafe", d: "Sit on the wooden floor of a real hanok with a cup of tea. Dessert is yakgwa — a Korean honey pastry, not cake. (includes 10 min drive)" },
-  },
-  {
-    icon: MapPin, half: 0, full: 45,
-    ko: { t: "스토리팜 120평 공방 투어", d: "CNC 장비가 도는 목공방을 직접 보여드립니다. 잠시 뒤 만드실 소반이 어떻게 재단되는지도. (이동 15분 포함)" },
-    en: { t: "Storyfarm Woodworking Studio Tour", d: "A working 120-pyeong studio with CNC machines running — including how the soban you are about to build is cut. (includes 15 min drive)" },
-  },
-  {
-    icon: Hammer, half: 75, full: 100,
-    ko: { t: "전통 소반 만들기", d: "달팽이아지트 60평 공간에서 나만의 소반을 조립합니다. 완성한 소반은 가져가세요." },
-    en: { t: "Build Your Own Traditional Soban", d: "Assemble a Korean low table in our 60-pyeong space. The soban you finish is yours to take home." },
-  },
-  {
-    icon: Camera, half: 0, full: 20,
-    ko: { t: "스냅 사진 촬영 · 마무리", d: "완성한 소반과 함께 사진을 남깁니다. 한옥 마루와 공방에서도 틈틈이 찍어드려요." },
-    en: { t: "Snapshot Photos · Wrap-up", d: "Photos with the soban you just finished — plus candid shots on the hanok floor and in the studio along the way." },
-  },
-  {
-    icon: Bus, half: 30, full: 35,
-    ko: { t: "한옥마을로 복귀", d: "출발하신 자리에 다시 내려드립니다." },
-    en: { t: "Back to Hanok Village", d: "We drop you off where we picked you up." },
-  },
+/* 네 상품이 공통으로 깔고 가는 것 */
+const COMMON = [
+  { icon: Utensils, ko: { t: "두부마을 로컬 한상", d: "관광지 식당이 아니라 동네 사람들이 가는 두부집" }, en: { t: "Local tofu set lunch", d: "Not a tourist restaurant — where locals actually eat" } },
+  { icon: Bus, ko: { t: "한옥마을 왕복 차량", d: "12시에 모시러 가고, 같은 자리에 내려드립니다" }, en: { t: "Round-trip transfer", d: "Picked up at noon, dropped back at the same spot" } },
+  { icon: Users, ko: { t: "영어 가이드 동행", d: "6시간 내내 함께 다닙니다" }, en: { t: "English-speaking guide", d: "With you for the full six hours" } },
 ];
-
-// 표시된 시간의 합이 실제 코스 길이와 맞는지 한 곳에서 계산한다.
-const TOTAL = {
-  half: ITINERARY.reduce((a, s) => a + s.half, 0),
-  full: ITINERARY.reduce((a, s) => a + s.full, 0),
-};
-
-/* ───── 왜 이 코스인가 ───── */
-const PILLARS = [
-  {
-    emoji: "🍲",
-    ko: { t: "로컬 식사", d: "관광객용 메뉴가 아니라 동네 사람이 먹는 두부 한 상" },
-    en: { t: "A Local Meal", d: "Not a tourist menu — the tofu table locals sit down to" },
-  },
-  {
-    emoji: "🏯",
-    ko: { t: "진짜 한옥", d: "재현이 아니라 실제로 한옥으로 지어 운영 중인 카페" },
-    en: { t: "A Real Hanok", d: "Not a replica — a cafe actually built and run as a hanok" },
-  },
-  {
-    emoji: "🪵",
-    ko: { t: "내 손으로 만든 것", d: "사진만 남는 게 아니라 물건이 남습니다" },
-    en: { t: "Something You Made", d: "You leave with an object, not just photos" },
-  },
-];
-
-/* ───── 소반 키트에 대한 약속 ─────
-   저가 키트로는 만족도가 안 나온다는 게 기획 단계의 결론이라
-   그 판단을 그대로 페이지에 적는다. */
-const QUALITY = {
-  ko: [
-    "저가 수입 키트를 쓰지 않습니다",
-    "120평 공방에서 직접 재단한 원목을 씁니다",
-    "완성품은 실제로 쓸 수 있는 물건입니다",
-  ],
-  en: [
-    "We do not use cheap imported kits",
-    "The wood is cut in our own 120-pyeong studio",
-    "What you finish is a tray you can actually use",
-  ],
-};
 
 const T = {
   ko: {
-    nav: "달팽이아지트", inquiry: "문의", book: "예약하기",
-    eyebrow: "외국인을 위한 전주 한국 문화 체험",
-    h1a: "가장 한국적인 하루를", h1b: "통째로",
-    sub: "먹고 · 쉬고 · 만들고 — 한옥마을에서 픽업해서 다시 모셔다드립니다",
-    from: "1인", perPerson: "원부터",
-    pickup: "한옥마을 픽업·복귀 포함",
+    nav: "달팽이아지트", inquiry: "문의", book: "예약",
+    eyebrow: "전주·완주 외국인 로컬 체험",
+    h1a: "같은 하루를", h1b: "네 가지 방법으로",
+    sub: "정오에 한옥마을에서 만나 여섯 시간, 완주를 걷습니다",
+    perPerson: "1인",
     cta: "예약 문의하기",
-    introA: "외국인 여행객이 한국에서 가장 해보고 싶어 하는 건",
-    introB: "'한국적인 어떤 것'과 '한국적인 어떤 공간'입니다.",
-    introC: "이 코스는 그 두 가지를 하루에 담았습니다.",
-    pillarsTitle: "이 하루에 담긴", pillarsHl: "세 가지",
-    itinTitle: "코스", itinHl: "일정",
-    itinNote: "코스를 눌러서 비교해보세요. 구간 시간에는 이동 시간이 포함되어 있습니다",
-    fullOnlyBadge: "6시간 전용",
-    totalTime: "총 소요 시간",
-    priceTitle: "코스와", priceHl: "요금",
-    priceNote: "픽업·식사·차·다과·소반 키트가 모두 포함된 금액입니다",
-    minParty: "최소 인원",
-    person: "인",
-    couponTitle: "3인 이상 함께 오시면",
-    couponDesc: "달팽이아지트 펜션에서 쓰실 수 있는 할인 쿠폰을 드립니다. 전주 근교에서 하루 더 묵고 가셔도 좋아요.",
-    partnerTitle: "제휴 카페에서 오셨나요?",
-    partnerDesc: "한옥마을 제휴 카페의 QR 코드로 예약하시면 10% 할인됩니다.",
-    partnerApplied: "제휴 할인 10%가 적용되었습니다",
-    qualityTitle: "소반 키트에 대한", qualityHl: "약속",
+    commonTitle: "네 코스가", commonHl: "공통으로 드리는 것",
+    pickTitle: "오후를", pickHl: "무엇으로 채울까요",
+    pickNote: "네 가지 중 하나를 고르세요. 오전은 모두 같습니다.",
+    selected: "선택됨",
+    planTitle: "일정",
+    includeTitle: "포함 사항",
+    extraTitle: "추가 특전",
+    takeaway: "가져가는 것",
+    outdoorNote: "야외 중심 코스라 날씨 영향을 받습니다",
+    compareTitle: "네 코스", compareHl: "한눈에",
+    cName: "코스", cEnd: "종료", cTake: "가져가는 것", cWeather: "날씨",
+    weatherOk: "실내 중심", weatherRisk: "야외 중심",
     formTitle: "예약", formHl: "문의",
-    formNote: "가능 여부를 확인하고 24시간 안에 연락드립니다. 지금 결제하지 않습니다.",
-    fName: "이름", fCountry: "국적", fEmail: "이메일", fMessenger: "메신저 ID",
-    fMessengerPh: "카카오톡 / WhatsApp / WeChat", fPhone: "전화번호",
-    fContactNote: "이메일·메신저·전화번호 중 하나만 적어주시면 됩니다",
-    fCourse: "코스", fParty: "인원", fDate: "희망 날짜", fTime: "희망 시간",
-    fRequests: "요청사항", fRequestsPh: "채식·알레르기·언어·기타 요청을 편하게 적어주세요",
+    formNote: "차량과 협력처 일정을 확인하고 24시간 안에 연락드립니다. 지금 결제하지 않습니다.",
+    fCourse: "상품 선택", fName: "대표자 이름", fCountry: "국적",
+    fEmail: "이메일", fMessenger: "메신저 ID", fMessengerPh: "카카오톡 / WhatsApp / WeChat",
+    fPhone: "전화번호", fContactNote: "이메일·메신저·전화번호 중 하나만 적어주시면 됩니다",
+    fParty: "인원", fDate: "희망 날짜",
+    fRequests: "요청사항", fRequestsPh: "채식·할랄·알레르기·언어 등 편하게 적어주세요",
     fConsent: "예약 안내를 위한 개인정보 수집·이용에 동의합니다.",
+    partyNote: `이 투어는 ${MIN_PARTY}~${MAX_PARTY}명 단체로 운영됩니다`,
     submit: "예약 문의 보내기", submitting: "전송 중...",
-    total: "총액", couponBadge: "펜션 쿠폰 10만원 대상",
+    total: "총액",
+    partnerApplied: "제휴처를 통해 오셨습니다",
     doneTitle: "예약 문의가 접수되었습니다",
-    doneL1: "24시간 안에 연락드립니다",
+    doneL1: "차량·협력처 확인 후 24시간 안에 연락드립니다",
     doneL2: "결과와 무관하게 꼭 회신드립니다",
     doneL3: "지금 입금하지 마세요 — 확정 후 안내드립니다",
     ok: "확인했어요",
     infoTitle: "안내",
-    ctaTitle: "사진만 남는 여행 말고,", ctaTitle2: "만든 게 남는 하루",
+    ctaTitle: "정오에 만나서,", ctaTitle2: "해가 기울 때 돌아옵니다",
   },
   en: {
     nav: "Dalpaengi Azit", inquiry: "Ask", book: "Book",
-    eyebrow: "A Korean Culture Day Tour from Jeonju",
-    h1a: "The most Korean day", h1b: "you can have",
-    sub: "Eat · Rest · Make — picked up from Hanok Village and dropped back off",
-    from: "From", perPerson: "per person",
-    pickup: "Pickup & drop-off included",
+    eyebrow: "Local Experiences in Jeonju & Wanju",
+    h1a: "One day,", h1b: "four ways to spend it",
+    sub: "We meet at noon in Hanok Village and spend six hours in Wanju",
+    perPerson: "per person",
     cta: "Request a Booking",
-    introA: "What visitors most want in Korea is usually two things —",
-    introB: "something Korean to do, and a Korean place to be in.",
-    introC: "This course puts both into a single day.",
-    pillarsTitle: "Three things in", pillarsHl: "one day",
-    itinTitle: "The", itinHl: "Itinerary",
-    itinNote: "Tap a course to compare. Each block includes the drive time between stops",
-    fullOnlyBadge: "6-hour only",
-    totalTime: "Total duration",
-    priceTitle: "Courses &", priceHl: "Pricing",
-    priceNote: "Pickup, lunch, tea, dessert and the soban kit are all included",
-    minParty: "Minimum",
-    person: " people",
-    couponTitle: "Coming as a group of 3 or more?",
-    couponDesc: "You get a discount coupon for Dalpaengi Azit, our pension nearby. Stay a night in the countryside outside Jeonju.",
-    partnerTitle: "Came from a partner cafe?",
-    partnerDesc: "Book through a partner cafe's QR code and get 10% off.",
-    partnerApplied: "10% partner discount applied",
-    qualityTitle: "Our promise about", qualityHl: "the kit",
+    commonTitle: "What every course", commonHl: "includes",
+    pickTitle: "How do you want to", pickHl: "spend the afternoon",
+    pickNote: "Pick one of four. The morning is the same in all of them.",
+    selected: "Selected",
+    planTitle: "Schedule",
+    includeTitle: "What's included",
+    extraTitle: "Extra touches",
+    takeaway: "You take home",
+    outdoorNote: "Mostly outdoors — weather affects this course",
+    compareTitle: "All four", compareHl: "side by side",
+    cName: "Course", cEnd: "Ends", cTake: "Take home", cWeather: "Weather",
+    weatherOk: "Mostly indoors", weatherRisk: "Mostly outdoors",
     formTitle: "Request a", formHl: "Booking",
-    formNote: "We check availability and reply within 24 hours. No payment is taken now.",
-    fName: "Name", fCountry: "Country", fEmail: "Email", fMessenger: "Messenger ID",
-    fMessengerPh: "KakaoTalk / WhatsApp / WeChat", fPhone: "Phone",
-    fContactNote: "Just one of email, messenger or phone is enough",
-    fCourse: "Course", fParty: "Party size", fDate: "Preferred date", fTime: "Preferred time",
-    fRequests: "Requests", fRequestsPh: "Vegetarian, allergies, language, anything else",
+    formNote: "We confirm vehicle and partner availability, then reply within 24 hours. No payment now.",
+    fCourse: "Choose a course", fName: "Lead traveller's name", fCountry: "Country",
+    fEmail: "Email", fMessenger: "Messenger ID", fMessengerPh: "KakaoTalk / WhatsApp / WeChat",
+    fPhone: "Phone", fContactNote: "Just one of email, messenger or phone is enough",
+    fParty: "Group size", fDate: "Preferred date",
+    fRequests: "Requests", fRequestsPh: "Vegetarian, halal, allergies, language — anything",
     fConsent: "I agree to the collection of my details for booking purposes.",
+    partyNote: `This tour runs for groups of ${MIN_PARTY}–${MAX_PARTY}`,
     submit: "Send Booking Request", submitting: "Sending...",
-    total: "Total", couponBadge: "Eligible for the KRW 100,000 pension coupon",
+    total: "Total",
+    partnerApplied: "You came through a partner",
     doneTitle: "Your request has been received",
-    doneL1: "We will reply within 24 hours",
+    doneL1: "We reply within 24 hours after checking availability",
     doneL2: "You will hear from us either way",
-    doneL3: "Do not send any payment yet — we will guide you after confirming",
+    doneL3: "Do not send any payment yet",
     ok: "Got it",
     infoTitle: "Good to know",
-    ctaTitle: "Not a trip you only photograph —", ctaTitle2: "a day you take home",
+    ctaTitle: "Meet at noon,", ctaTitle2: "back before sunset",
   },
 };
 
 type Lang = "ko" | "en";
+type Course = (typeof COURSES)[number];
 
 /* ───── 예약 폼 ───── */
-function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: string | null; referralName: string | null }) {
+function BookingForm({
+  lang, course, setCourse, referral, referralName,
+}: {
+  lang: Lang; course: string; setCourse: (k: string) => void;
+  referral: string | null; referralName: string | null;
+}) {
   const t = T[lang];
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [email, setEmail] = useState("");
   const [messenger, setMessenger] = useState("");
   const [phone, setPhone] = useState("");
-  const [course, setCourse] = useState<string>("half");
-  const [partySize, setPartySize] = useState(2);
+  const [partySize, setPartySize] = useState(MIN_PARTY);
   const [preferredDate, setPreferredDate] = useState("");
-  const [preferredTime, setPreferredTime] = useState("13:00");
   const [requests, setRequests] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [done, setDone] = useState(false);
 
-  const selected = COURSES.find((c) => c.key === course) ?? COURSES[0];
-  const perPerson = referral ? Math.round((selected.fee * 0.9) / 10) * 10 : selected.fee;
-  const total = perPerson * partySize;
-  const couponEligible = partySize >= COUPON_MIN_PARTY;
-
-  // 6시간 코스는 2인 이상이라, 코스를 바꿀 때 인원이 모자라면 같이 올려준다.
-  const pickCourse = (key: string) => {
-    setCourse(key);
-    const c = COURSES.find((x) => x.key === key);
-    if (c && partySize < c.minParty) setPartySize(c.minParty);
-  };
+  const selected = (COURSES.find((c) => c.key === course) ?? COURSES[0]) as Course;
+  const total = FEE * partySize;
 
   const submit = async () => {
     if (!name.trim()) return setResult({ ok: false, msg: lang === "ko" ? "이름을 입력해주세요." : "Please enter your name." });
-    if (!email.trim() && !messenger.trim() && !phone.trim())
-      return setResult({ ok: false, msg: t.fContactNote });
+    if (!email.trim() && !messenger.trim() && !phone.trim()) return setResult({ ok: false, msg: t.fContactNote });
     if (!preferredDate) return setResult({ ok: false, msg: lang === "ko" ? "희망 날짜를 선택해주세요." : "Please choose a date." });
     if (!privacyConsent) return setResult({ ok: false, msg: t.fConsent });
 
@@ -278,8 +316,7 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name, country, email, messenger, phone, course, partySize,
-          preferredDate, preferredTime, requests, privacyConsent,
-          referral, language: lang,
+          preferredDate, requests, privacyConsent, referral, language: lang,
         }),
       });
       const data = await res.json();
@@ -315,10 +352,8 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
                 <li>• {t.doneL2}</li>
                 <li>• {t.doneL3}</li>
               </ul>
-              <button
-                onClick={() => setDone(false)}
-                className="w-full py-3.5 bg-stone-800 text-white rounded-xl font-bold text-base hover:bg-stone-900 transition-colors"
-              >
+              <button onClick={() => setDone(false)}
+                className="w-full py-3.5 bg-stone-800 text-white rounded-xl font-bold text-base hover:bg-stone-900 transition-colors">
                 {t.ok}
               </button>
             </div>
@@ -327,44 +362,28 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
       )}
 
       <div className="p-6 space-y-5">
-        {/* 코스 선택 */}
+        {/* 상품 선택 — 위 섹션과 같은 상태를 공유한다 */}
         <div>
           <label className={labelClass}>{t.fCourse} <span className="text-red-500">*</span></label>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {COURSES.map((c) => {
               const on = course === c.key;
-              const fee = referral ? Math.round((c.fee * 0.9) / 10) * 10 : c.fee;
               return (
-                <button key={c.key} type="button" onClick={() => pickCourse(c.key)}
-                  className={`w-full rounded-xl border-2 transition-all text-left px-4 py-3 ${
-                    on ? "border-stone-700 bg-stone-50 shadow-md" : "border-gray-200 hover:border-gray-300"
+                <button key={c.key} type="button" onClick={() => setCourse(c.key)}
+                  className={`rounded-xl border-2 px-3 py-2.5 text-left transition-all ${
+                    on ? "border-stone-800 bg-stone-50 shadow-sm" : "border-gray-200 hover:border-gray-300"
                   }`}>
-                  <div className="flex items-center gap-3">
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      on ? "border-stone-700 bg-stone-700" : "border-gray-300"
-                    }`}>
-                      {on && <span className="w-2 h-2 rounded-full bg-white" />}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-bold ${on ? "text-stone-900" : "text-gray-700"}`}>{c[lang].label}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {c[lang].desc}
-                        {c.minParty > 1 && ` · ${t.minParty} ${c.minParty}${t.person}`}
-                      </p>
-                    </div>
-                    <span className={`text-sm font-black flex-shrink-0 ${on ? "text-stone-800" : "text-gray-400"}`}>
-                      {referral && (
-                        <span className="block text-[10px] text-gray-400 line-through font-normal">
-                          {c.fee.toLocaleString()}
-                        </span>
-                      )}
-                      ₩{fee.toLocaleString()}
-                    </span>
-                  </div>
+                  <span className="text-lg">{c.emoji}</span>
+                  <p className={`text-[11px] font-bold mt-1 leading-tight ${on ? "text-stone-900" : "text-gray-500"}`}>
+                    {c.key}. {c[lang].short}
+                  </p>
                 </button>
               );
             })}
           </div>
+          <p className="text-[11px] text-gray-500 mt-2">
+            {selected.emoji} {selected[lang].name} · 12:00–{selected.end}
+          </p>
         </div>
 
         {/* 인원 · 날짜 */}
@@ -372,7 +391,7 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
           <div>
             <label className={labelClass}>{t.fParty} <span className="text-red-500">*</span></label>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setPartySize((n) => Math.max(selected.minParty, n - 1))}
+              <button type="button" onClick={() => setPartySize((n) => Math.max(MIN_PARTY, n - 1))}
                 className="w-9 h-10 rounded-xl border border-gray-200 font-black text-gray-500 hover:bg-gray-50">−</button>
               <span className="flex-1 text-center text-lg font-black text-stone-800">{partySize}</span>
               <button type="button" onClick={() => setPartySize((n) => Math.min(MAX_PARTY, n + 1))}
@@ -384,36 +403,17 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
             <input type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} className={inputClass} />
           </div>
         </div>
+        <p className="text-[11px] text-gray-400 -mt-3">{t.partyNote}</p>
 
-        <div>
-          <label className={labelClass}>{t.fTime}</label>
-          <div className="flex gap-2">
-            {["10:00", "13:00", "15:00"].map((tm) => (
-              <button key={tm} type="button" onClick={() => setPreferredTime(tm)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                  preferredTime === tm ? "border-stone-700 bg-stone-50 text-stone-800" : "border-gray-200 text-gray-400 hover:bg-gray-50"
-                }`}>{tm}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* 금액 요약 */}
+        {/* 금액 */}
         <div className="rounded-2xl bg-stone-900 text-white p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/60">
-              ₩{perPerson.toLocaleString()} × {partySize}
-            </span>
+            <span className="text-xs text-white/60">₩{FEE.toLocaleString()} × {partySize}</span>
             <span className="text-2xl font-black">₩{total.toLocaleString()}</span>
           </div>
           {referral && (
             <p className="text-[11px] text-amber-300 font-bold mt-2 flex items-center gap-1">
-              <Ticket size={12} /> {t.partnerApplied}
-              {referralName ? ` · ${referralName}` : ""}
-            </p>
-          )}
-          {couponEligible && (
-            <p className="text-[11px] text-emerald-300 font-bold mt-1 flex items-center gap-1">
-              <Gift size={12} /> {t.couponBadge}
+              <Ticket size={12} /> {t.partnerApplied}{referralName ? ` · ${referralName}` : ""}
             </p>
           )}
         </div>
@@ -456,9 +456,7 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
         <label className="flex items-start gap-2 cursor-pointer">
           <input type="checkbox" checked={privacyConsent} onChange={(e) => setPrivacyConsent(e.target.checked)}
             className="mt-0.5 w-4 h-4 rounded border-gray-300 text-stone-700 focus:ring-stone-500/20" />
-          <span className="text-xs text-gray-600">
-            <span className="font-bold text-red-500">*</span> {t.fConsent}
-          </span>
+          <span className="text-xs text-gray-600"><span className="font-bold text-red-500">*</span> {t.fConsent}</span>
         </label>
 
         <button onClick={submit} disabled={loading}
@@ -476,19 +474,18 @@ function BookingForm({ lang, referral, referralName }: { lang: Lang; referral: s
 
 /* ═══════════════════════════════════════ */
 export default function HanokTourPage() {
-  // 한국어 UI 가 필요한 건 솔과 국내 문의자다. 기본은 외국인이라 영어.
+  // 외국인 대상이라 기본은 영어. 한국어는 솔과 국내 문의자용.
   const [lang, setLang] = useState<Lang>("en");
+  const [course, setCourse] = useState<string>("A");
   const [referral, setReferral] = useState<string | null>(null);
   const [referralName, setReferralName] = useState<string | null>(null);
-  // 일정 섹션에서 보고 있는 코스. 예약 폼의 선택과는 별개다.
-  const [viewCourse, setViewCourse] = useState<string>("full");
 
-  /* ref 를 useSearchParams 로 읽으면 Suspense 경계가 생기면서 본문이
-     서버 렌더링에서 빠진다. 이 페이지는 외국인 검색 유입이 목적이라
-     HTML 에 본문이 반드시 들어 있어야 해서 window 에서 직접 읽는다. */
+  /* ref 를 useSearchParams 로 읽으면 Suspense 경계가 생기면서 본문이 서버 렌더링에서
+     빠진다. 외국인 검색 유입이 목적이라 HTML 에 본문이 반드시 있어야 해서 직접 읽는다. */
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
-    fetch(`/api/programs/hanok-tour${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`)
+    if (!ref) return;
+    fetch(`/api/programs/hanok-tour?ref=${encodeURIComponent(ref)}`)
       .then((r) => r.json())
       .then((d) => {
         setReferral(d.referral ?? null);
@@ -498,7 +495,7 @@ export default function HanokTourPage() {
   }, []);
 
   const t = T[lang];
-  const minFee = referral ? 81_000 : 90_000;
+  const selected = (COURSES.find((c) => c.key === course) ?? COURSES[0]) as Course;
 
   return (
     <main className="min-h-screen bg-white">
@@ -509,15 +506,12 @@ export default function HanokTourPage() {
             <ChevronLeft size={16} /> {t.nav}
           </Link>
           <div className="flex items-center gap-2">
-            {/* 언어 토글 — 외국인 대상이라 기본은 EN */}
             <div className="flex rounded-full border border-gray-200 overflow-hidden text-xs font-bold">
               {(["en", "ko"] as const).map((l) => (
                 <button key={l} onClick={() => setLang(l)}
                   className={`px-2.5 py-1.5 transition-colors ${
                     lang === l ? "bg-stone-800 text-white" : "text-gray-400 hover:bg-gray-50"
-                  }`}>
-                  {l.toUpperCase()}
-                </button>
+                  }`}>{l.toUpperCase()}</button>
               ))}
             </div>
             <a href={KAKAO_URL} target="_blank" rel="noopener noreferrer"
@@ -532,16 +526,14 @@ export default function HanokTourPage() {
       </div>
 
       {/* 히어로 */}
-      <section className="relative min-h-[540px] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[520px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={IMG.hero} alt="Korean culture day tour" className="w-full h-full object-cover" />
+          <img src={IMG.hero} alt="Jeonju Wanju local experience" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/75 to-stone-950/95" />
         </div>
         <div className="relative z-10 max-w-3xl mx-auto px-4 py-20 text-center">
-          <p className="text-amber-200/80 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-4">
-            {t.eyebrow}
-          </p>
-          <p className="text-6xl mb-5">🏯</p>
+          <p className="text-amber-200/80 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-4">{t.eyebrow}</p>
+          <p className="text-5xl mb-5">🏯</p>
           <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
             {t.h1a}
             <br />
@@ -551,29 +543,29 @@ export default function HanokTourPage() {
 
           <div className="flex flex-wrap justify-center gap-2 mt-8">
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-              <Clock size={14} /> 4h / 6h
+              <Clock size={14} /> 12:00–18:00
             </div>
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-              <Users size={14} /> max {MAX_PARTY}
+              <Users size={14} /> {MIN_PARTY}–{MAX_PARTY}
             </div>
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-              <Bus size={14} /> {t.pickup}
+              <MapPin size={14} /> Jeonju Hanok Village
             </div>
           </div>
 
-          <div className="mt-8 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-5 border border-white/20 max-w-xs mx-auto">
-            {referral && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 rounded-full mb-3">
-                <Ticket size={12} className="text-white" />
-                <span className="text-[11px] font-black text-white">
-                  {referralName} · 10% OFF
-                </span>
-              </div>
-            )}
-            <p className="text-[11px] text-white/50 uppercase tracking-widest">{t.from}</p>
-            <p className="text-4xl font-black text-white mt-1">
-              ₩{minFee.toLocaleString()}
-            </p>
+          {/* 상품 4종 요약 */}
+          <div className="mt-8 grid grid-cols-4 gap-2 max-w-md mx-auto">
+            {COURSES.map((c) => (
+              <a key={c.key} href="#pick"
+                className="rounded-xl bg-white/10 border border-white/15 px-1.5 py-3 hover:bg-white/20 transition-colors">
+                <p className="text-xl leading-none">{c.emoji}</p>
+                <p className="text-[10px] text-white/60 mt-1.5 font-bold">{c.key}</p>
+              </a>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <p className="text-4xl font-black text-white">₩{FEE.toLocaleString()}</p>
             <p className="text-xs text-white/50 mt-1">{t.perPerson}</p>
           </div>
 
@@ -585,188 +577,213 @@ export default function HanokTourPage() {
       </section>
 
       <div className="max-w-3xl mx-auto px-4 pb-24">
-        {/* 인트로 */}
-        <section className="py-12 sm:py-16 text-center">
-          <p className="text-base sm:text-xl text-gray-700 leading-relaxed font-medium">
-            {t.introA}
-            <br className="hidden sm:block" /> {t.introB}
-          </p>
-          <p className="text-sm sm:text-base text-gray-500 mt-5">{t.introC}</p>
-        </section>
-
-        {/* 세 기둥 */}
-        <section className="pb-12 sm:pb-16">
+        {/* 공통 포함 */}
+        <section className="py-12 sm:py-16">
           <div className="text-center mb-8">
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              {t.pillarsTitle} <span className="text-amber-600">{t.pillarsHl}</span>
+              {t.commonTitle} <span className="text-amber-600">{t.commonHl}</span>
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            {PILLARS.map((p, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-200 p-5 text-center hover:shadow-md transition-all hover:-translate-y-0.5">
-                <p className="text-3xl">{p.emoji}</p>
-                <p className="font-black text-gray-900 text-sm mt-3">{p[lang].t}</p>
-                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{p[lang].d}</p>
-              </div>
-            ))}
+            {COMMON.map((c, i) => {
+              const Icon = c.icon;
+              return (
+                <div key={i} className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+                  <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mx-auto">
+                    <Icon size={20} className="text-amber-700" />
+                  </div>
+                  <p className="font-black text-gray-900 text-sm mt-3">{c[lang].t}</p>
+                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{c[lang].d}</p>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* 코스 일정 — 4시간/6시간을 눌러서 비교할 수 있게 한다 */}
-        <section className="pb-12 sm:pb-16">
-          <div className="text-center mb-6">
+        {/* 상품 선택 */}
+        <section id="pick" className="pb-12 sm:pb-16 scroll-mt-20">
+          <div className="text-center mb-8">
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              {t.itinTitle} <span className="text-amber-600">{t.itinHl}</span>
+              {t.pickTitle} <span className="text-amber-600">{t.pickHl}</span>
             </h2>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">{t.itinNote}</p>
+            <p className="text-sm text-gray-500 mt-2">{t.pickNote}</p>
           </div>
 
-          <div className="flex justify-center gap-2 mb-5">
-            {COURSES.map((c) => (
-              <button key={c.key} type="button" onClick={() => setViewCourse(c.key)}
-                className={`px-4 py-2 rounded-full text-sm font-bold border-2 transition-all ${
-                  viewCourse === c.key
-                    ? "border-stone-800 bg-stone-800 text-white"
-                    : "border-gray-200 text-gray-400 hover:border-gray-300"
-                }`}>
-                {c[lang].label}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {ITINERARY.map((s, i) => {
-              const Icon = s.icon;
-              const min = viewCourse === "full" ? s.full : s.half;
-              const skipped = min === 0;
+          <div className="grid gap-3 sm:grid-cols-2">
+            {COURSES.map((c) => {
+              const on = course === c.key;
               return (
-                <div key={i} className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-4 transition-all ${
-                  skipped ? "border-dashed border-gray-200 bg-gray-50/60" : "border-gray-200 bg-white"
-                }`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    skipped ? "bg-gray-100 text-gray-300" : "bg-amber-50 text-amber-700"
+                <button key={c.key} type="button" onClick={() => setCourse(c.key)}
+                  className={`relative rounded-2xl overflow-hidden text-left transition-all border-2 ${
+                    on ? "border-stone-800 shadow-lg" : "border-transparent hover:shadow-md"
                   }`}>
-                    <Icon size={18} />
+                  <div className="relative h-32 overflow-hidden">
+                    <img src={c.img} alt={c[lang].name} className="w-full h-full object-cover" />
+                    <div className={`absolute inset-0 ${on ? "bg-stone-950/55" : "bg-stone-950/70"}`} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
+                      <span className="text-3xl">{c.emoji}</span>
+                      <p className="text-white font-black text-sm mt-1.5 leading-tight">{c[lang].name}</p>
+                      <p className="text-white/60 text-[11px] mt-0.5">{c[lang].short}</p>
+                    </div>
+                    <span className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/90 text-stone-800 text-[11px] font-black flex items-center justify-center">
+                      {c.key}
+                    </span>
+                    {on && (
+                      <span className="absolute top-2 right-2 px-2 py-0.5 bg-amber-500 text-stone-950 rounded-full text-[10px] font-black">
+                        {t.selected}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`font-bold text-sm ${skipped ? "text-gray-400" : "text-gray-900"}`}>{s[lang].t}</p>
-                      {skipped ? (
-                        <span className="px-2 py-0.5 bg-stone-700 text-white rounded-full text-[10px] font-bold">
-                          {t.fullOnlyBadge}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-black">
-                          {min} min
+                  <div className={`p-3.5 ${on ? "bg-stone-50" : "bg-white"}`}>
+                    <p className="text-xs text-gray-600 leading-relaxed">{c[lang].tagline}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">
+                        12:00–{c.end}
+                      </span>
+                      {c.outdoor && (
+                        <span className="text-[10px] px-2 py-0.5 bg-sky-100 text-sky-700 rounded-full font-bold">
+                          {t.weatherRisk}
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs mt-1.5 leading-relaxed ${skipped ? "text-gray-400" : "text-gray-600"}`}>
-                      {s[lang].d}
-                    </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
+        </section>
 
-          {/* 합계 — 표시된 시간이 실제 코스 길이와 맞는다는 걸 보여준다 */}
-          <div className="mt-4 rounded-2xl bg-stone-900 text-white px-5 py-4 flex items-center justify-between">
-            <span className="text-xs text-white/60 uppercase tracking-widest">{t.totalTime}</span>
-            <span className="text-xl font-black">
-              {Math.floor(TOTAL[viewCourse === "full" ? "full" : "half"] / 60)}h{" "}
-              {TOTAL[viewCourse === "full" ? "full" : "half"] % 60 > 0
-                ? `${TOTAL[viewCourse === "full" ? "full" : "half"] % 60}m`
-                : ""}
-              <span className="text-xs font-normal text-white/50 ml-2">
-                ({TOTAL[viewCourse === "full" ? "full" : "half"]} min)
-              </span>
-            </span>
+        {/* 선택한 상품 상세 */}
+        <section className="pb-12 sm:pb-16">
+          <div className="rounded-2xl border-2 border-stone-800 overflow-hidden">
+            <div className="relative h-44 overflow-hidden">
+              <img src={selected.img} alt={selected[lang].name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 to-stone-950/40" />
+              <div className="absolute bottom-4 left-5 right-5">
+                <p className="text-[11px] font-black text-amber-300 tracking-widest">
+                  {selected.key} · 12:00–{selected.end}
+                </p>
+                <p className="text-xl sm:text-2xl font-black text-white mt-1">
+                  {selected.emoji} {selected[lang].name}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 sm:p-6 space-y-6">
+              {selected.outdoor && (
+                <div className="flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-xl p-3">
+                  <CloudSun size={16} className="text-sky-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-sky-800">{t.outdoorNote}</p>
+                </div>
+              )}
+
+              {/* 일정 */}
+              <div>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-3">{t.planTitle}</p>
+                <div className="space-y-1">
+                  {selected.plan.map((s, i) => (
+                    <div key={i} className={`flex items-start gap-3 rounded-lg px-3 py-2 ${
+                      s.move ? "bg-gray-50" : "bg-amber-50/60"
+                    }`}>
+                      <span className={`text-[11px] font-black tabular-nums flex-shrink-0 w-11 pt-0.5 ${
+                        s.move ? "text-gray-400" : "text-amber-700"
+                      }`}>{s.time}</span>
+                      <p className={`text-xs leading-relaxed flex-1 ${s.move ? "text-gray-400" : "text-gray-800 font-medium"}`}>
+                        {s[lang]}
+                      </p>
+                      {s.min > 0 && (
+                        <span className={`text-[10px] font-bold flex-shrink-0 pt-0.5 ${s.move ? "text-gray-300" : "text-amber-600"}`}>
+                          {s.min}m
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 포함 사항 */}
+              <div>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-3">{t.includeTitle}</p>
+                <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-2">
+                  {selected.includes[lang].map((it) => (
+                    <li key={it} className="flex items-start gap-2 text-xs text-gray-700">
+                      <Check size={14} className="text-amber-600 flex-shrink-0 mt-0.5" /> {it}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 추가 특전 */}
+              {selected.extras[lang].length > 0 && (
+                <div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-3">{t.extraTitle}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selected.extras[lang].map((it) => (
+                      <span key={it} className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-xs text-amber-800 font-medium">
+                        <Gift size={11} className="inline mr-1 -mt-0.5" />{it}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 가져가는 것 */}
+              <div className="flex items-center gap-3 bg-stone-900 text-white rounded-xl px-4 py-3">
+                <Home size={16} className="text-amber-300 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest">{t.takeaway}</p>
+                  <p className="text-sm font-bold">{selected[lang].takeaway}</p>
+                </div>
+              </div>
+
+              <a href="#book"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-stone-950 font-black text-sm hover:bg-amber-400 transition-colors">
+                {t.cta} <ArrowRight size={14} />
+              </a>
+            </div>
           </div>
         </section>
 
-        {/* 요금 */}
+        {/* 비교표 */}
         <section className="pb-12 sm:pb-16">
           <div className="text-center mb-8">
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-              {t.priceTitle} <span className="text-amber-600">{t.priceHl}</span>
+              {t.compareTitle} <span className="text-amber-600">{t.compareHl}</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-2">{t.priceNote}</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {COURSES.map((c) => {
-              const fee = referral ? Math.round((c.fee * 0.9) / 10) * 10 : c.fee;
-              return (
-                <div key={c.key} className="rounded-2xl border border-gray-200 bg-white p-5 flex flex-col">
-                  <span className="self-start px-2.5 py-1 bg-stone-100 text-stone-600 rounded-full text-[11px] font-black">
-                    {c[lang].tag}
-                  </span>
-                  <p className="text-base font-black text-gray-900 mt-3">{c[lang].label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{c[lang].desc}</p>
-                  <div className="mt-4">
-                    {referral && (
-                      <span className="text-sm text-gray-400 line-through mr-2">₩{c.fee.toLocaleString()}</span>
-                    )}
-                    <span className="text-3xl font-black text-amber-600">₩{fee.toLocaleString()}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-1">
-                    {t.perPerson}
-                    {c.minParty > 1 ? ` · ${t.minParty} ${c.minParty}${t.person}` : ""}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 3인 이상 쿠폰 */}
-          <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 sm:p-6">
-            <div className="flex items-start gap-4">
-              <Gift size={24} className="flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-black text-base">{t.couponTitle}</p>
-                <p className="text-3xl font-black mt-1">₩{COUPON_VALUE.toLocaleString()}</p>
-                <p className="text-xs text-white/80 mt-2 leading-relaxed">{t.couponDesc}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 제휴 카페 안내 */}
-          <div className={`mt-3 rounded-2xl border p-5 ${
-            referral ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"
-          }`}>
-            <div className="flex items-start gap-3">
-              <Ticket size={20} className={referral ? "text-amber-600 flex-shrink-0 mt-0.5" : "text-gray-400 flex-shrink-0 mt-0.5"} />
-              <div>
-                <p className="font-bold text-sm text-gray-900">
-                  {referral ? `${t.partnerApplied}${referralName ? ` — ${referralName}` : ""}` : t.partnerTitle}
-                </p>
-                <p className="text-xs text-gray-600 mt-1 leading-relaxed">{t.partnerDesc}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 키트 품질 약속 */}
-        <section className="pb-12 sm:pb-16">
-          <div className="rounded-2xl border border-stone-200 overflow-hidden">
-            <div className="relative h-40 overflow-hidden">
-              <img src={IMG.craft} alt="soban" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 to-transparent" />
-              <div className="absolute bottom-4 left-5">
-                <p className="text-lg font-black text-white">
-                  {t.qualityTitle} <span className="text-amber-300">{t.qualityHl}</span>
-                </p>
-              </div>
-            </div>
-            <div className="p-5 sm:p-6">
-              <ul className="space-y-2.5">
-                {QUALITY[lang].map((q, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <Check size={16} className="text-amber-600 flex-shrink-0 mt-0.5" /> {q}
-                  </li>
+          <div className="rounded-2xl border border-gray-200 overflow-x-auto">
+            <table className="w-full text-left min-w-[520px]">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-3 py-2.5 text-[11px] font-black text-gray-400 uppercase">{t.cName}</th>
+                  <th className="px-3 py-2.5 text-[11px] font-black text-gray-400 uppercase">{t.cEnd}</th>
+                  <th className="px-3 py-2.5 text-[11px] font-black text-gray-400 uppercase">{t.cTake}</th>
+                  <th className="px-3 py-2.5 text-[11px] font-black text-gray-400 uppercase">{t.cWeather}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COURSES.map((c, i) => (
+                  <tr key={c.key} onClick={() => setCourse(c.key)}
+                    className={`cursor-pointer transition-colors ${i > 0 ? "border-t border-gray-100" : ""} ${
+                      course === c.key ? "bg-amber-50" : "hover:bg-gray-50"
+                    }`}>
+                    <td className="px-3 py-3">
+                      <p className="text-xs font-bold text-gray-900">{c.emoji} {c[lang].name}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{c.key} · {c[lang].short}</p>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-gray-600 tabular-nums">{c.end}</td>
+                    <td className="px-3 py-3 text-xs text-gray-600">{c[lang].takeaway}</td>
+                    <td className="px-3 py-3">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        c.outdoor ? "bg-sky-100 text-sky-700" : "bg-emerald-100 text-emerald-700"
+                      }`}>
+                        {c.outdoor ? t.weatherRisk : t.weatherOk}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            </div>
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -777,7 +794,7 @@ export default function HanokTourPage() {
               {t.formTitle} <span className="text-amber-600">{t.formHl}</span>
             </h2>
           </div>
-          <BookingForm lang={lang} referral={referral} referralName={referralName} />
+          <BookingForm lang={lang} course={course} setCourse={setCourse} referral={referral} referralName={referralName} />
         </section>
 
         {/* 안내 */}
@@ -787,19 +804,19 @@ export default function HanokTourPage() {
             <ul className="text-xs text-gray-600 space-y-1.5 leading-relaxed">
               {lang === "ko" ? (
                 <>
-                  <li>🚐 전주 한옥마을에서 픽업하고 같은 자리에 복귀합니다.</li>
-                  <li>👥 최대 {MAX_PARTY}명까지 함께 진행합니다.</li>
-                  <li>🍽️ 채식·알레르기는 예약 시 알려주시면 맞춰드립니다.</li>
+                  <li>🚐 전주 한옥마을에서 12:00 집결하고 같은 자리에서 해산합니다.</li>
+                  <li>👥 {MIN_PARTY}~{MAX_PARTY}명 단체로 운영됩니다.</li>
+                  <li>🍽️ 채식·할랄·알레르기는 예약 시 알려주시면 협력 식당과 조율합니다.</li>
                   <li>💳 예약 확정 안내를 받으신 뒤에 결제하시면 됩니다.</li>
-                  <li>🌧️ 실내 위주 코스라 비가 와도 진행됩니다.</li>
+                  <li>🧾 개인 경비, 추가 음료, 여행자보험은 포함되지 않습니다.</li>
                 </>
               ) : (
                 <>
-                  <li>🚐 Pickup and drop-off at Jeonju Hanok Village are included.</li>
-                  <li>👥 Up to {MAX_PARTY} people per departure.</li>
-                  <li>🍽️ Tell us about vegetarian needs or allergies when you book.</li>
+                  <li>🚐 We meet at 12:00 in Jeonju Hanok Village and finish at the same spot.</li>
+                  <li>👥 Runs for groups of {MIN_PARTY}–{MAX_PARTY} people.</li>
+                  <li>🍽️ Tell us about vegetarian, halal or allergy needs when you book.</li>
                   <li>💳 Payment is arranged after we confirm your booking.</li>
-                  <li>🌧️ The course runs rain or shine — most of it is indoors.</li>
+                  <li>🧾 Personal expenses, extra drinks and travel insurance are not included.</li>
                 </>
               )}
             </ul>
@@ -809,10 +826,10 @@ export default function HanokTourPage() {
         {/* CTA */}
         <section className="pb-8">
           <div className="relative rounded-2xl overflow-hidden">
-            <img src={IMG.cta} alt="" className="w-full h-64 sm:h-72 object-cover" />
+            <img src={IMG.cta} alt="" className="w-full h-64 object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/70 to-stone-950/40" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-              <p className="text-4xl mb-3">🪵</p>
+              <p className="text-4xl mb-3">🏯</p>
               <p className="text-xl sm:text-2xl font-black text-white leading-snug">
                 {t.ctaTitle}
                 <br />

@@ -3,25 +3,28 @@ import type { Metadata } from "next";
 /* 외국인 검색 유입이 1순위라 메타는 영어를 앞에 둔다.
    한국어 키워드도 함께 넣어 국내 검색에서도 걸리게 한다. */
 export const metadata: Metadata = {
-  title: "Korean Culture Day Tour in Jeonju | 달팽이아지트",
+  title: "Jeonju & Wanju Local Day Tours | 달팽이아지트",
   description:
-    "A half-day Korean culture experience from Jeonju Hanok Village: a local tofu-village lunch, tea and yakgwa in a 500-pyeong hanok cafe, a woodworking studio tour, and hand-building your own traditional Korean soban tray. Pickup and drop-off included. From KRW 90,000.",
+    "Four ways to spend one day in Wanju, from Jeonju Hanok Village. Every course shares a local tofu-village lunch and a round-trip transfer; you choose the afternoon — build a traditional soban, walk a slow local route, make Korean tea sweets, or spend the day listening. 12:00-18:00, groups of 10-15, KRW 99,000 per person.",
   keywords: [
-    "Jeonju tour",
+    "Jeonju day tour",
+    "Wanju local experience",
     "Korean culture experience",
     "hanok cafe Jeonju",
     "soban making workshop",
+    "Korean tea sweets class",
+    "dasik making Korea",
     "Jeonju Hanok Village day trip",
-    "Korean traditional craft",
     "전주 외국인 체험",
-    "한옥 체험 투어",
+    "완주 로컬 투어",
     "전통 소반 만들기",
+    "다식 만들기 체험",
     "달팽이아지트",
   ],
   openGraph: {
-    title: "Korean Culture Day Tour — Eat, Rest, and Make Something Korean",
+    title: "One Day in Wanju — Four Ways to Spend It",
     description:
-      "Local tofu-village lunch · tea and yakgwa in a hanok cafe · make your own traditional soban tray. Pickup from Jeonju Hanok Village. From KRW 90,000.",
+      "Soban making · a slow local route · Korean tea sweets · a day of sound. Meet at noon in Jeonju Hanok Village. 6 hours, groups of 10-15, KRW 99,000 per person.",
     images: ["/img/exterior-main.jpg"],
     type: "website",
     locale: "en_US",

@@ -12,6 +12,32 @@ const SENDER = (process.env.SOLAPI_SENDER || "").trim();
 const ADMIN_SOL = "01085319531";    // 홈페이지 관리자 임솔
 const ADMIN_SEJIN = "01053140146";  // 리트릿 운영자 임세진
 
+/* 완주 로컬 체험 투어 상품 4종 — api/programs/hanok-tour/route.ts 와 같은 값을 유지한다 */
+const HANOK_COURSE: Record<string, string> = {
+  A: "내 손으로 만드는 한국 밥상",
+  B: "완주 로컬 하루",
+  C: "손으로 빚는 한국의 다과",
+  D: "전주 소리 집중 힐링",
+};
+const HANOK_COURSE_EN: Record<string, string> = {
+  A: "Make Your Own Korean Table",
+  B: "Wanju Slow Day",
+  C: "Make Korean Tea Sweets",
+  D: "A Day of Korean Sound",
+};
+const HANOK_PLAN_KO: Record<string, string> = {
+  A: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상\n13:35 한옥카페 전통차\n14:45 스토리팜 공방 투어\n15:20 전통소반 만들기\n16:50 각인·포장·기념촬영\n17:35 한옥마을 복귀",
+  B: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상\n13:35 한옥카페 전통차\n14:35 소양 고택 투어\n15:05 K-콘텐츠 촬영지\n15:35 호수뷰 산책\n17:05 한옥마을 복귀",
+  C: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상\n13:35 한옥카페 전통차\n15:05 다과·다식 만들기\n16:35 직접 만든 다식으로 티타임\n17:35 한옥마을 복귀",
+  D: "12:00 한옥마을 집결\n12:30 두부마을 로컬 한상\n14:00 소리나무 카페·헤아리움 감상실\n16:00 소리채집 프로그램\n18:00 한옥마을 복귀",
+};
+const HANOK_PLAN_EN: Record<string, string> = {
+  A: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch\n13:35 Hanok cafe, Korean tea\n14:45 Workshop tour\n15:20 Make your own soban\n16:50 Engraving & photos\n17:35 Back to Hanok Village",
+  B: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch\n13:35 Hanok cafe, Korean tea\n14:35 Historic hanok house\n15:05 K-content filming location\n15:35 Lakeside walk\n17:05 Back to Hanok Village",
+  C: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch\n13:35 Hanok cafe, Korean tea\n15:05 Dasik & tea sweets class\n16:35 Tea time with what you made\n17:35 Back to Hanok Village",
+  D: "12:00 Meet at Hanok Village\n12:30 Local tofu set lunch\n14:00 Sorinamu cafe & Hearium hall\n16:00 Field recording program\n18:00 Back to Hanok Village",
+};
+
 // 프로그램 목록 정의 (향후 프로그램 추가 시 여기에 추가)
 const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   "spring-retreat-2026": { label: "완주하다 봄 리트릿 2026", maxCapacity: 20 },
@@ -22,7 +48,7 @@ const PROGRAMS: Record<string, { label: string; maxCapacity: number }> = {
   // 프라이빗 멤버십은 월 1기수 오픈이라 기수마다 키가 하나씩 늘어난다.
   "membership-2026-10": { label: "달팽이 프라이빗 멤버십 1기 (10월)", maxCapacity: 20 },
   // 한옥투어는 고정 회차가 아니라 날짜별 예약 요청이라 정원 개념이 다르다(1회 출발 최대 10명).
-  "hanok-tour": { label: "한국 문화 체험 투어 (외국인)", maxCapacity: 10 },
+  "hanok-tour": { label: "완주 로컬 체험 투어 (외국인)", maxCapacity: 15 },
 };
 
 // 프로그램 식별자에 따라 테이블명 결정
@@ -531,16 +557,14 @@ export async function PATCH(req: NextRequest) {
             ? `안녕하세요, ${appData.name}님!
 한옥 체험 투어 예약이 확정되었습니다 🏯
 
-■ 일시: ${appData.preferred_date || "-"} ${appData.preferred_time || ""}
+■ 상품: ${HANOK_COURSE[appData.course as string] || "-"}
+■ 일시: ${appData.preferred_date || "-"} 12:00 집결
 ■ 인원: ${appData.party_size}명
 ■ 금액: 1인 ${fee.toLocaleString("ko-KR")}원 (총 ${total.toLocaleString("ko-KR")}원)
 ■ 집결: 전주 한옥마을 (상세 위치는 전날 다시 안내드립니다)
-${appData.coupon_granted ? "\n🎁 3인 이상 동반이라 달팽이아지트 펜션\n   100,000원 할인 쿠폰을 드립니다." : ""}
 
-━━ 🏯 코스 (${appData.course === "full" ? "6" : "4"}시간) ━━
-${appData.course === "full"
-  ? "픽업·이동 30분\n두부마을 로컬 식사 60분\n한옥 카페 티타임 70분\n스토리팜 공방 투어 45분\n전통 소반 만들기 100분\n스냅 촬영·마무리 20분\n한옥마을 복귀 35분"
-  : "픽업·이동 30분\n두부마을 로컬 식사 50분\n한옥 카페 티타임 55분\n전통 소반 만들기 75분\n한옥마을 복귀 30분"}
+━━ 🏯 일정 ━━
+${HANOK_PLAN_KO[appData.course as string] || ""}
 
 ━━ 🎒 준비물 ━━
 • 편한 신발 (한옥 마루에서 신발을 벗습니다)
@@ -551,17 +575,16 @@ ${appData.course === "full"
             : `Hello ${appData.name}!
 Your Korean Culture Tour is confirmed 🏯
 
-■ Date: ${appData.preferred_date || "-"} ${appData.preferred_time || ""}
-■ Party: ${appData.party_size} people
+■ Course: ${HANOK_COURSE_EN[appData.course as string] || "-"}
+■ Date: ${appData.preferred_date || "-"}, meet at 12:00
+■ Group: ${appData.party_size} people
 ■ Price: KRW ${fee.toLocaleString("en-US")} per person
    (Total KRW ${total.toLocaleString("en-US")})
 ■ Meeting point: Jeonju Hanok Village
    (exact spot sent the day before)
 
-━━ COURSE (${appData.course === "full" ? "6" : "4"} hours) ━━
-${appData.course === "full"
-  ? "Pickup & drive 30m\nTofu village lunch 60m\nHanok cafe tea 70m\nStudio tour 45m\nSoban making 100m\nPhotos & wrap-up 20m\nBack to Hanok Village 35m"
-  : "Pickup & drive 30m\nTofu village lunch 50m\nHanok cafe tea 55m\nSoban making 75m\nBack to Hanok Village 30m"}
+━━ SCHEDULE ━━
+${HANOK_PLAN_EN[appData.course as string] || ""}
 
 ━━ BRING ━━
 • Easy shoes (you take them off on the hanok floor)
