@@ -569,8 +569,10 @@ export default function AdminProgramsPage() {
                               (1인 {(app.fee_per_person ?? 0).toLocaleString()}원)
                             </span>
                           </span>
-                          {app.preferred_time && (
-                            <span className="text-xs text-gray-500">희망 {app.preferred_time}</span>
+                          {app.party_size < 10 && (
+                            <span className="text-[11px] px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-bold">
+                              ⚠️ 합류 대기 (10명 미만)
+                            </span>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-2">

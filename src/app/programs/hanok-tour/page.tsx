@@ -14,14 +14,18 @@ import {
   Gift,
   CloudSun,
   Home,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 
 /* ───── 공통 조건 ─────
-   네 상품 모두 12:00 한옥마을 집결, 1인 99,000원, 10~15명 단체.
+   네 상품 모두 12:00 한옥마을 집결, 1인 99,000원, 한 팀 최대 15명.
    달라지는 건 오후 체험뿐이라, 한 페이지에서 상품만 고르는 구조로 짰다. */
 const FEE = 99_000;
-const MIN_PARTY = 10;
+/* 1명부터 신청받는다. 다만 차량·가이드가 팀 단위 정액이라 소수 인원 단독 출발은
+   원가가 성립하지 않아, GROUP_MIN 미만은 다른 여행자와 함께 출발하는 합류 신청으로 받는다. */
+const MIN_PARTY = 1;
+const GROUP_MIN = 10;
 const MAX_PARTY = 15;
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 
@@ -222,7 +226,11 @@ const T = {
     fParty: "인원", fDate: "희망 날짜",
     fRequests: "요청사항", fRequestsPh: "채식·할랄·알레르기·언어 등 편하게 적어주세요",
     fConsent: "예약 안내를 위한 개인정보 수집·이용에 동의합니다.",
-    partyNote: `이 투어는 ${MIN_PARTY}~${MAX_PARTY}명 단체로 운영됩니다`,
+    partyNote: `1명부터 신청하실 수 있어요 (최대 ${MAX_PARTY}명)`,
+    joinTitle: "다른 여행자와 함께 출발합니다",
+    joinDesc: `이 투어는 ${GROUP_MIN}명이 모이면 출발합니다. 같은 날짜를 고른 다른 여행자분들과 함께 가시게 되며, 인원이 차는 대로 가장 먼저 안내드려요.`,
+    privateTitle: "단독 출발이 가능한 인원입니다",
+    privateDesc: "일행만으로 출발하실 수 있습니다. 차량과 협력처 일정을 확인하고 24시간 안에 연락드릴게요.",
     submit: "예약 문의 보내기", submitting: "전송 중...",
     total: "총액",
     partnerApplied: "제휴처를 통해 오셨습니다",
@@ -261,7 +269,11 @@ const T = {
     fParty: "Group size", fDate: "Preferred date",
     fRequests: "Requests", fRequestsPh: "Vegetarian, halal, allergies, language — anything",
     fConsent: "I agree to the collection of my details for booking purposes.",
-    partyNote: `This tour runs for groups of ${MIN_PARTY}–${MAX_PARTY}`,
+    partyNote: `From 1 traveller, up to ${MAX_PARTY}`,
+    joinTitle: "You'll travel with other guests",
+    joinDesc: `This tour departs once ${GROUP_MIN} travellers are booked. We'll match you with others who chose the same date and let you know as soon as it fills.`,
+    privateTitle: "Your group can depart on its own",
+    privateDesc: "No need to wait for others. We'll confirm vehicle and partner availability within 24 hours.",
     submit: "Send Booking Request", submitting: "Sending...",
     total: "Total",
     partnerApplied: "You came through a partner",
@@ -291,7 +303,7 @@ function BookingForm({
   const [email, setEmail] = useState("");
   const [messenger, setMessenger] = useState("");
   const [phone, setPhone] = useState("");
-  const [partySize, setPartySize] = useState(MIN_PARTY);
+  const [partySize, setPartySize] = useState(2);
   const [preferredDate, setPreferredDate] = useState("");
   const [requests, setRequests] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -301,6 +313,8 @@ function BookingForm({
 
   const selected = (COURSES.find((c) => c.key === course) ?? COURSES[0]) as Course;
   const total = FEE * partySize;
+  // GROUP_MIN 미만이면 단독 출발이 아니라 합류 신청이다. 폼에서 미리 알려준다.
+  const joining = partySize < GROUP_MIN;
 
   const submit = async () => {
     if (!name.trim()) return setResult({ ok: false, msg: lang === "ko" ? "이름을 입력해주세요." : "Please enter your name." });
@@ -404,6 +418,20 @@ function BookingForm({
           </div>
         </div>
         <p className="text-[11px] text-gray-400 -mt-3">{t.partyNote}</p>
+
+        <div className={`rounded-xl border p-3.5 flex items-start gap-3 ${
+          joining ? "border-sky-200 bg-sky-50" : "border-emerald-200 bg-emerald-50"
+        }`}>
+          <UsersRound size={16} className={`flex-shrink-0 mt-0.5 ${joining ? "text-sky-600" : "text-emerald-600"}`} />
+          <div>
+            <p className={`text-xs font-bold ${joining ? "text-sky-900" : "text-emerald-900"}`}>
+              {joining ? t.joinTitle : t.privateTitle}
+            </p>
+            <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
+              {joining ? t.joinDesc : t.privateDesc}
+            </p>
+          </div>
+        </div>
 
         {/* 금액 */}
         <div className="rounded-2xl bg-stone-900 text-white p-4">
@@ -546,7 +574,7 @@ export default function HanokTourPage() {
               <Clock size={14} /> 12:00–18:00
             </div>
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
-              <Users size={14} /> {MIN_PARTY}–{MAX_PARTY}
+              <Users size={14} /> 1–{MAX_PARTY}
             </div>
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
               <MapPin size={14} /> Jeonju Hanok Village
@@ -805,7 +833,8 @@ export default function HanokTourPage() {
               {lang === "ko" ? (
                 <>
                   <li>🚐 전주 한옥마을에서 12:00 집결하고 같은 자리에서 해산합니다.</li>
-                  <li>👥 {MIN_PARTY}~{MAX_PARTY}명 단체로 운영됩니다.</li>
+                  <li>👥 1명부터 신청하실 수 있고, 한 팀 최대 {MAX_PARTY}명까지 함께 출발합니다.</li>
+                  <li>🤝 {GROUP_MIN}명 미만이면 같은 날짜를 고른 다른 여행자분들과 함께 출발합니다.</li>
                   <li>🍽️ 채식·할랄·알레르기는 예약 시 알려주시면 협력 식당과 조율합니다.</li>
                   <li>💳 예약 확정 안내를 받으신 뒤에 결제하시면 됩니다.</li>
                   <li>🧾 개인 경비, 추가 음료, 여행자보험은 포함되지 않습니다.</li>
@@ -813,7 +842,8 @@ export default function HanokTourPage() {
               ) : (
                 <>
                   <li>🚐 We meet at 12:00 in Jeonju Hanok Village and finish at the same spot.</li>
-                  <li>👥 Runs for groups of {MIN_PARTY}–{MAX_PARTY} people.</li>
+                  <li>👥 Book from a single traveller, up to {MAX_PARTY} per departure.</li>
+                  <li>🤝 Under {GROUP_MIN}, we match you with others who booked the same date.</li>
                   <li>🍽️ Tell us about vegetarian, halal or allergy needs when you book.</li>
                   <li>💳 Payment is arranged after we confirm your booking.</li>
                   <li>🧾 Personal expenses, extra drinks and travel insurance are not included.</li>

@@ -17,7 +17,12 @@ const PROGRAM = "hanok-tour";
    네 상품 모두 6시간(12:00~18:00), 1인 99,000원, 10~15명 단체.
    달라지는 건 오후 체험뿐이다. */
 const FEE = 99_000;
-const MIN_PARTY = 10;
+/* 1명부터 신청을 받는다. 다만 차량(팀 정액)과 가이드(팀 정액) 때문에
+   소수 인원 단독 출발은 원가가 성립하지 않는다. 그래서 GROUP_MIN 미만은
+   "다른 여행자와 함께 출발" 하는 합류 신청으로 처리하고,
+   GROUP_MIN 이 모이면 그 날짜로 출발을 확정한다. */
+const MIN_PARTY = 1;
+const GROUP_MIN = 10;
 const MAX_PARTY = 15;
 const MEETING = "전주 한옥마을";
 
@@ -90,6 +95,7 @@ export async function GET(req: NextRequest) {
     fee: FEE,
     feePerPerson,
     minParty: MIN_PARTY,
+    groupMin: GROUP_MIN,
     maxParty: MAX_PARTY,
     meeting: MEETING,
     courses: Object.entries(COURSES).map(([key, c]) => ({ key, ...c })),
@@ -140,17 +146,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 차량·가이드가 팀 단위 정액이라 인원이 적으면 운영이 성립하지 않는다.
   if (partySize < MIN_PARTY || partySize > MAX_PARTY) {
     return NextResponse.json(
       {
         error: isKo
-          ? `이 투어는 ${MIN_PARTY}~${MAX_PARTY}명 단체로 운영됩니다.`
-          : `This tour runs for groups of ${MIN_PARTY} to ${MAX_PARTY} people.`,
+          ? `인원은 ${MIN_PARTY}~${MAX_PARTY}명까지 신청하실 수 있습니다.`
+          : `Group size must be between ${MIN_PARTY} and ${MAX_PARTY}.`,
       },
       { status: 400 }
     );
   }
+
+  // GROUP_MIN 미만이면 단독 출발이 아니라 합류 신청이다.
+  const joining = partySize < GROUP_MIN;
 
   if (privacyConsent !== true) {
     return NextResponse.json(
@@ -195,7 +203,9 @@ export async function POST(req: NextRequest) {
     coupon_granted: false,
     privacy_consent: privacyConsent,
     program: PROGRAM,
-    status: "pending",
+    // 합류 신청은 출발 인원이 찰 때까지 대기 상태로 둔다.
+    // 관리자에서 10명이 모이면 pending 으로 올려 출발을 확정한다.
+    status: joining ? "waitlist" : "pending",
   });
 
   if (error) {
@@ -211,14 +221,15 @@ export async function POST(req: NextRequest) {
       : "(메신저)",
     course,
     partySize + "인",
+    joining ? "(합류대기)" : "(단독출발)",
     referral || "direct"
   );
 
   try {
-    const adminMsg = `[한옥투어 새 예약]
+    const adminMsg = `[한옥투어 ${joining ? "합류 신청" : "새 예약"}]
 
 ■ 상품: ${course}. ${courseInfo.nameKo}
-■ 인원: ${partySize}명
+■ 인원: ${partySize}명${joining ? ` ⚠️ 합류 대기 (${GROUP_MIN}명 미만)` : " ✅ 단독 출발 가능"}
 ■ 희망일: ${preferredDate} 12:00 집결
 ■ 종료: ${courseInfo.endTime} (${MEETING} 해산)
 
@@ -234,7 +245,9 @@ export async function POST(req: NextRequest) {
 = ${totalFee.toLocaleString("ko-KR")}원
 ${referral ? `🎟️ ${PARTNERS[referral]} QR 유입` : "· 직접 유입"}
 ${requests ? `\n■ 요청사항: ${requests}` : ""}
-▶ 차량·협력처 확인 후 관리자에서 확정 처리`;
+${joining
+  ? `▶ 같은 날짜 합류 인원이 ${GROUP_MIN}명이 되면\n   관리자에서 pending 으로 올려 출발 확정`
+  : "▶ 차량·협력처 확인 후 관리자에서 확정 처리"}`;
 
     const tasks = [
       messageService.sendOne({
@@ -246,7 +259,7 @@ ${requests ? `\n■ 요청사항: ${requests}` : ""}
     if (koreanMobile) {
       const applicantMsg = isKo
         ? `안녕하세요, ${name}님!
-완주 로컬 체험 투어 예약이 접수되었습니다 🏯
+완주 로컬 체험 투어 ${joining ? "합류 신청이" : "예약이"} 접수되었습니다 🏯
 
 ■ 상품: ${courseInfo.nameKo}
 ■ 인원: ${partySize}명
@@ -259,8 +272,9 @@ ${requests ? `\n■ 요청사항: ${requests}` : ""}
 ${courseInfo.planKo}
 
 ━━ 📌 다음 단계 ━━
-차량과 협력처 일정을 확인하고
-24시간 안에 연락드립니다.
+${joining
+  ? `이 투어는 ${GROUP_MIN}명이 모이면 출발합니다.\n같은 날짜에 신청하신 다른 여행자분들과\n함께 출발하며, 인원이 차는 대로\n가장 먼저 안내드립니다.`
+  : "차량과 협력처 일정을 확인하고\n24시간 안에 연락드립니다."}
 지금 입금하지 마세요.
 
 문의: 010-8531-9531 (임솔)
@@ -278,8 +292,10 @@ Your Wanju local experience request is received 🏯
 ━━ SCHEDULE ━━
 ${courseInfo.planEn}
 
-We will confirm vehicle and partner availability
-within 24 hours. Please do not send payment yet.
+${joining
+  ? `This tour departs with ${GROUP_MIN} travellers.\nWe will match you with others booking the same\ndate and let you know as soon as it fills.`
+  : "We will confirm vehicle and partner availability\nwithin 24 hours."}
+Please do not send payment yet.
 
 Contact: +82 10-8531-9531 (Sol)
 Thank you!`;
@@ -302,6 +318,8 @@ Thank you!`;
     course,
     courseName: isKo ? courseInfo.nameKo : courseInfo.nameEn,
     partySize,
+    joining,
+    groupMin: GROUP_MIN,
     feePerPerson,
     totalFee,
     referralApplied: !!referral,
