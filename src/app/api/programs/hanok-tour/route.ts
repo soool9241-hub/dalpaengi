@@ -24,6 +24,9 @@ const FEE = 99_000;
 const MIN_PARTY = 1;
 const GROUP_MIN = 10;
 const MAX_PARTY = 15;
+/* 출발 7일 전에 인원을 확정한다. 판정은 api/cron/hanok-departure-check 가 매일 돌면서
+   그날로부터 7일 뒤 출발 건을 확정 또는 취소로 정리한다. 값을 바꾸면 크론도 같이 고칠 것. */
+const CUTOFF_DAYS = 7;
 const MEETING = "전주 한옥마을";
 
 /* ───── 상품 4종 ─────
@@ -246,7 +249,7 @@ export async function POST(req: NextRequest) {
 ${referral ? `🎟️ ${PARTNERS[referral]} QR 유입` : "· 직접 유입"}
 ${requests ? `\n■ 요청사항: ${requests}` : ""}
 ${joining
-  ? `▶ 같은 날짜 합류 인원이 ${GROUP_MIN}명이 되면\n   관리자에서 pending 으로 올려 출발 확정`
+  ? `▶ 출발 ${CUTOFF_DAYS}일 전 자동 판정 (매일 09:00)\n   ${GROUP_MIN}명 이상이면 확정, 미달이면 취소 안내`
   : "▶ 차량·협력처 확인 후 관리자에서 확정 처리"}`;
 
     const tasks = [
@@ -273,7 +276,7 @@ ${courseInfo.planKo}
 
 ━━ 📌 다음 단계 ━━
 ${joining
-  ? `이 투어는 ${GROUP_MIN}명이 모이면 출발합니다.\n같은 날짜에 신청하신 다른 여행자분들과\n함께 출발하며, 인원이 차는 대로\n가장 먼저 안내드립니다.`
+  ? `이 투어는 ${GROUP_MIN}명이 모이면 출발합니다.\n같은 날짜에 신청하신 다른 여행자분들과\n함께 출발하며, 인원이 차는 대로\n가장 먼저 안내드립니다.\n\n※ 출발 ${CUTOFF_DAYS}일 전에 인원을 확정합니다.\n   미달 시 취소 안내를 드리며,\n   결제 전이라 따로 처리하실 것은 없습니다.`
   : "차량과 협력처 일정을 확인하고\n24시간 안에 연락드립니다."}
 지금 입금하지 마세요.
 
@@ -293,7 +296,7 @@ Your Wanju local experience request is received 🏯
 ${courseInfo.planEn}
 
 ${joining
-  ? `This tour departs with ${GROUP_MIN} travellers.\nWe will match you with others booking the same\ndate and let you know as soon as it fills.`
+  ? `This tour departs with ${GROUP_MIN} travellers.\nWe will match you with others booking the same\ndate and let you know as soon as it fills.\n\nWe confirm ${CUTOFF_DAYS} days before departure.\nIf it has not filled by then we cancel and\nlet you know — nothing is charged.`
   : "We will confirm vehicle and partner availability\nwithin 24 hours."}
 Please do not send payment yet.
 

@@ -27,6 +27,8 @@ const FEE = 99_000;
 const MIN_PARTY = 1;
 const GROUP_MIN = 10;
 const MAX_PARTY = 15;
+// 출발 7일 전에 인원을 확정한다. 여행객이 일정을 다시 짤 시간을 남기기 위한 기준.
+const CUTOFF_DAYS = 7;
 const KAKAO_URL = "https://open.kakao.com/o/ssowhRlg";
 
 /* 각 장소의 전용 촬영본이 아직 없어 펜션·주변 사진을 쓴다.
@@ -229,6 +231,7 @@ const T = {
     partyNote: `1명부터 신청하실 수 있어요 (최대 ${MAX_PARTY}명)`,
     joinTitle: "다른 여행자와 함께 출발합니다",
     joinDesc: `이 투어는 ${GROUP_MIN}명이 모이면 출발합니다. 같은 날짜를 고른 다른 여행자분들과 함께 가시게 되며, 인원이 차는 대로 가장 먼저 안내드려요.`,
+    joinCutoff: `출발 ${CUTOFF_DAYS}일 전에 인원을 확정합니다. 그때까지 ${GROUP_MIN}명이 모이지 않으면 취소 안내를 드리고, 결제 전이라 따로 처리하실 것은 없습니다.`,
     privateTitle: "단독 출발이 가능한 인원입니다",
     privateDesc: "일행만으로 출발하실 수 있습니다. 차량과 협력처 일정을 확인하고 24시간 안에 연락드릴게요.",
     submit: "예약 문의 보내기", submitting: "전송 중...",
@@ -272,6 +275,7 @@ const T = {
     partyNote: `From 1 traveller, up to ${MAX_PARTY}`,
     joinTitle: "You'll travel with other guests",
     joinDesc: `This tour departs once ${GROUP_MIN} travellers are booked. We'll match you with others who chose the same date and let you know as soon as it fills.`,
+    joinCutoff: `We confirm ${CUTOFF_DAYS} days before departure. If the group has not filled by then we let you know and the booking is cancelled — nothing is charged, so there is nothing for you to do.`,
     privateTitle: "Your group can depart on its own",
     privateDesc: "No need to wait for others. We'll confirm vehicle and partner availability within 24 hours.",
     submit: "Send Booking Request", submitting: "Sending...",
@@ -430,6 +434,11 @@ function BookingForm({
             <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
               {joining ? t.joinDesc : t.privateDesc}
             </p>
+            {joining && (
+              <p className="text-[11px] text-sky-800 mt-2 pt-2 border-t border-sky-200 leading-relaxed">
+                🗓 {t.joinCutoff}
+              </p>
+            )}
           </div>
         </div>
 
@@ -835,6 +844,7 @@ export default function HanokTourPage() {
                   <li>🚐 전주 한옥마을에서 12:00 집결하고 같은 자리에서 해산합니다.</li>
                   <li>👥 1명부터 신청하실 수 있고, 한 팀 최대 {MAX_PARTY}명까지 함께 출발합니다.</li>
                   <li>🤝 {GROUP_MIN}명 미만이면 같은 날짜를 고른 다른 여행자분들과 함께 출발합니다.</li>
+                  <li>🗓 출발 {CUTOFF_DAYS}일 전에 인원을 확정합니다. 미달 시 취소 안내를 드리며 결제 전이라 별도 처리는 없습니다.</li>
                   <li>🍽️ 채식·할랄·알레르기는 예약 시 알려주시면 협력 식당과 조율합니다.</li>
                   <li>💳 예약 확정 안내를 받으신 뒤에 결제하시면 됩니다.</li>
                   <li>🧾 개인 경비, 추가 음료, 여행자보험은 포함되지 않습니다.</li>
@@ -844,6 +854,7 @@ export default function HanokTourPage() {
                   <li>🚐 We meet at 12:00 in Jeonju Hanok Village and finish at the same spot.</li>
                   <li>👥 Book from a single traveller, up to {MAX_PARTY} per departure.</li>
                   <li>🤝 Under {GROUP_MIN}, we match you with others who booked the same date.</li>
+                  <li>🗓 We confirm {CUTOFF_DAYS} days before departure. If it has not filled, we cancel and let you know — nothing is charged.</li>
                   <li>🍽️ Tell us about vegetarian, halal or allergy needs when you book.</li>
                   <li>💳 Payment is arranged after we confirm your booking.</li>
                   <li>🧾 Personal expenses, extra drinks and travel insurance are not included.</li>
