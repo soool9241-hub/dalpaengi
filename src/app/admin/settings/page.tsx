@@ -216,7 +216,7 @@ export default function SettingsPage() {
 
           <div className="mt-6 p-4 bg-amber-50 rounded-xl">
             <h4 className="text-sm font-bold text-amber-900 mb-2">환불 규정</h4>
-            <p className="text-sm text-amber-800 font-medium">예약일 2주 전 취소 시 100% 환불 / 이후 환불 불가</p>
+            <p className="text-sm text-amber-800 font-medium">예약일 14일 전 취소 시 100% 환불 / 이후 환불 불가</p>
           </div>
         </div>
       )}

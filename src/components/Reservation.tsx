@@ -1922,7 +1922,7 @@ export default function Reservation() {
               <div className="flex justify-between"><span className="font-semibold text-text-dark">총 결제 금액</span><span className="font-bold text-primary text-lg">{formatPrice(totalPrice)}</span></div>
               <div className="flex justify-between text-base"><span className="text-text-mid">1인당</span><span className="font-bold text-primary">{formatPrice(pricePerPerson)}</span></div>
               {showBusForm && busPrice === 0 && <p className="text-xs text-text-light text-center">* 버스 렌트 비용은 별도 안내드립니다</p>}
-              <p className="text-text-mid mt-3 text-center leading-relaxed" style={{ fontSize: "20px" }}>예약 취소 및 환불: 예약일 2주 전 100% 환불 / 이후 환불 불가</p>
+              <p className="text-text-mid mt-3 text-center leading-relaxed" style={{ fontSize: "20px" }}>예약 취소 및 환불: 예약일 14일 전 100% 환불 / 이후 환불 불가</p>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border-2 border-border rounded-xl font-semibold text-sm text-text-mid hover:bg-sage transition-colors">취소</button>
